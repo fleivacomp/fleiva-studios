@@ -1,0 +1,219 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #f4f5ed;
+  color: #171a18;
+}
+
+.pagina-publica {
+  width: min(42rem, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 2rem 0;
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+
+  div {
+    display: grid;
+    gap: 0.15rem;
+  }
+
+  strong {
+    font-size: 1rem;
+  }
+
+  div > span {
+    color: #4e5852;
+    font-size: 0.8rem;
+  }
+}
+
+.marca-simbolo {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  background: #263891;
+  color: #ffffff;
+  border-radius: 0.65rem;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.painel {
+  padding: clamp(1.25rem, 4vw, 2rem);
+  background: #fcffeb;
+  border: 1px solid #cdd2c8;
+  border-top: 0.25rem solid #263891;
+  border-radius: 0.75rem;
+}
+
+.identificacao {
+  margin-bottom: 1.75rem;
+
+  h1 {
+    margin: 0.25rem 0;
+    font-size: clamp(2rem, 8vw, 3rem);
+    line-height: 1.05;
+  }
+
+  > p:last-child {
+    margin: 0;
+    color: #4e5852;
+  }
+}
+
+.secao {
+  margin: 0;
+  color: #263891;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.informacoes {
+  display: grid;
+  grid-template-columns: repeat(
+    2,
+    minmax(0, 1fr)
+  );
+  gap: 0.75rem;
+  margin: 0;
+  padding: 1rem 0;
+  border-top: 1px solid #cdd2c8;
+  border-bottom: 1px solid #cdd2c8;
+
+  div {
+    min-width: 0;
+  }
+
+  dt {
+    margin-bottom: 0.25rem;
+    color: #4e5852;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  dd {
+    overflow-wrap: anywhere;
+    margin: 0;
+  }
+}
+
+.observacoes {
+  margin-top: 1.25rem;
+
+  h2 {
+    margin: 0 0 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  p {
+    margin: 0;
+    color: #4e5852;
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+}
+
+.botao-download,
+.botao-secundario {
+  min-height: 2.75rem;
+  padding: 0.65rem 1rem;
+  border-radius: 0.4rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.6;
+  }
+}
+
+.botao-download {
+  width: 100%;
+  margin-top: 1.5rem;
+  background: #263891;
+  color: #ffffff;
+  border: 1px solid #263891;
+
+  &:hover:not(:disabled) {
+    background: #1f2e78;
+  }
+}
+
+.botao-secundario {
+  margin-top: 0.75rem;
+  background: transparent;
+  color: #171a18;
+  border: 1px solid #cdd2c8;
+
+  &:hover {
+    background: #eef0e5;
+  }
+}
+
+.erro-download {
+  margin: 1rem 0 0;
+  color: #e03329;
+}
+
+.estado {
+  text-align: center;
+
+  h1,
+  p {
+    margin-top: 0;
+  }
+
+  p:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.estado-erro {
+  border-top-color: #e03329;
+}
+
+footer {
+  margin-top: 1rem;
+  color: #7b847d;
+  font-size: 0.75rem;
+  text-align: center;
+}
+.acoes-versao {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.botao-whatsapp {
+  background: #0a4730;
+  color: #ffffff;
+  border: 1px solid #0a4730;
+
+  &:hover:not(:disabled) {
+    background: #073b28;
+  }
+}
+
+.mensagem-compartilhamento {
+  margin: 0 0 1rem;
+  padding: 0.75rem;
+  background: rgb(36 122 81 / 10%);
+  color: #0a4730;
+  border: 1px solid rgb(36 122 81 / 35%);
+  border-radius: 0.4rem;
+}
+@media (max-width: 34rem) {
+  .informacoes {
+    grid-template-columns: 1fr;
+  }
+}

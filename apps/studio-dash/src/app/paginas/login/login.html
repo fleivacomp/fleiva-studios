@@ -1,0 +1,51 @@
+<main class="pagina-login">
+  <form class="formulario-login" [formGroup]="formulario" (ngSubmit)="entrar()">
+    <header>
+      <h1>Fleiva Studios</h1>
+      <p>Entre para acessar seu estúdio.</p>
+    </header>
+
+    <label for="email">E-mail</label>
+
+    <input
+      id="email"
+      type="email"
+      formControlName="email"
+      autocomplete="email"
+    />
+
+    @if (
+      formulario.controls.email.touched &&
+      formulario.controls.email.invalid
+    ) {
+      <small>Informe um e-mail válido.</small>
+    }
+
+    <label for="senha">Senha</label>
+
+    <input
+      id="senha"
+      type="password"
+      formControlName="senha"
+      autocomplete="current-password"
+    />
+
+    @if (
+      formulario.controls.senha.touched &&
+      formulario.controls.senha.invalid
+    ) {
+      <small>Informe sua senha.</small>
+    }
+
+    @if (mensagemErro()) {
+      <p class="erro" role="alert">{{ mensagemErro() }}</p>
+    }
+
+    <button
+      type="submit"
+      [disabled]="formulario.invalid || enviando()"
+    >
+      {{ enviando() ? 'Entrando...' : 'Entrar' }}
+    </button>
+  </form>
+</main>

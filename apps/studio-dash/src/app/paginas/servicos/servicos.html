@@ -1,0 +1,199 @@
+<main class="pagina">
+  <header class="cabecalho">
+    <div>
+      <p class="secao">CONFIGURAÇÕES</p>
+      <h1>Serviços</h1>
+      <p>Cadastre os serviços e as formas de cobrança do estúdio.</p>
+    </div>
+  </header>
+
+  <section class="painel formulario-painel">
+    <div class="titulo-painel">
+      <h2>
+        @if (servicoEditandoId()) {
+          Editar serviço
+        } @else {
+          Novo serviço
+        }
+      </h2>
+    </div>
+
+    <form [formGroup]="formulario" (ngSubmit)="salvar()">
+      <div class="campos">
+        <label>
+          <span>Nome</span>
+
+          <input
+            type="text"
+            formControlName="nome"
+            placeholder="Ex.: Gravação de voz"
+          />
+
+          @if (
+            formulario.controls.nome.touched &&
+            formulario.controls.nome.invalid
+          ) {
+            <small>Informe o nome do serviço.</small>
+          }
+        </label>
+
+        <label>
+          <span>Preço</span>
+
+          <input
+            type="number"
+            formControlName="preco"
+            placeholder="0,00"
+            min="0"
+            step="0.01"
+          />
+
+          @if (
+            formulario.controls.preco.touched &&
+            formulario.controls.preco.invalid
+          ) {
+            <small>Informe um preço válido.</small>
+          }
+        </label>
+
+        <label>
+          <span>Tipo de cobrança</span>
+
+          <input
+            type="text"
+            formControlName="tipo_cobranca"
+            placeholder="Ex.: hora, faixa, diária"
+          />
+
+          @if (
+            formulario.controls.tipo_cobranca.touched &&
+            formulario.controls.tipo_cobranca.invalid
+          ) {
+            <small>Informe o tipo de cobrança.</small>
+          }
+        </label>
+
+        <label>
+          <span>Duração em minutos</span>
+
+          <input
+            type="number"
+            formControlName="duracao_minutos"
+            placeholder="Opcional"
+            min="1"
+            step="1"
+          />
+
+          @if (
+            formulario.controls.duracao_minutos.touched &&
+            formulario.controls.duracao_minutos.invalid
+          ) {
+            <small>A duração deve ser maior que zero.</small>
+          }
+        </label>
+      </div>
+
+      @if (erroFormulario()) {
+        <p class="erro">{{ erroFormulario() }}</p>
+      }
+
+      <div class="acoes-formulario">
+        @if (servicoEditandoId()) {
+          <button
+            type="button"
+            class="botao-secundario"
+            [disabled]="salvando()"
+            (click)="cancelarEdicao()"
+          >
+            Cancelar
+          </button>
+        }
+
+        <button
+          type="submit"
+          class="botao-principal"
+          [disabled]="salvando()"
+        >
+          @if (salvando()) {
+            Salvando...
+          } @else if (servicoEditandoId()) {
+            Salvar alterações
+          } @else {
+            Cadastrar serviço
+          }
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <section class="painel">
+    <div class="titulo-painel">
+      <h2>Serviços cadastrados</h2>
+      <span>{{ dadosServicos.servicos().length }}</span>
+    </div>
+
+    @if (dadosServicos.carregando()) {
+      <p class="estado">Carregando serviços...</p>
+    } @else if (dadosServicos.erro()) {
+      <div class="estado erro">
+        <p>{{ dadosServicos.erro() }}</p>
+
+        <button
+          type="button"
+          class="botao-secundario"
+          (click)="dadosServicos.listar()"
+        >
+          Tentar novamente
+        </button>
+      </div>
+    } @else if (dadosServicos.servicos().length === 0) {
+      <p class="estado">Nenhum serviço cadastrado.</p>
+    } @else {
+      <div class="lista">
+        @for (
+          servico of dadosServicos.servicos();
+          track servico.id
+        ) {
+          <article class="servico">
+            <div class="dados-servico">
+              <div>
+                <h3>{{ servico.nome }}</h3>
+                <p>
+                  {{ formatarPreco(servico.preco) }}
+                  <span>/ {{ servico.tipo_cobranca }}</span>
+                </p>
+              </div>
+
+              <span class="duracao">
+                {{ formatarDuracao(servico.duracao_minutos) }}
+              </span>
+            </div>
+
+            <div class="acoes-servico">
+              <button
+                type="button"
+                class="botao-secundario"
+                (click)="editar(servico)"
+              >
+                Editar
+              </button>
+
+              <button
+                type="button"
+                class="botao-excluir"
+                [disabled]="excluindoId() === servico.id"
+                (click)="excluir(servico)"
+              >
+                @if (excluindoId() === servico.id) {
+                  Excluindo...
+                } @else {
+                  Excluir
+                }
+              </button>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </section>
+</main>

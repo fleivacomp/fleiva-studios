@@ -1,0 +1,254 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.estrutura {
+  display: grid;
+  min-height: 100vh;
+  grid-template-columns: 15rem minmax(0, 1fr);
+}
+
+.barra-lateral {
+  position: sticky;
+  top: 0;
+  display: flex;
+  width: 15rem;
+  height: 100vh;
+  flex-direction: column;
+  overflow-y: auto;
+  background: linear-gradient(
+    180deg,
+    var(--sidebar-start),
+    var(--sidebar-end)
+  );
+  color: var(--brand-cream);
+}
+
+.marca {
+  display: flex;
+  min-height: 5.5rem;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1rem;
+  border-bottom: 0.0625rem solid
+    rgb(252 255 235 / 12%);
+}
+
+.marca-simbolo {
+  display: grid;
+  width: 2.6rem;
+  height: 2.6rem;
+  flex: 0 0 auto;
+  place-items: center;
+  background: var(--brand-blue);
+  color: var(--brand-cream);
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.marca-texto {
+  display: grid;
+  gap: 0.05rem;
+
+  strong {
+    color: var(--brand-cream);
+    font-size: 1rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  small {
+    color: rgb(252 255 235 / 64%);
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+}
+
+.navegacao {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1.25rem 0.75rem;
+
+  .titulo-menu {
+    margin: 0 0 0.45rem;
+    padding: 0 0.65rem;
+    color: rgb(252 255 235 / 48%);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  a {
+    display: flex;
+    min-height: 2.8rem;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: 0.35rem;
+    color: rgb(252 255 235 / 76%);
+    font-size: 0.82rem;
+    font-weight: 700;
+    transition:
+      background-color 150ms ease,
+      color 150ms ease;
+
+    &:hover {
+      background: rgb(252 255 235 / 7%);
+      color: var(--brand-cream);
+    }
+
+    &.ativo {
+      background: rgb(252 255 235 / 12%);
+      color: var(--brand-cream);
+      box-shadow: inset 0.18rem 0
+        var(--brand-red);
+    }
+  }
+}
+
+.indicador {
+  color: rgb(252 255 235 / 42%);
+  font-size: 0.62rem;
+  letter-spacing: 0.05em;
+}
+
+.rodape-menu {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: auto;
+  padding: 1rem;
+  border-top: 0.0625rem solid
+    rgb(252 255 235 / 12%);
+}
+
+.usuario {
+  display: grid;
+  min-width: 0;
+  gap: 0.2rem;
+
+  span {
+    color: rgb(252 255 235 / 52%);
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  strong {
+    overflow: hidden;
+    color: var(--brand-cream);
+    font-size: 0.72rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.botao-sair {
+  min-height: 2.45rem;
+  padding: 0.55rem 0.75rem;
+  border: 0.0625rem solid
+    rgb(252 255 235 / 18%);
+  border-radius: 0.35rem;
+  background: rgb(252 255 235 / 7%);
+  color: var(--brand-cream);
+  font-weight: 700;
+
+  &:hover:not(:disabled) {
+    background: rgb(252 255 235 / 13%);
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.6;
+  }
+}
+
+.erro-saida {
+  margin: 0;
+  color: #ffaaa4;
+  font-size: 0.7rem;
+}
+
+.area-principal {
+  min-width: 0;
+}
+
+.conteudo {
+  min-width: 0;
+}
+
+.cabecalho-movel,
+.fundo-menu {
+  display: none;
+}
+
+@media (max-width: 48rem) {
+  .estrutura {
+    display: block;
+  }
+
+  .barra-lateral {
+    position: fixed;
+    z-index: 30;
+    inset: 0 auto 0 0;
+    width: min(17rem, 86vw);
+    transform: translateX(-100%);
+    transition: transform 180ms ease;
+  }
+
+  .menu-aberto .barra-lateral {
+    transform: translateX(0);
+  }
+
+  .fundo-menu {
+    position: fixed;
+    z-index: 20;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: rgb(0 0 0 / 48%);
+  }
+
+  .cabecalho-movel {
+    position: sticky;
+    z-index: 10;
+    top: 0;
+    display: flex;
+    min-height: 3.75rem;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.65rem 1rem;
+    border-bottom: 0.0625rem solid var(--border);
+    background: color-mix(
+      in srgb,
+      var(--surface) 94%,
+      transparent
+    );
+    backdrop-filter: blur(0.65rem);
+  }
+
+  .marca-movel {
+    color: var(--text);
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .botao-menu {
+    min-height: 2.3rem;
+    padding: 0.45rem 0.7rem;
+    border: 0.0625rem solid var(--border);
+    border-radius: 0.3rem;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+}

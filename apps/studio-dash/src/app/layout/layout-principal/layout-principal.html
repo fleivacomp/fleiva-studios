@@ -1,0 +1,137 @@
+<div
+  class="estrutura"
+  [class.menu-aberto]="menuAberto()"
+>
+  <aside class="barra-lateral">
+    <a
+      class="marca"
+      routerLink="/agendamentos"
+      (click)="fecharMenu()"
+    >
+      <span class="marca-simbolo">F</span>
+
+      <span class="marca-texto">
+        <strong>Fleiva</strong>
+        <small>Studios</small>
+      </span>
+    </a>
+
+    <nav class="navegacao" aria-label="Navegação principal">
+      <p class="titulo-menu">Gerenciamento</p>
+
+      <a
+        routerLink="/agendamentos"
+        routerLinkActive="ativo"
+        [routerLinkActiveOptions]="{ exact: true }"
+        (click)="fecharMenu()"
+      >
+        <span class="indicador">01</span>
+        <span>Agenda</span>
+      </a>
+
+      <a
+        routerLink="/contatos"
+        routerLinkActive="ativo"
+        (click)="fecharMenu()"
+      >
+        <span class="indicador">02</span>
+        <span>Contatos</span>
+      </a>
+
+      <a
+        routerLink="/projetos"
+        routerLinkActive="ativo"
+        (click)="fecharMenu()"
+      >
+        <span class="indicador">03</span>
+        <span>Projetos</span>
+      </a>
+
+      <a
+        routerLink="/servicos"
+        routerLinkActive="ativo"
+        (click)="fecharMenu()"
+      >
+        <span class="indicador">04</span>
+        <span>Serviços</span>
+      </a>
+
+    <a
+        routerLink="/faixas"
+        routerLinkActive="ativo"
+        (click)="fecharMenu()"
+      >
+        <span class="indicador">05</span>
+        <span>Faixas</span>
+      </a>
+       <a
+        routerLink="/acertos"
+        routerLinkActive="ativo"
+        (click)="fecharMenu()"
+      >
+        <span class="indicador">06</span>
+        <span>Acertos</span>
+      </a>
+    </nav>
+
+    <footer class="rodape-menu">
+      <div class="usuario">
+        <span>Conectado como</span>
+        <strong>
+          {{ autenticacao.usuario()?.email }}
+        </strong>
+      </div>
+
+      @if (erroSaida()) {
+        <p class="erro-saida">{{ erroSaida() }}</p>
+      }
+
+      <button
+        type="button"
+        class="botao-sair"
+        [disabled]="saindo()"
+        (click)="sair()"
+      >
+        @if (saindo()) {
+          Saindo...
+        } @else {
+          Sair
+        }
+      </button>
+    </footer>
+  </aside>
+
+  @if (menuAberto()) {
+    <button
+      type="button"
+      class="fundo-menu"
+      aria-label="Fechar menu"
+      (click)="fecharMenu()"
+    ></button>
+  }
+
+  <section class="area-principal">
+    <header class="cabecalho-movel">
+      <a
+        class="marca-movel"
+        routerLink="/agendamentos"
+      >
+        Fleiva Studios
+      </a>
+
+      <button
+        type="button"
+        class="botao-menu"
+        aria-label="Abrir menu"
+        [attr.aria-expanded]="menuAberto()"
+        (click)="alternarMenu()"
+      >
+        Menu
+      </button>
+    </header>
+
+    <div class="conteudo">
+      <router-outlet />
+    </div>
+  </section>
+</div>

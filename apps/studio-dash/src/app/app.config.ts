@@ -1,10 +1,18 @@
-import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
+import {
+  ApplicationConfig,
+  provideBrowserGlobalErrorListeners,
+  provideZonelessChangeDetection,
+} from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { appRoutes } from './app.routes';
+import { fornecerConfiguracaoSupabase } from '@fleiva-studios/shared-data-access';
+import { ambiente } from '../environments/ambiente';
+import { rotasAplicacao } from './app.routes';
 
-export const appConfig: ApplicationConfig = {
+export const configuracaoAplicacao: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(appRoutes)
-  ]
+    provideZonelessChangeDetection(),
+    provideRouter(rotasAplicacao),
+    fornecerConfiguracaoSupabase(ambiente.supabase),
+  ],
 };

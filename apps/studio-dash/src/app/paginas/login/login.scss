@@ -1,0 +1,82 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+}
+
+.pagina-login {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background: #f4f5ed;
+}
+
+.formulario-login {
+  width: min(100%, 24rem);
+  display: grid;
+  gap: 0.75rem;
+  padding: 2rem;
+  background: #fcffeb;
+  border: 1px solid #cdd2c8;
+  border-radius: 0.75rem;
+}
+
+header {
+  margin-bottom: 1rem;
+}
+
+h1,
+p {
+  margin: 0;
+}
+
+header p {
+  margin-top: 0.5rem;
+  color: #4e5852;
+}
+
+label {
+  font-weight: 600;
+}
+
+input,
+button {
+  min-height: 2.75rem;
+  padding: 0 0.875rem;
+  border-radius: 0.375rem;
+  font: inherit;
+}
+
+input {
+  border: 1px solid #cdd2c8;
+  background: #fff;
+}
+
+input:focus {
+  outline: 2px solid #263891;
+  outline-offset: 1px;
+}
+
+button {
+  margin-top: 0.75rem;
+  border: 0;
+  background: #263891;
+  color: #fff;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+small,
+.erro {
+  color: #e03329;
+}
+
+.erro {
+  padding: 0.75rem;
+  background: rgb(224 51 41 / 10%);
+  border-radius: 0.375rem;
+}

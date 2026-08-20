@@ -1,0 +1,174 @@
+<main class="pagina">
+  <header class="cabecalho">
+    <p class="secao">CADASTROS</p>
+    <h1>Contatos</h1>
+    <p>Pessoas vinculadas ao estúdio.</p>
+  </header>
+
+  <section class="painel formulario-painel">
+    <h2>
+      @if (contatoEditandoId()) {
+        Editar contato
+      } @else {
+        Novo contato
+      }
+    </h2>
+
+    <form [formGroup]="formulario" (ngSubmit)="salvar()">
+      <div class="campos">
+        <label>
+          <span>Nome</span>
+
+          <input
+            type="text"
+            formControlName="nome"
+            placeholder="Nome do contato"
+          />
+
+          @if (
+            formulario.controls.nome.touched &&
+            formulario.controls.nome.invalid
+          ) {
+            <small>Informe o nome.</small>
+          }
+        </label>
+
+        <label>
+          <span>Telefone</span>
+
+          <input
+            type="tel"
+            formControlName="telefone"
+            placeholder="Opcional"
+          />
+        </label>
+
+        <label>
+          <span>E-mail</span>
+
+          <input
+            type="email"
+            formControlName="email"
+            placeholder="Opcional"
+          />
+
+          @if (
+            formulario.controls.email.touched &&
+            formulario.controls.email.invalid
+          ) {
+            <small>Informe um e-mail válido.</small>
+          }
+        </label>
+
+        <label class="campo-marcacao">
+          <input type="checkbox" formControlName="e_cliente" />
+          <span>Pode assumir o pagamento de um serviço</span>
+        </label>
+      </div>
+
+      @if (erroFormulario()) {
+        <p class="erro">{{ erroFormulario() }}</p>
+      }
+
+      <div class="acoes">
+        @if (contatoEditandoId()) {
+          <button
+            type="button"
+            class="secundario"
+            [disabled]="salvando()"
+            (click)="cancelarEdicao()"
+          >
+            Cancelar
+          </button>
+        }
+
+        <button
+          type="submit"
+          class="primario"
+          [disabled]="salvando()"
+        >
+          @if (salvando()) {
+            Salvando...
+          } @else if (contatoEditandoId()) {
+            Salvar alterações
+          } @else {
+            Cadastrar contato
+          }
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <section class="painel">
+    <div class="titulo-lista">
+      <h2>Contatos cadastrados</h2>
+      <span>{{ dadosContatos.contatos().length }}</span>
+    </div>
+
+    @if (dadosContatos.carregando()) {
+      <p class="estado">Carregando contatos...</p>
+    } @else if (dadosContatos.erro()) {
+      <div class="estado erro">
+        <p>{{ dadosContatos.erro() }}</p>
+
+        <button
+          type="button"
+          class="secundario"
+          (click)="dadosContatos.listar()"
+        >
+          Tentar novamente
+        </button>
+      </div>
+    } @else if (dadosContatos.contatos().length === 0) {
+      <p class="estado">Nenhum contato cadastrado.</p>
+    } @else {
+      <div class="lista">
+        @for (
+          contato of dadosContatos.contatos();
+          track contato.id
+        ) {
+          <article class="contato">
+            <div>
+              <div class="nome">
+                <h3>{{ contato.nome }}</h3>
+
+                @if (contato.e_cliente) {
+                  <span>Cliente</span>
+                }
+              </div>
+
+              <p>
+                {{ contato.telefone || 'Sem telefone' }}
+                ·
+                {{ contato.email || 'Sem e-mail' }}
+              </p>
+            </div>
+
+            <div class="acoes">
+              <button
+                type="button"
+                class="secundario"
+                (click)="editar(contato)"
+              >
+                Editar
+              </button>
+
+              <button
+                type="button"
+                class="excluir"
+                [disabled]="excluindoId() === contato.id"
+                (click)="excluir(contato)"
+              >
+                @if (excluindoId() === contato.id) {
+                  Excluindo...
+                } @else {
+                  Excluir
+                }
+              </button>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </section>
+</main>

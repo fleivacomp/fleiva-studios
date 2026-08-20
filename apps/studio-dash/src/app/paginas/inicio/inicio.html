@@ -1,0 +1,11 @@
+<main>
+  <h1>Fleiva Studios</h1>
+
+  <p>Sessão autenticada.</p>
+
+  @if (usuario(); as usuarioAtual) {
+    <p>{{ usuarioAtual.email }}</p>
+  }
+
+  <button type="button" (click)="sair()">Sair</button>
+</main>

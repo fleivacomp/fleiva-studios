@@ -1,0 +1,93 @@
+<main class="pagina-publica">
+  <header class="marca">
+    <span class="marca-simbolo">F</span>
+
+    <div>
+      <strong>Fleiva Studios</strong>
+      <span>Arquivo compartilhado</span>
+    </div>
+  </header>
+
+  @if (dados.carregando()) {
+    <section class="painel estado">
+      <p>Carregando arquivo...</p>
+    </section>
+  } @else if (dados.erro()) {
+    <section class="painel estado estado-erro">
+      <h1>Arquivo indisponível</h1>
+      <p>{{ dados.erro() }}</p>
+
+      <button
+        type="button"
+        class="botao-secundario"
+        (click)="recarregar()"
+      >
+        Tentar novamente
+      </button>
+    </section>
+  } @else if (dados.arquivo(); as arquivo) {
+    <section class="painel arquivo">
+      <div class="identificacao">
+        <p class="secao">FAIXA</p>
+        <h1>{{ arquivo.faixa }}</h1>
+        <p>{{ arquivo.projeto }}</p>
+      </div>
+
+      <dl class="informacoes">
+        <div>
+          <dt>Versão</dt>
+          <dd>{{ arquivo.versao }}</dd>
+        </div>
+
+        <div>
+          <dt>Arquivo</dt>
+          <dd>{{ arquivo.nome_arquivo }}</dd>
+        </div>
+
+        <div>
+          <dt>Tamanho</dt>
+          <dd>
+            {{ formatarBytes(arquivo.tamanho_bytes) }}
+          </dd>
+        </div>
+
+        <div>
+          <dt>Enviado em</dt>
+          <dd>
+            {{ formatarData(arquivo.criado_em) }}
+          </dd>
+        </div>
+      </dl>
+
+      @if (arquivo.observacoes) {
+        <div class="observacoes">
+          <h2>Observações</h2>
+          <p>{{ arquivo.observacoes }}</p>
+        </div>
+      }
+
+      @if (erroDownload()) {
+        <p class="erro-download">
+          {{ erroDownload() }}
+        </p>
+      }
+
+      <button
+        type="button"
+        class="botao-download"
+        [disabled]="baixando()"
+        (click)="baixar()"
+      >
+        @if (baixando()) {
+          Preparando download...
+        } @else {
+          Baixar arquivo
+        }
+      </button>
+    </section>
+  }
+
+  <footer>
+    Arquivo privado compartilhado pelo Fleiva Studios.
+  </footer>
+</main>

@@ -11,6 +11,7 @@
     "@angular/forms": "~22.0.4",
     "@angular/platform-browser": "~22.0.4",
     "@angular/router": "~22.0.4",
+    "@supabase/supabase-js": "^2.112.3",
     "rxjs": "~7.8.0"
   },
   "devDependencies": {
@@ -40,6 +41,7 @@
     "jsdom": "^27.1.0",
     "nx": "23.1.1",
     "prettier": "~3.6.2",
+    "supabase": "^2.115.0",
     "tslib": "^2.3.0",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.58.0",

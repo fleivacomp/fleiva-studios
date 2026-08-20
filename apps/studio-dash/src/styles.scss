@@ -1,1 +1,95 @@
 /* You can add global styles to this file, and also import other style files */
+:root {
+  color-scheme: light;
+
+  --brand-cream: #fcffeb;
+  --brand-red: #e03329;
+  --brand-blue: #263891;
+  --brand-green: #0a4730;
+  --brand-yellow: #e0ad26;
+  --brand-gray: #d4d4d4;
+  --brand-black: #000000;
+
+  --background: #f4f5ed;
+  --surface: #fcffeb;
+  --surface-muted: #eef0e5;
+  --surface-hover: #e4e7db;
+
+  --text: #171a18;
+  --text-soft: #4e5852;
+  --text-muted: #7b847d;
+  --border: #cdd2c8;
+
+  --primary: #263891;
+  --primary-strong: #1f2e78;
+  --secondary: #0a4730;
+  --success: #247a51;
+  --warning: #b08316;
+  --danger: #e03329;
+
+  --sidebar-start: #0a4730;
+  --sidebar-end: #063523;
+
+  --shadow: 0 1rem 2.5rem
+    rgb(10 71 48 / 13%);
+  --shadow-soft: 0 0.5rem 1.8rem
+    rgb(10 71 48 / 8%);
+
+  --radius: 0.55rem;
+  --radius-grande: 0.75rem;
+
+  font-family:
+    'IBM Plex Mono',
+    'SFMono-Regular',
+    Consolas,
+    monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--background);
+  color: var(--text);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+::selection {
+  background: var(--primary);
+  color: var(--brand-cream);
+}
+
+:focus-visible {
+  outline: 0.15rem solid
+    color-mix(in srgb, var(--primary) 65%, transparent);
+  outline-offset: 0.12rem;
+}

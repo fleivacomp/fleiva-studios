@@ -1,0 +1,313 @@
+<main class="pagina">
+  <header class="cabecalho">
+    <p class="secao">ARTISTAS</p>
+    <h1>Projetos artísticos</h1>
+    <p>Bandas, artistas solo, duplas e outros projetos.</p>
+  </header>
+
+  <section class="painel formulario-projeto">
+    <h2>
+      @if (projetoEditandoId()) {
+        Editar projeto
+      } @else {
+        Novo projeto
+      }
+    </h2>
+
+    <form
+      [formGroup]="formularioProjeto"
+      (ngSubmit)="salvarProjeto()"
+    >
+      <div class="campos-projeto">
+        <label>
+          <span>Nome</span>
+
+          <input
+            type="text"
+            formControlName="nome"
+            placeholder="Nome artístico ou nome do grupo"
+          />
+
+          @if (
+            formularioProjeto.controls.nome.touched &&
+            formularioProjeto.controls.nome.invalid
+          ) {
+            <small>Informe o nome do projeto.</small>
+          }
+        </label>
+
+        <label>
+          <span>Tipo</span>
+
+          <input
+            type="text"
+            formControlName="tipo"
+            placeholder="Ex.: solo, banda, dupla"
+          />
+
+          @if (
+            formularioProjeto.controls.tipo.touched &&
+            formularioProjeto.controls.tipo.invalid
+          ) {
+            <small>Informe o tipo do projeto.</small>
+          }
+        </label>
+      </div>
+
+      <div class="acoes">
+        @if (projetoEditandoId()) {
+          <button
+            type="button"
+            class="botao secundario"
+            [disabled]="salvandoProjeto()"
+            (click)="cancelarEdicaoProjeto()"
+          >
+            Cancelar
+          </button>
+        }
+
+        <button
+          type="submit"
+          class="botao primario"
+          [disabled]="salvandoProjeto()"
+        >
+          @if (salvandoProjeto()) {
+            Salvando...
+          } @else if (projetoEditandoId()) {
+            Salvar alterações
+          } @else {
+            Cadastrar projeto
+          }
+        </button>
+      </div>
+    </form>
+  </section>
+
+  @if (erroOperacao()) {
+    <div class="alerta">
+      {{ erroOperacao() }}
+    </div>
+  }
+
+  <section class="painel">
+    <div class="titulo-lista">
+      <h2>Projetos cadastrados</h2>
+      <span>{{ dadosProjetos.projetos().length }}</span>
+    </div>
+
+    @if (dadosProjetos.carregando()) {
+      <p class="estado">Carregando projetos...</p>
+    } @else if (dadosProjetos.erro()) {
+      <div class="estado erro">
+        <p>{{ dadosProjetos.erro() }}</p>
+
+        <button
+          type="button"
+          class="botao secundario"
+          (click)="dadosProjetos.listar()"
+        >
+          Tentar novamente
+        </button>
+      </div>
+    } @else if (dadosProjetos.projetos().length === 0) {
+      <p class="estado">Nenhum projeto cadastrado.</p>
+    } @else {
+      <div class="lista-projetos">
+        @for (
+          projeto of dadosProjetos.projetos();
+          track projeto.id
+        ) {
+          <article class="projeto">
+            <header class="cabecalho-projeto">
+              <div>
+                <span class="tipo-projeto">
+                  {{ projeto.tipo }}
+                </span>
+
+                <h3>{{ projeto.nome }}</h3>
+              </div>
+
+              <div class="acoes">
+                <button
+                  type="button"
+                  class="botao secundario"
+                  (click)="editarProjeto(projeto)"
+                >
+                  Editar
+                </button>
+
+                <button
+                  type="button"
+                  class="botao excluir"
+                  [disabled]="
+                    excluindoProjetoId() === projeto.id
+                  "
+                  (click)="excluirProjeto(projeto)"
+                >
+                  @if (
+                    excluindoProjetoId() === projeto.id
+                  ) {
+                    Excluindo...
+                  } @else {
+                    Excluir
+                  }
+                </button>
+              </div>
+            </header>
+
+            <div class="membros">
+              <div class="titulo-membros">
+                <h4>Membros e responsáveis</h4>
+
+                <button
+                  type="button"
+                  class="botao secundario"
+                  (click)="abrirNovoMembro(projeto.id)"
+                >
+                  Adicionar contato
+                </button>
+              </div>
+
+              @if (projeto.membros.length === 0) {
+                <p class="sem-membros">
+                  Nenhum contato vinculado.
+                </p>
+              } @else {
+                <div class="lista-membros">
+                  @for (
+                    membro of projeto.membros;
+                    track membro.id
+                  ) {
+                    <div class="membro">
+                      <div class="dados-membro">
+                        <strong>
+                          {{ membro.contato.nome }}
+                        </strong>
+
+                        <span>{{ membro.papel }}</span>
+
+                        @if (!membro.ativo) {
+                          <small>Inativo</small>
+                        }
+                      </div>
+
+                      <div class="acoes-membro">
+                        <button
+                          type="button"
+                          class="botao secundario"
+                          (click)="
+                            editarMembro(projeto.id, membro)
+                          "
+                        >
+                          Editar
+                        </button>
+
+                        <button
+                          type="button"
+                          class="botao excluir"
+                          [disabled]="
+                            excluindoMembroId() === membro.id
+                          "
+                          (click)="removerMembro(membro)"
+                        >
+                          @if (
+                            excluindoMembroId() === membro.id
+                          ) {
+                            Removendo...
+                          } @else {
+                            Remover
+                          }
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+
+              @if (projetoMembroId() === projeto.id) {
+                <form
+                  class="formulario-membro"
+                  [formGroup]="formularioMembro"
+                  (ngSubmit)="salvarMembro(projeto.id)"
+                >
+                  <h4>
+                    @if (membroEditandoId()) {
+                      Editar vínculo
+                    } @else {
+                      Adicionar contato
+                    }
+                  </h4>
+
+                  <div class="campos-membro">
+                    <label>
+                      <span>Contato</span>
+
+                      <select formControlName="contato_id">
+                        <option value="">
+                          Selecione um contato
+                        </option>
+
+                        @for (
+                          contato of dadosContatos.contatos();
+                          track contato.id
+                        ) {
+                          <option [value]="contato.id">
+                            {{ contato.nome }}
+                          </option>
+                        }
+                      </select>
+                    </label>
+
+                    <label>
+                      <span>Papel</span>
+
+                      <input
+                        type="text"
+                        formControlName="papel"
+                        placeholder="Ex.: vocalista, produtor, empresário"
+                      />
+                    </label>
+
+                    <label class="campo-ativo">
+                      <input
+                        type="checkbox"
+                        formControlName="ativo"
+                      />
+
+                      <span>Vínculo ativo</span>
+                    </label>
+                  </div>
+
+                  <div class="acoes">
+                    <button
+                      type="button"
+                      class="botao secundario"
+                      [disabled]="salvandoMembro()"
+                      (click)="fecharFormularioMembro()"
+                    >
+                      Cancelar
+                    </button>
+
+                    <button
+                      type="submit"
+                      class="botao primario"
+                      [disabled]="salvandoMembro()"
+                    >
+                      @if (salvandoMembro()) {
+                        Salvando...
+                      } @else if (membroEditandoId()) {
+                        Salvar vínculo
+                      } @else {
+                        Adicionar
+                      }
+                    </button>
+                  </div>
+                </form>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </section>
+</main>

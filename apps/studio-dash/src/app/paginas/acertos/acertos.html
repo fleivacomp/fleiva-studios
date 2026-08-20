@@ -1,0 +1,726 @@
+<main class="pagina">
+  <header class="cabecalho">
+    <div>
+      <p class="secao">DINHEIRO</p>
+      <h1>Acertos</h1>
+      <p>
+        Veja o que entrou, o que falta e faça as contas do seu
+        jeito.
+      </p>
+    </div>
+  </header>
+
+  <section class="resumos">
+    <article class="resumo resumo-receber">
+      <span>Falta receber</span>
+      <strong>
+        {{
+          formatarMoeda(
+            dadosAcertos.totalAReceber()
+          )
+        }}
+      </strong>
+    </article>
+
+    <article class="resumo resumo-recebido">
+      <span>Já entrou</span>
+      <strong>
+        {{
+          formatarMoeda(
+            dadosAcertos.totalRecebido()
+          )
+        }}
+      </strong>
+    </article>
+
+    <article class="resumo resumo-credito">
+      <span>Crédito de clientes</span>
+      <strong>
+        {{
+          formatarMoeda(
+            dadosAcertos.totalEmCredito()
+          )
+        }}
+      </strong>
+    </article>
+  </section>
+
+  @if (mensagemPagina()) {
+    <p class="mensagem-sucesso">
+      {{ mensagemPagina() }}
+    </p>
+  }
+
+  @if (erroPagina()) {
+    <p class="mensagem-erro">
+      {{ erroPagina() }}
+    </p>
+  }
+
+  <section class="grade-criacao">
+    <article class="painel">
+      <div class="titulo-painel">
+        <div>
+          <h2>Usar um agendamento</h2>
+          <p>
+            Serviços, quantidades e preços são preenchidos
+            automaticamente.
+          </p>
+        </div>
+      </div>
+
+      <form
+        [formGroup]="formularioAgendamento"
+        (ngSubmit)="gerarDoAgendamento()"
+      >
+        <label>
+          <span>Agendamento</span>
+
+          <select formControlName="agendamento_id">
+            <option value="">
+              Selecione um agendamento
+            </option>
+
+            @for (
+              agendamento of
+                dadosAgendamentos.agendamentos();
+              track agendamento.id
+            ) {
+              <option [value]="agendamento.id">
+                {{ resumirAgendamento(agendamento) }}
+                @if (
+                  agendamentoJaIncluido(
+                    agendamento.id
+                  )
+                ) {
+                  — já incluído
+                }
+              </option>
+            }
+          </select>
+
+          @if (
+            formularioAgendamento.controls
+              .agendamento_id.touched &&
+            formularioAgendamento.controls
+              .agendamento_id.invalid
+          ) {
+            <small>
+              Selecione o agendamento.
+            </small>
+          }
+        </label>
+
+        <button
+          type="submit"
+          class="botao-principal"
+          [disabled]="salvandoAgendamento()"
+        >
+          @if (salvandoAgendamento()) {
+            Gerando...
+          } @else {
+            Gerar acerto
+          }
+        </button>
+      </form>
+    </article>
+
+    <article class="painel">
+      <div class="titulo-painel">
+        <div>
+          <h2>Novo acerto livre</h2>
+          <p>
+            Para pacote, produção, desconto ou qualquer conta
+            fora da agenda.
+          </p>
+        </div>
+      </div>
+
+      <form
+        [formGroup]="formularioManual"
+        (ngSubmit)="criarManual()"
+      >
+        <div class="campos">
+          <label>
+            <span>Contato</span>
+
+            <select formControlName="contato_id">
+              <option value="">
+                Selecione o contato
+              </option>
+
+              @for (
+                contato of dadosContatos.contatos();
+                track contato.id
+              ) {
+                <option [value]="contato.id">
+                  {{ contato.nome }}
+                </option>
+              }
+            </select>
+          </label>
+
+          <label>
+            <span>O que está sendo acertado</span>
+
+            <input
+              type="text"
+              formControlName="descricao"
+              placeholder="Ex.: Produções de agosto"
+            />
+          </label>
+
+          <label>
+            <span>Quantidade</span>
+
+            <input
+              type="number"
+              formControlName="quantidade"
+              min="0.01"
+              step="0.01"
+            />
+          </label>
+
+          <label>
+            <span>Valor</span>
+
+            <input
+              type="number"
+              formControlName="valor_unitario"
+              step="0.01"
+            />
+
+            <small class="ajuda">
+              Use valor negativo para desconto.
+            </small>
+          </label>
+
+          <label>
+            <span>Data combinada</span>
+
+            <input
+              type="date"
+              formControlName="vencimento_em"
+            />
+          </label>
+
+          <label class="campo-largo">
+            <span>Observações</span>
+
+            <textarea
+              formControlName="observacoes"
+              rows="3"
+              placeholder="Opcional"
+            ></textarea>
+          </label>
+        </div>
+
+        <button
+          type="submit"
+          class="botao-principal"
+          [disabled]="salvandoManual()"
+        >
+          @if (salvandoManual()) {
+            Criando...
+          } @else {
+            Criar acerto
+          }
+        </button>
+      </form>
+    </article>
+  </section>
+
+  <section class="painel lista-painel">
+    <div class="titulo-painel">
+      <div>
+        <h2>Contas e acertos</h2>
+        <p>
+          Abra uma conta para ver itens e pagamentos.
+        </p>
+      </div>
+
+      <span class="contador">
+        {{ dadosAcertos.acertos().length }}
+      </span>
+    </div>
+
+    @if (carregandoPagina()) {
+      <p class="estado">Carregando acertos...</p>
+    } @else if (
+      dadosAcertos.erro() ||
+      dadosContatos.erro() ||
+      dadosAgendamentos.erro()
+    ) {
+      <div class="estado estado-erro">
+        <p>
+          {{
+            dadosAcertos.erro() ||
+              dadosContatos.erro() ||
+              dadosAgendamentos.erro()
+          }}
+        </p>
+
+        <button
+          type="button"
+          class="botao-secundario"
+          (click)="carregarDados()"
+        >
+          Tentar novamente
+        </button>
+      </div>
+    } @else if (
+      dadosAcertos.acertos().length === 0
+    ) {
+      <p class="estado">
+        Nenhum acerto criado ainda.
+      </p>
+    } @else {
+      <div class="lista-acertos">
+        @for (
+          acerto of dadosAcertos.acertos();
+          track acerto.id
+        ) {
+          <article
+  class="acerto"
+  [id]="'acerto-' + acerto.id"
+>
+            <button
+              type="button"
+              class="cabecalho-acerto"
+              [attr.aria-expanded]="
+                acertoAbertoId() === acerto.id
+              "
+              (click)="alternarDetalhes(acerto.id)"
+            >
+              <div class="identificacao-acerto">
+                <strong>
+                  {{ acerto.contato.nome }}
+                </strong>
+
+                <span>
+                  Criado em
+                  {{ formatarData(acerto.criado_em) }}
+                </span>
+              </div>
+
+              <div class="valores-acerto">
+                <div>
+                  <span>Total</span>
+                  <strong>
+                    {{
+                      formatarMoeda(
+                        acerto.valor_total
+                      )
+                    }}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Pago</span>
+                  <strong>
+                    {{
+                      formatarMoeda(
+                        acerto.valor_pago
+                      )
+                    }}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>Falta</span>
+                  <strong>
+                    {{
+  formatarMoeda(
+    valorFaltante(acerto)
+  )
+}}
+                  </strong>
+                </div>
+              </div>
+
+              <span
+                class="situacao"
+                [class.situacao-ok]="
+                  acerto.saldo === 0
+                "
+                [class.situacao-parcial]="
+                  acerto.saldo > 0 &&
+                  acerto.valor_pago > 0
+                "
+                [class.situacao-credito]="
+                  acerto.saldo < 0
+                "
+              >
+                {{ rotuloSituacao(acerto) }}
+              </span>
+            </button>
+
+            @if (
+              acertoAbertoId() === acerto.id
+            ) {
+              <div class="detalhes-acerto">
+                <div class="informacoes-acerto">
+                  <span>
+                    Data combinada:
+                    <strong>
+                      {{
+                        formatarDataOpcional(
+                          acerto.vencimento_em
+                        )
+                      }}
+                    </strong>
+                  </span>
+
+                  @if (acerto.observacoes) {
+                    <p>{{ acerto.observacoes }}</p>
+                  }
+                </div>
+
+                <section class="bloco-detalhes">
+                  <div class="cabecalho-bloco">
+                    <div>
+                      <h3>O que entrou na conta</h3>
+                      <p>
+                        Serviços, pacotes, extras e descontos.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      class="botao-secundario"
+                      (click)="abrirNovoItem(acerto.id)"
+                    >
+                      Adicionar item
+                    </button>
+                  </div>
+
+                  @if (acerto.itens.length === 0) {
+                    <p class="sem-registros">
+                      Nenhum item adicionado.
+                    </p>
+                  } @else {
+                    <div class="lista-detalhes">
+                      @for (
+                        item of acerto.itens;
+                        track item.id
+                      ) {
+                        <article class="linha-detalhe">
+                          <div>
+                            <strong>
+                              {{ item.descricao }}
+                            </strong>
+
+                            <span>
+                              {{
+                                formatarQuantidade(
+                                  item.quantidade
+                                )
+                              }}
+                              ×
+                              {{
+                                formatarMoeda(
+                                  item.valor_unitario
+                                )
+                              }}
+                            </span>
+                          </div>
+
+                          <strong>
+                            {{
+                              formatarMoeda(
+                                item.quantidade *
+                                  item.valor_unitario
+                              )
+                            }}
+                          </strong>
+
+                          <button
+                            type="button"
+                            class="botao-remover"
+                            [disabled]="
+                              excluindoItemId() === item.id
+                            "
+                            (click)="excluirItem(item.id)"
+                          >
+                            @if (
+                              excluindoItemId() === item.id
+                            ) {
+                              Removendo...
+                            } @else {
+                              Remover
+                            }
+                          </button>
+                        </article>
+                      }
+                    </div>
+                  }
+
+                  @if (
+                    acertoItemId() === acerto.id
+                  ) {
+                    <form
+                      class="formulario-interno"
+                      [formGroup]="formularioItem"
+                      (ngSubmit)="adicionarItem(acerto.id)"
+                    >
+                      <div class="campos campos-internos">
+                        <label>
+                          <span>Descrição</span>
+
+                          <input
+                            type="text"
+                            formControlName="descricao"
+                            placeholder="Ex.: Desconto do pacote"
+                          />
+                        </label>
+
+                        <label>
+                          <span>Quantidade</span>
+
+                          <input
+                            type="number"
+                            formControlName="quantidade"
+                            min="0.01"
+                            step="0.01"
+                          />
+                        </label>
+
+                        <label>
+                          <span>Valor unitário</span>
+
+                          <input
+                            type="number"
+                            formControlName="valor_unitario"
+                            step="0.01"
+                          />
+                        </label>
+                      </div>
+
+                      <div class="acoes-formulario">
+                        <button
+                          type="button"
+                          class="botao-secundario"
+                          (click)="fecharFormularios()"
+                        >
+                          Cancelar
+                        </button>
+
+                        <button
+                          type="submit"
+                          class="botao-principal"
+                          [disabled]="salvandoItem()"
+                        >
+                          @if (salvandoItem()) {
+                            Adicionando...
+                          } @else {
+                            Adicionar
+                          }
+                        </button>
+                      </div>
+                    </form>
+                  }
+                </section>
+
+                <section class="bloco-detalhes">
+                  <div class="cabecalho-bloco">
+                    <div>
+                      <h3>Pagamentos</h3>
+                      <p>
+                        Pode registrar sinal, parte ou valor
+                        completo.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      class="botao-receber"
+                      (click)="abrirPagamento(acerto)"
+                    >
+                      Registrar pagamento
+                    </button>
+                  </div>
+
+                  @if (
+                    acerto.pagamentos.length === 0
+                  ) {
+                    <p class="sem-registros">
+                      Nenhum pagamento registrado.
+                    </p>
+                  } @else {
+                    <div class="lista-detalhes">
+                      @for (
+                        pagamento of acerto.pagamentos;
+                        track pagamento.id
+                      ) {
+                        <article class="linha-detalhe">
+                          <div>
+                            <strong>
+                              {{
+                                pagamento.pagador?.nome ??
+                                  acerto.contato.nome
+                              }}
+                            </strong>
+
+                            <span>
+                              {{
+                                formatarData(
+                                  pagamento.pago_em
+                                )
+                              }}
+
+                              @if (
+                                pagamento.forma_pagamento
+                              ) {
+                                ·
+                                {{
+                                  pagamento.forma_pagamento
+                                }}
+                              }
+                            </span>
+                          </div>
+
+                          <strong class="valor-recebido">
+                            {{
+                              formatarMoeda(
+                                pagamento.valor
+                              )
+                            }}
+                          </strong>
+
+                          <button
+                            type="button"
+                            class="botao-remover"
+                            [disabled]="
+                              excluindoPagamentoId() ===
+                              pagamento.id
+                            "
+                            (click)="
+                              excluirPagamento(
+                                pagamento.id
+                              )
+                            "
+                          >
+                            @if (
+                              excluindoPagamentoId() ===
+                              pagamento.id
+                            ) {
+                              Removendo...
+                            } @else {
+                              Remover
+                            }
+                          </button>
+                        </article>
+                      }
+                    </div>
+                  }
+
+                  @if (
+                    acertoPagamentoId() === acerto.id
+                  ) {
+                    <form
+                      class="formulario-interno"
+                      [formGroup]="formularioPagamento"
+                      (ngSubmit)="
+                        registrarPagamento(acerto.id)
+                      "
+                    >
+                      <div class="campos campos-internos">
+                        <label>
+                          <span>Valor recebido</span>
+
+                          <input
+                            type="number"
+                            formControlName="valor"
+                            min="0.01"
+                            step="0.01"
+                          />
+                        </label>
+
+                        <label>
+                          <span>Quem pagou</span>
+
+                          <select
+                            formControlName="pagador_contato_id"
+                          >
+                            <option value="">
+                              Mesmo contato do acerto
+                            </option>
+
+                            @for (
+                              contato of
+                                dadosContatos.contatos();
+                              track contato.id
+                            ) {
+                              <option [value]="contato.id">
+                                {{ contato.nome }}
+                              </option>
+                            }
+                          </select>
+                        </label>
+
+                        <label>
+                          <span>Como pagou</span>
+
+                          <input
+                            type="text"
+                            formControlName="forma_pagamento"
+                            placeholder="Pix, dinheiro, cartão..."
+                          />
+                        </label>
+
+                        <label>
+                          <span>Quando pagou</span>
+
+                          <input
+                            type="datetime-local"
+                            formControlName="pago_em"
+                          />
+                        </label>
+
+                        <label class="campo-largo">
+                          <span>Observações</span>
+
+                          <textarea
+                            formControlName="observacoes"
+                            rows="2"
+                            placeholder="Opcional"
+                          ></textarea>
+                        </label>
+                      </div>
+
+                      <div class="acoes-formulario">
+                        <button
+                          type="button"
+                          class="botao-secundario"
+                          (click)="fecharFormularios()"
+                        >
+                          Cancelar
+                        </button>
+
+                        <button
+                          type="submit"
+                          class="botao-receber"
+                          [disabled]="
+                            salvandoPagamento()
+                          "
+                        >
+                          @if (
+                            salvandoPagamento()
+                          ) {
+                            Registrando...
+                          } @else {
+                            Confirmar pagamento
+                          }
+                        </button>
+                      </div>
+                    </form>
+                  }
+                </section>
+              </div>
+            }
+          </article>
+        }
+      </div>
+    }
+  </section>
+</main>
