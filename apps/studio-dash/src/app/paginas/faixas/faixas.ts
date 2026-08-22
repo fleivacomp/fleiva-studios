@@ -1,6 +1,12 @@
+
+
+
 import {
   Component,
+  ElementRef,
   OnInit,
+  ViewChild,
+  computed,
   inject,
   signal,
 } from '@angular/core';
@@ -38,6 +44,9 @@ export class Faixas implements OnInit {
   private readonly construtorFormulario =
     inject(FormBuilder);
 
+  @ViewChild('reprodutor')
+  private reprodutor?: ElementRef<HTMLAudioElement>;
+
   readonly salvando = signal(false);
   readonly excluindoId = signal<string | null>(null);
   readonly faixaEditandoId = signal<string | null>(null);
@@ -46,9 +55,72 @@ export class Faixas implements OnInit {
   readonly baixandoVersaoId = signal<string | null>(null);
   readonly erroFormulario = signal<string | null>(null);
   readonly erroUpload = signal<string | null>(null);
-  readonly processandoLinkVersaoId = signal<string | null>(null)
+  readonly processandoLinkVersaoId = signal<string | null>(null);
   readonly mensagemCompartilhamento = signal<string | null>(null);
   readonly erroCompartilhamento = signal<string | null>(null);
+  readonly termoBusca = signal('');
+  readonly faixaSelecionadaId = signal<string | null>(null);
+  readonly editorAberto = signal(false);
+  readonly versaoReproduzindo = signal<VersaoFaixa | null>(null);
+  readonly urlReproducao = signal<string | null>(null);
+  readonly carregandoReproducaoId = signal<string | null>(null);
+  readonly erroReproducao = signal<string | null>(null);
+  readonly audioTocando = signal(false);
+  readonly tempoAtualAudio = signal(0);
+  readonly duracaoAudio = signal(0);
+  readonly volumeAudio = signal(1);
+
+  readonly faixasVisiveis = computed(() => {
+    const termo = this.termoBusca().trim().toLocaleLowerCase('pt-BR');
+
+    if (!termo) {
+      return this.dadosFaixas.faixas();
+    }
+
+    return this.dadosFaixas.faixas().filter((faixa) =>
+      [
+        faixa.titulo,
+        faixa.projeto.nome,
+        faixa.status_producao,
+        faixa.tom ?? '',
+      ].some((valor) =>
+        valor.toLocaleLowerCase('pt-BR').includes(termo),
+      ),
+    );
+  });
+
+  readonly faixaSelecionada = computed(() => {
+    const faixas = this.faixasVisiveis();
+    const faixaId = this.faixaSelecionadaId();
+
+    return (
+      faixas.find((faixa) => faixa.id === faixaId) ??
+      faixas[0] ??
+      null
+    );
+  });
+
+  readonly versoesSelecionadas = computed(() => {
+    const faixa = this.faixaSelecionada();
+
+    return faixa
+      ? this.dadosVersoes.versoesDaFaixa(faixa.id)
+      : [];
+  });
+
+  readonly versaoAtualSelecionada = computed(
+    () => this.versoesSelecionadas()[0] ?? null,
+  );
+
+  readonly faixaReproduzindo = computed(() => {
+    const versao = this.versaoReproduzindo();
+
+    return versao
+      ? this.dadosFaixas.faixas().find(
+          (faixa) => faixa.id === versao.faixa_id,
+        ) ?? null
+      : null;
+  });
   readonly opcoesStatus: readonly OpcaoStatus[] = [
     {
       valor: 'composicao',
@@ -139,6 +211,33 @@ export class Faixas implements OnInit {
     ]);
   }
 
+  atualizarBusca(evento: Event): void {
+    const input = evento.target as HTMLInputElement;
+
+    this.termoBusca.set(input.value);
+  }
+
+  selecionarFaixa(faixaId: string): void {
+    this.faixaSelecionadaId.set(faixaId);
+    this.erroUpload.set(null);
+    this.erroFormulario.set(null);
+    this.limparRetornoCompartilhamento();
+  }
+
+  abrirNovaFaixa(): void {
+    this.limparFormulario();
+    this.editorAberto.set(true);
+  }
+
+  fecharEditor(): void {
+    if (this.salvando()) {
+      return;
+    }
+
+    this.limparFormulario();
+    this.editorAberto.set(false);
+  }
+
   async salvar(): Promise<void> {
     if (this.formulario.invalid) {
       this.formulario.markAllAsTouched();
@@ -167,16 +266,23 @@ export class Faixas implements OnInit {
 
       const faixaId = this.faixaEditandoId();
 
+      let faixaSalvaId = faixaId;
+
       if (faixaId) {
         await this.dadosFaixas.atualizar(
           faixaId,
           dados,
         );
       } else {
-        await this.dadosFaixas.cadastrar(dados);
+        const faixaCriada =
+          await this.dadosFaixas.cadastrar(dados);
+
+        faixaSalvaId = faixaCriada.id;
       }
 
+      this.faixaSelecionadaId.set(faixaSalvaId);
       this.limparFormulario();
+      this.editorAberto.set(false);
     } catch (erro) {
       this.erroFormulario.set(
         this.obterMensagemErro(erro),
@@ -188,6 +294,8 @@ export class Faixas implements OnInit {
 
   editar(faixa: FaixaCompleta): void {
     this.faixaEditandoId.set(faixa.id);
+    this.faixaSelecionadaId.set(faixa.id);
+    this.editorAberto.set(true);
     this.erroFormulario.set(null);
 
     this.formulario.setValue({
@@ -200,14 +308,10 @@ export class Faixas implements OnInit {
       observacoes: faixa.observacoes,
     });
 
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    });
   }
 
   cancelarEdicao(): void {
-    this.limparFormulario();
+    this.fecharEditor();
   }
 
   async excluir(faixa: FaixaCompleta): Promise<void> {
@@ -232,6 +336,10 @@ export class Faixas implements OnInit {
 
     try {
       await this.dadosFaixas.excluir(faixa.id);
+
+      if (this.faixaSelecionadaId() === faixa.id) {
+        this.faixaSelecionadaId.set(null);
+      }
 
       if (this.faixaEditandoId() === faixa.id) {
         this.limparFormulario();
@@ -360,7 +468,180 @@ export class Faixas implements OnInit {
       this.baixandoVersaoId.set(null);
     }
   }
-    async copiarLink(
+
+  async reproduzirVersao(
+    versao: VersaoFaixa,
+  ): Promise<void> {
+    if (
+      this.carregandoReproducaoId() ||
+      !this.podeReproduzir(versao)
+    ) {
+      return;
+    }
+
+    if (
+      this.versaoReproduzindo()?.id === versao.id &&
+      this.urlReproducao()
+    ) {
+      await this.alternarReproducao();
+      return;
+    }
+
+    this.carregandoReproducaoId.set(versao.id);
+    this.erroReproducao.set(null);
+
+    try {
+      const arquivo =
+        await this.dadosVersoes.obterReproducao(
+          versao.id,
+        );
+
+      this.versaoReproduzindo.set(versao);
+      this.urlReproducao.set(arquivo.url);
+
+      window.setTimeout(() => {
+        void this.tentarIniciarReproducao();
+      });
+    } catch (erro) {
+      this.erroReproducao.set(
+        this.obterMensagemErro(erro),
+      );
+    } finally {
+      this.carregandoReproducaoId.set(null);
+    }
+  }
+
+  fecharReprodutor(): void {
+    const audio = this.reprodutor?.nativeElement;
+
+    if (audio) {
+      audio.pause();
+      audio.removeAttribute('src');
+      audio.load();
+    }
+
+    this.versaoReproduzindo.set(null);
+    this.urlReproducao.set(null);
+    this.erroReproducao.set(null);
+    this.audioTocando.set(false);
+    this.tempoAtualAudio.set(0);
+    this.duracaoAudio.set(0);
+  }
+
+  registrarErroReproducao(): void {
+    this.audioTocando.set(false);
+    this.erroReproducao.set(
+      'Não foi possível reproduzir este formato no navegador.',
+    );
+  }
+
+  async alternarReproducao(): Promise<void> {
+    const audio = this.reprodutor?.nativeElement;
+
+    if (!audio) {
+      return;
+    }
+
+    if (audio.paused) {
+      try {
+        await audio.play();
+      } catch {
+        this.audioTocando.set(false);
+      }
+    } else {
+      audio.pause();
+    }
+  }
+
+  atualizarEstadoReproducao(tocando: boolean): void {
+    this.audioTocando.set(tocando);
+  }
+
+  atualizarDadosReproducao(evento: Event): void {
+    const audio = evento.target as HTMLAudioElement;
+
+    this.tempoAtualAudio.set(
+      Number.isFinite(audio.currentTime)
+        ? audio.currentTime
+        : 0,
+    );
+
+    this.duracaoAudio.set(
+      Number.isFinite(audio.duration)
+        ? audio.duration
+        : 0,
+    );
+  }
+
+  buscarNaFaixa(evento: Event): void {
+    const input = evento.target as HTMLInputElement;
+    const audio = this.reprodutor?.nativeElement;
+
+    if (!audio) {
+      return;
+    }
+
+    const tempo = Number(input.value);
+
+    if (Number.isFinite(tempo)) {
+      audio.currentTime = tempo;
+      this.tempoAtualAudio.set(tempo);
+    }
+  }
+
+  alterarVolume(evento: Event): void {
+    const input = evento.target as HTMLInputElement;
+    const audio = this.reprodutor?.nativeElement;
+    const volume = Number(input.value);
+
+    if (!audio || !Number.isFinite(volume)) {
+      return;
+    }
+
+    audio.volume = volume;
+    this.volumeAudio.set(volume);
+  }
+
+  formatarTempoAudio(segundos: number): string {
+    if (!Number.isFinite(segundos) || segundos < 0) {
+      return '0:00';
+    }
+
+    const minutosInteiros = Math.floor(segundos / 60);
+    const segundosInteiros = Math.floor(segundos % 60);
+
+    return `${minutosInteiros}:${String(segundosInteiros).padStart(2, '0')}`;
+  }
+
+  podeReproduzir(versao: VersaoFaixa): boolean {
+    if (versao.tipo_mime?.startsWith('audio/')) {
+      return true;
+    }
+
+    return /\.(aac|flac|m4a|mp3|ogg|wav)$/i.test(
+      versao.nome_arquivo,
+    );
+  }
+
+  iniciaisFaixa(faixa: FaixaCompleta): string {
+    return faixa.titulo
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((parte) => parte.charAt(0))
+      .join('')
+      .toLocaleUpperCase('pt-BR');
+  }
+
+  private async tentarIniciarReproducao(): Promise<void> {
+    try {
+      await this.reprodutor?.nativeElement.play();
+    } catch {
+      // O controle nativo permanece disponível quando autoplay é bloqueado.
+    }
+  }
+
+  async copiarLink(
     versao: VersaoFaixa,
   ): Promise<void> {
     if (this.processandoLinkVersaoId()) {
@@ -583,6 +864,7 @@ export class Faixas implements OnInit {
 
   private limparFormulario(): void {
     this.faixaEditandoId.set(null);
+    this.erroFormulario.set(null);
 
     this.formulario.reset({
       projeto_id: '',

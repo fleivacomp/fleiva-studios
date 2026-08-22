@@ -1,672 +1,963 @@
-<main class="pagina">
-  <header class="cabecalho">
-    <div>
-      <p class="secao">CATÁLOGO</p>
+<main
+  class="pagina-media"
+  [class.com-reprodutor]="urlReproducao() !== null"
+>
+  <header class="barra-superior">
+    <div class="titulo-pagina">
+      <p>Biblioteca</p>
       <h1>Faixas</h1>
-      <p>
-        Organize as faixas dos projetos artísticos do estúdio.
-      </p>
+    </div>
+
+    <div class="acoes-superiores">
+      @if (!dadosVersoes.carregando() && !dadosVersoes.erro()) {
+        <div class="armazenamento">
+          <span>Armazenamento</span>
+          <strong>
+            {{ formatarBytes(dadosVersoes.usoBytes()) }}
+            <small>/ {{ formatarBytes(dadosVersoes.limiteBytes()) }}</small>
+          </strong>
+
+          <div
+            class="barra-armazenamento"
+            role="progressbar"
+            aria-label="Uso do armazenamento"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            [attr.aria-valuenow]="percentualUso()"
+          >
+            <span [style.width.%]="percentualUso()"></span>
+          </div>
+        </div>
+      }
+
+      <button
+        type="button"
+        class="botao-destaque"
+        (click)="abrirNovaFaixa()"
+      >
+        <span aria-hidden="true">+</span>
+        Nova faixa
+      </button>
     </div>
   </header>
 
-  <section class="painel armazenamento-painel">
-    <div class="titulo-painel">
-      <h2>Armazenamento</h2>
+  @if (dadosVersoes.erro()) {
+    <div class="aviso-pagina aviso-erro">
+      <p>{{ dadosVersoes.erro() }}</p>
+      <button type="button" (click)="dadosVersoes.listar()">
+        Tentar novamente
+      </button>
     </div>
+  }
 
-    @if (dadosVersoes.carregando()) {
-      <p class="estado-menor">
-        Carregando armazenamento...
-      </p>
-    } @else if (dadosVersoes.erro()) {
-      <div class="erro-armazenamento">
-        <p>{{ dadosVersoes.erro() }}</p>
+  @if (erroUpload() && faixaUploadId() === null) {
+    <p class="aviso-pagina aviso-erro">{{ erroUpload() }}</p>
+  }
 
-        <button
-          type="button"
-          class="botao-secundario"
-          (click)="dadosVersoes.listar()"
-        >
-          Tentar novamente
-        </button>
-      </div>
-    } @else {
-      <div class="resumo-armazenamento">
+  @if (erroFormulario() && !editorAberto()) {
+    <p class="aviso-pagina aviso-erro">{{ erroFormulario() }}</p>
+  }
+
+  @if (mensagemCompartilhamento()) {
+    <p class="aviso-pagina aviso-sucesso">
+      {{ mensagemCompartilhamento() }}
+    </p>
+  }
+
+  @if (erroCompartilhamento()) {
+    <p class="aviso-pagina aviso-erro">
+      {{ erroCompartilhamento() }}
+    </p>
+  }
+
+  @if (erroReproducao()) {
+    <p class="aviso-pagina aviso-erro">
+      {{ erroReproducao() }}
+    </p>
+  }
+
+  <section class="explorer">
+    <aside class="biblioteca-faixas">
+      <header class="cabecalho-biblioteca">
         <div>
-          <strong>
-            {{ formatarBytes(dadosVersoes.usoBytes()) }}
-          </strong>
+          <h2>Seu catálogo</h2>
+          <span>{{ dadosFaixas.faixas().length }}</span>
+        </div>
 
-          <span>
-            de
-            {{ formatarBytes(dadosVersoes.limiteBytes()) }}
+        <label class="busca">
+          <span class="icone-busca" aria-hidden="true">⌕</span>
+          <span class="sr-only">Buscar faixas</span>
+          <input
+            type="search"
+            placeholder="Buscar título, projeto ou status"
+            [value]="termoBusca()"
+            (input)="atualizarBusca($event)"
+          />
+        </label>
+      </header>
+
+      <div class="rotulos-lista" aria-hidden="true">
+        <span>Faixa</span>
+        <span>Etapa</span>
+      </div>
+
+      @if (dadosFaixas.carregando()) {
+        <div class="estado-lista">
+          <span class="carregador"></span>
+          <p>Carregando catálogo...</p>
+        </div>
+      } @else if (dadosFaixas.erro()) {
+        <div class="estado-lista estado-erro">
+          <p>{{ dadosFaixas.erro() }}</p>
+          <button type="button" (click)="carregarDados()">
+            Tentar novamente
+          </button>
+        </div>
+      } @else if (faixasVisiveis().length === 0) {
+        <div class="estado-lista">
+          @if (termoBusca()) {
+            <strong>Nenhuma faixa encontrada.</strong>
+            <p>Tente buscar por outro título, projeto ou status.</p>
+          } @else {
+            <strong>Seu catálogo está vazio.</strong>
+            <p>Cadastre a primeira faixa para começar.</p>
+          }
+        </div>
+      } @else {
+        <div class="lista-faixas" role="listbox" aria-label="Faixas">
+          @for (
+            faixa of faixasVisiveis();
+            track faixa.id;
+            let indice = $index
+          ) {
+            @let versoes = versoesDaFaixa(faixa.id);
+
+            <button
+              type="button"
+              class="linha-faixa"
+              role="option"
+              [class.selecionada]="faixaSelecionada()?.id === faixa.id"
+              [attr.aria-selected]="faixaSelecionada()?.id === faixa.id"
+              (click)="selecionarFaixa(faixa.id)"
+            >
+              <span
+                class="mini-capa"
+                [class.com-imagem]="faixa.projeto.capa_caminho !== null"
+                [class.sem-imagem]="faixa.projeto.capa_caminho === null"
+                [attr.data-ordem]="indice % 4"
+              >
+                @if (
+                  dadosFaixas.capaUrl(faixa.projeto);
+                  as capaUrl
+                ) {
+                  <img
+                    [src]="capaUrl"
+                    [alt]="'Capa de ' + faixa.projeto.nome"
+                  />
+                } @else {
+                  <span>{{ iniciaisFaixa(faixa) }}</span>
+                }
+
+                @if (versoes[0] && podeReproduzir(versoes[0])) {
+                  <span class="sinal-audio" aria-hidden="true">▶</span>
+                }
+              </span>
+
+              <span class="identidade-linha">
+                <strong>{{ faixa.titulo }}</strong>
+                <span>{{ faixa.projeto.nome }}</span>
+
+                @if (versoes[0]; as versaoAtual) {
+                  <small>{{ versaoAtual.versao }}</small>
+                } @else {
+                  <small>Sem arquivo</small>
+                }
+              </span>
+
+              <span class="etapa-linha">
+                {{ rotuloStatus(faixa.status_producao) }}
+              </span>
+            </button>
+          }
+        </div>
+      }
+    </aside>
+
+    <section class="painel-faixa">
+      @if (faixaSelecionada(); as faixa) {
+        @let versoes = versoesSelecionadas();
+        @let versaoAtual = versaoAtualSelecionada();
+
+        <header class="hero-faixa">
+          <div
+            class="capa-principal"
+            [class.com-imagem]="faixa.projeto.capa_caminho !== null"
+          >
+            @if (
+              dadosFaixas.capaUrl(faixa.projeto);
+              as capaUrl
+            ) {
+              <img
+                [src]="capaUrl"
+                [alt]="'Capa de ' + faixa.projeto.nome"
+              />
+            } @else {
+              <span>{{ iniciaisFaixa(faixa) }}</span>
+              <small>{{ faixa.projeto.nome }}</small>
+            }
+          </div>
+
+          <div class="informacoes-hero">
+            <p>Faixa</p>
+            <h2>{{ faixa.titulo }}</h2>
+            <span class="projeto-hero">{{ faixa.projeto.nome }}</span>
+
+            <div class="metadados-hero">
+              <strong>{{ rotuloStatus(faixa.status_producao) }}</strong>
+
+              @if (faixa.bpm !== null) {
+                <span>{{ faixa.bpm }} BPM</span>
+              }
+
+              @if (faixa.tom) {
+                <span>Tom {{ faixa.tom }}</span>
+              }
+
+              <span>
+                {{ versoes.length }}
+                @if (versoes.length === 1) {
+                  versão
+                } @else {
+                  versões
+                }
+              </span>
+            </div>
+          </div>
+        </header>
+
+        <div class="barra-acoes-faixa">
+          @if (versaoAtual && podeReproduzir(versaoAtual)) {
+            <button
+              type="button"
+              class="botao-reproduzir"
+              [disabled]="carregandoReproducaoId() !== null"
+              (click)="reproduzirVersao(versaoAtual)"
+              [attr.aria-label]="'Reproduzir ' + faixa.titulo"
+            >
+              @if (carregandoReproducaoId() === versaoAtual.id) {
+                <span class="carregador-claro"></span>
+              } @else {
+                <span aria-hidden="true">▶</span>
+              }
+            </button>
+          }
+
+          <button
+            type="button"
+            class="botao-destaque"
+            [disabled]="
+              enviandoFaixaId() !== null ||
+              dadosVersoes.carregando() ||
+              dadosVersoes.erro() !== null ||
+              dadosVersoes.espacoDisponivelBytes() <= 0
+            "
+            (click)="abrirUpload(faixa.id)"
+          >
+            @if (faixaUploadId() === faixa.id) {
+              Fechar envio
+            } @else {
+              Nova versão
+            }
+          </button>
+
+          <button
+            type="button"
+            class="botao-fantasma"
+            (click)="editar(faixa)"
+          >
+            Editar
+          </button>
+
+          <button
+            type="button"
+            class="botao-fantasma botao-perigo"
+            [disabled]="excluindoId() === faixa.id"
+            [title]="
+              temVersoes(faixa.id)
+                ? 'A faixa possui versões armazenadas'
+                : 'Excluir faixa'
+            "
+            (click)="excluir(faixa)"
+          >
+            @if (excluindoId() === faixa.id) {
+              Excluindo...
+            } @else {
+              Excluir
+            }
+          </button>
+        </div>
+
+        <div class="conteudo-faixa">
+          @if (faixaUploadId() === faixa.id) {
+            <section class="painel-upload">
+              <header>
+                <div>
+                  <p>Novo arquivo</p>
+                  <h3>Enviar versão</h3>
+                </div>
+
+                <span>
+                  {{ formatarBytes(dadosVersoes.espacoDisponivelBytes()) }}
+                  livres
+                </span>
+              </header>
+
+              <form
+                [formGroup]="formularioUpload"
+                (ngSubmit)="enviarVersao(faixa.id)"
+              >
+                <div class="campos-upload">
+                  <label>
+                    <span>Nome da versão</span>
+                    <input
+                      type="text"
+                      formControlName="versao"
+                      placeholder="Ex.: V1, mix 03, master final"
+                    />
+
+                    @if (
+                      formularioUpload.controls.versao.touched &&
+                      formularioUpload.controls.versao.invalid
+                    ) {
+                      <small>Informe a versão.</small>
+                    }
+                  </label>
+
+                  <label>
+                    <span>Arquivo</span>
+                    <input
+                      type="file"
+                      (change)="selecionarArquivo($event)"
+                    />
+
+                    @if (
+                      formularioUpload.controls.arquivo.touched &&
+                      formularioUpload.controls.arquivo.invalid
+                    ) {
+                      <small>Selecione o arquivo.</small>
+                    }
+                  </label>
+
+                  <label class="campo-largo">
+                    <span>Observações</span>
+                    <textarea
+                      formControlName="observacoes"
+                      rows="3"
+                      placeholder="Ex.: voz mais alta, versão para aprovação..."
+                    ></textarea>
+                  </label>
+                </div>
+
+                @if (formularioUpload.controls.arquivo.value; as arquivo) {
+                  <div class="arquivo-selecionado">
+                    <strong>{{ arquivo.name }}</strong>
+                    <span>{{ formatarBytes(arquivo.size) }}</span>
+                  </div>
+                }
+
+                @if (erroUpload()) {
+                  <p class="erro-formulario">{{ erroUpload() }}</p>
+                }
+
+                <div class="acoes-formulario">
+                  <button
+                    type="button"
+                    class="botao-secundario"
+                    [disabled]="enviandoFaixaId() === faixa.id"
+                    (click)="cancelarUpload()"
+                  >
+                    Cancelar
+                  </button>
+
+                  <button
+                    type="submit"
+                    class="botao-destaque"
+                    [disabled]="enviandoFaixaId() === faixa.id"
+                  >
+                    @if (enviandoFaixaId() === faixa.id) {
+                      Enviando...
+                    } @else {
+                      Enviar arquivo
+                    }
+                  </button>
+                </div>
+              </form>
+            </section>
+          }
+
+          <section class="secao-detalhe versao-atual">
+            <header>
+              <div>
+                <p>Em circulação</p>
+                <h3>Versão atual</h3>
+              </div>
+
+              @if (versaoAtual) {
+                <span class="selo-atual">Atual</span>
+              }
+            </header>
+
+            @if (versaoAtual) {
+              <article class="arquivo-destaque">
+                <button
+                  type="button"
+                  class="mini-reproduzir"
+                  [disabled]="
+                    !podeReproduzir(versaoAtual) ||
+                    carregandoReproducaoId() !== null
+                  "
+                  (click)="reproduzirVersao(versaoAtual)"
+                  [attr.aria-label]="'Reproduzir ' + versaoAtual.versao"
+                >
+                  @if (carregandoReproducaoId() === versaoAtual.id) {
+                    <span class="carregador"></span>
+                  } @else {
+                    ▶
+                  }
+                </button>
+
+                <div class="nome-arquivo">
+                  <strong>{{ versaoAtual.versao }}</strong>
+                  <span>{{ versaoAtual.nome_arquivo }}</span>
+                </div>
+
+                <div class="dados-arquivo">
+                  <span>{{ formatarBytes(versaoAtual.tamanho_bytes) }}</span>
+                  <time
+                    [attr.datetime]="
+                      versaoAtual.confirmado_em ?? versaoAtual.criado_em
+                    "
+                  >
+                    {{
+                      formatarData(
+                        versaoAtual.confirmado_em ?? versaoAtual.criado_em
+                      )
+                    }}
+                  </time>
+                </div>
+
+                <div class="acoes-arquivo">
+                  <button
+                    type="button"
+                    [disabled]="
+                      baixandoVersaoId() !== null ||
+                      processandoLinkVersaoId() !== null
+                    "
+                    (click)="baixarVersao(versaoAtual)"
+                  >
+                    @if (baixandoVersaoId() === versaoAtual.id) {
+                      Preparando...
+                    } @else {
+                      Baixar
+                    }
+                  </button>
+
+                  <button
+                    type="button"
+                    class="acao-whatsapp"
+                    [disabled]="
+                      baixandoVersaoId() !== null ||
+                      processandoLinkVersaoId() !== null
+                    "
+                    (click)="compartilharWhatsApp(faixa, versaoAtual)"
+                  >
+                    WhatsApp
+                  </button>
+
+                  <button
+                    type="button"
+                    [disabled]="
+                      baixandoVersaoId() !== null ||
+                      processandoLinkVersaoId() !== null
+                    "
+                    (click)="copiarLink(versaoAtual)"
+                  >
+                    Copiar link
+                  </button>
+
+                  @if (versaoAtual.token_compartilhamento) {
+                    <button
+                      type="button"
+                      class="botao-perigo"
+                      [disabled]="processandoLinkVersaoId() !== null"
+                      (click)="revogarLink(versaoAtual)"
+                    >
+                      Revogar
+                    </button>
+                  }
+                </div>
+              </article>
+
+              @if (versaoAtual.observacoes) {
+                <p class="observacoes-arquivo">
+                  {{ versaoAtual.observacoes }}
+                </p>
+              }
+            } @else {
+              <div class="vazio-detalhe">
+                <strong>Nenhum arquivo enviado.</strong>
+                <p>Envie uma versão para iniciar o histórico da faixa.</p>
+              </div>
+            }
+          </section>
+
+          <section class="secao-detalhe contexto-producao">
+            <header>
+              <div>
+                <p>Informações</p>
+                <h3>Contexto da produção</h3>
+              </div>
+            </header>
+
+            @if (faixa.observacoes) {
+              <p>{{ faixa.observacoes }}</p>
+            } @else {
+              <p class="texto-vazio">Sem observações registradas.</p>
+            }
+
+            @if (faixa.link_externo_audio) {
+              <a
+                [href]="faixa.link_externo_audio"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Abrir áudio externo
+              </a>
+            }
+          </section>
+
+          @if (versoes.length > 1) {
+            <section class="secao-detalhe historico">
+              <header>
+                <div>
+                  <p>Arquivos</p>
+                  <h3>Versões anteriores</h3>
+                </div>
+
+                <span>{{ versoes.length - 1 }}</span>
+              </header>
+
+              <div class="cabecalho-tabela" aria-hidden="true">
+                <span>Versão</span>
+                <span>Tamanho</span>
+                <span>Enviada em</span>
+                <span>Ações</span>
+              </div>
+
+              <div class="lista-versoes">
+                @for (
+                  versao of versoes;
+                  track versao.id;
+                  let primeira = $first
+                ) {
+                  @if (!primeira) {
+                    <article class="linha-versao">
+                      <div class="identidade-versao">
+                        <button
+                          type="button"
+                          class="mini-reproduzir"
+                          [disabled]="
+                            !podeReproduzir(versao) ||
+                            carregandoReproducaoId() !== null
+                          "
+                          (click)="reproduzirVersao(versao)"
+                          [attr.aria-label]="'Reproduzir ' + versao.versao"
+                        >
+                          @if (carregandoReproducaoId() === versao.id) {
+                            <span class="carregador"></span>
+                          } @else {
+                            ▶
+                          }
+                        </button>
+
+                        <span>
+                          <strong>{{ versao.versao }}</strong>
+                          <small>{{ versao.nome_arquivo }}</small>
+                        </span>
+                      </div>
+
+                      <span>{{ formatarBytes(versao.tamanho_bytes) }}</span>
+
+                      <time
+                        [attr.datetime]="versao.confirmado_em ?? versao.criado_em"
+                      >
+                        {{
+                          formatarData(
+                            versao.confirmado_em ?? versao.criado_em
+                          )
+                        }}
+                      </time>
+
+                      <div class="acoes-versao">
+                        <button
+                          type="button"
+                          [disabled]="
+                            baixandoVersaoId() !== null ||
+                            processandoLinkVersaoId() !== null
+                          "
+                          (click)="baixarVersao(versao)"
+                        >
+                          Baixar
+                        </button>
+
+                        <button
+                          type="button"
+                          class="acao-whatsapp"
+                          [disabled]="processandoLinkVersaoId() !== null"
+                          (click)="compartilharWhatsApp(faixa, versao)"
+                        >
+                          WhatsApp
+                        </button>
+
+                        <button
+                          type="button"
+                          [disabled]="processandoLinkVersaoId() !== null"
+                          (click)="copiarLink(versao)"
+                        >
+                          Link
+                        </button>
+
+                        @if (versao.token_compartilhamento) {
+                          <button
+                            type="button"
+                            class="botao-perigo"
+                            [disabled]="processandoLinkVersaoId() !== null"
+                            (click)="revogarLink(versao)"
+                          >
+                            Revogar
+                          </button>
+                        }
+                      </div>
+
+                      @if (versao.observacoes) {
+                        <p class="observacoes-versao">
+                          {{ versao.observacoes }}
+                        </p>
+                      }
+                    </article>
+                  }
+                }
+              </div>
+            </section>
+          }
+        </div>
+      } @else {
+        <div class="nenhuma-selecao">
+          <div class="icone-vazio" aria-hidden="true">♫</div>
+          <strong>Selecione uma faixa</strong>
+          <p>Os arquivos, versões e ações aparecerão aqui.</p>
+        </div>
+      }
+    </section>
+  </section>
+
+  @if (editorAberto()) {
+    <div class="camada-editor">
+      <button
+        type="button"
+        class="fundo-editor"
+        aria-label="Fechar editor"
+        (click)="fecharEditor()"
+      ></button>
+
+      <section
+        class="editor-faixa"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="titulo-editor-faixa"
+      >
+        <header>
+          <div>
+            <p>
+              @if (faixaEditandoId()) {
+                Editar catálogo
+              } @else {
+                Adicionar ao catálogo
+              }
+            </p>
+
+            <h2 id="titulo-editor-faixa">
+              @if (faixaEditandoId()) {
+                Editar faixa
+              } @else {
+                Nova faixa
+              }
+            </h2>
+          </div>
+
+          <button
+            type="button"
+            class="fechar-editor"
+            aria-label="Fechar editor"
+            [disabled]="salvando()"
+            (click)="fecharEditor()"
+          >
+            ×
+          </button>
+        </header>
+
+        <div class="corpo-editor">
+          @if (
+            !dadosFaixas.carregando() &&
+            dadosFaixas.projetos().length === 0
+          ) {
+            <div class="aviso-projeto">
+              <p>
+                Cadastre um projeto artístico antes de cadastrar uma faixa.
+              </p>
+              <a routerLink="/projetos">Ir para projetos</a>
+            </div>
+          }
+
+          <form [formGroup]="formulario" (ngSubmit)="salvar()">
+            <div class="campos-editor">
+              <label>
+                <span>Projeto artístico</span>
+                <select formControlName="projeto_id">
+                  <option value="">Selecione um projeto</option>
+
+                  @for (
+                    projeto of dadosFaixas.projetos();
+                    track projeto.id
+                  ) {
+                    <option [value]="projeto.id">
+                      {{ projeto.nome }}
+                    </option>
+                  }
+                </select>
+
+                @if (
+                  formulario.controls.projeto_id.touched &&
+                  formulario.controls.projeto_id.invalid
+                ) {
+                  <small>Selecione o projeto artístico.</small>
+                }
+              </label>
+
+              <label>
+                <span>Título</span>
+                <input
+                  type="text"
+                  formControlName="titulo"
+                  placeholder="Ex.: Noite em São Paulo"
+                />
+
+                @if (
+                  formulario.controls.titulo.touched &&
+                  formulario.controls.titulo.invalid
+                ) {
+                  <small>Informe o título da faixa.</small>
+                }
+              </label>
+
+              <label>
+                <span>Status de produção</span>
+                <select formControlName="status_producao">
+                  @for (opcao of opcoesStatus; track opcao.valor) {
+                    <option [value]="opcao.valor">
+                      {{ opcao.rotulo }}
+                    </option>
+                  }
+                </select>
+              </label>
+
+              <div class="campos-menores">
+                <label>
+                  <span>BPM</span>
+                  <input
+                    type="number"
+                    formControlName="bpm"
+                    placeholder="Opcional"
+                    step="1"
+                  />
+                </label>
+
+                <label>
+                  <span>Tom</span>
+                  <input
+                    type="text"
+                    formControlName="tom"
+                    placeholder="Opcional"
+                  />
+                </label>
+              </div>
+
+              <label>
+                <span>Link externo de áudio</span>
+                <input
+                  type="url"
+                  formControlName="link_externo_audio"
+                  placeholder="Drive, Dropbox, WeTransfer..."
+                />
+              </label>
+
+              <label>
+                <span>Observações</span>
+                <textarea
+                  formControlName="observacoes"
+                  rows="5"
+                  placeholder="Informações importantes sobre a produção"
+                ></textarea>
+              </label>
+            </div>
+
+            @if (erroFormulario()) {
+              <p class="erro-formulario">{{ erroFormulario() }}</p>
+            }
+
+            <div class="acoes-formulario">
+              <button
+                type="button"
+                class="botao-secundario"
+                [disabled]="salvando()"
+                (click)="fecharEditor()"
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="submit"
+                class="botao-destaque"
+                [disabled]="
+                  salvando() || dadosFaixas.projetos().length === 0
+                "
+              >
+                @if (salvando()) {
+                  Salvando...
+                } @else if (faixaEditandoId()) {
+                  Salvar alterações
+                } @else {
+                  Adicionar faixa
+                }
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </div>
+  }
+
+  @if (
+    urlReproducao();
+    as url
+  ) {
+    @if (versaoReproduzindo(); as versao) {
+      <footer class="reprodutor-global">
+        <div class="musica-reprodutor">
+          @if (faixaReproduzindo(); as faixa) {
+            <span
+              class="capa-reprodutor"
+              [class.com-imagem]="
+                faixa.projeto.capa_caminho !== null
+              "
+            >
+              @if (
+                dadosFaixas.capaUrl(faixa.projeto);
+                as capaUrl
+              ) {
+                <img
+                  [src]="capaUrl"
+                  [alt]="'Capa de ' + faixa.projeto.nome"
+                />
+              } @else {
+                {{ iniciaisFaixa(faixa) }}
+              }
+            </span>
+
+            <span>
+              <strong>{{ faixa.titulo }}</strong>
+              <small>
+                {{ faixa.projeto.nome }} · {{ versao.versao }}
+              </small>
+            </span>
+          }
+        </div>
+
+        <div class="controles-reprodutor">
+          <button
+            type="button"
+            class="alternar-reproducao"
+            [attr.aria-label]="
+              audioTocando() ? 'Pausar reprodução' : 'Iniciar reprodução'
+            "
+            (click)="alternarReproducao()"
+          >
+            @if (audioTocando()) {
+              <span aria-hidden="true">Ⅱ</span>
+            } @else {
+              <span aria-hidden="true">▶</span>
+            }
+          </button>
+
+          <span class="tempo-reprodutor">
+            {{ formatarTempoAudio(tempoAtualAudio()) }}
+          </span>
+
+          <label class="progresso-reprodutor">
+            <span class="sr-only">Posição da reprodução</span>
+            <input
+              type="range"
+              min="0"
+              [max]="duracaoAudio() || 0"
+              step="0.1"
+              [value]="tempoAtualAudio()"
+              (input)="buscarNaFaixa($event)"
+            />
+          </label>
+
+          <span class="tempo-reprodutor">
+            {{ formatarTempoAudio(duracaoAudio()) }}
           </span>
         </div>
 
-        <span>
-          {{ formatarBytes(
-            dadosVersoes.espacoDisponivelBytes()
-          ) }}
-          disponíveis
-        </span>
-      </div>
+        <div class="acoes-reprodutor">
+          <label class="volume-reprodutor">
+            <span aria-hidden="true">◖</span>
+            <span class="sr-only">Volume</span>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              [value]="volumeAudio()"
+              (input)="alterarVolume($event)"
+            />
+          </label>
 
-      <div
-        class="barra-armazenamento"
-        role="progressbar"
-        aria-label="Uso do armazenamento"
-        aria-valuemin="0"
-        aria-valuemax="100"
-        [attr.aria-valuenow]="percentualUso()"
-      >
-        <span
-          [style.width.%]="percentualUso()"
-        ></span>
-      </div>
-    }
-  </section>
-
-  <section class="painel formulario-painel">
-    <div class="titulo-painel">
-      <h2>
-        @if (faixaEditandoId()) {
-          Editar faixa
-        } @else {
-          Nova faixa
-        }
-      </h2>
-    </div>
-
-    @if (
-      !dadosFaixas.carregando() &&
-      dadosFaixas.projetos().length === 0
-    ) {
-      <div class="aviso">
-        <p>
-          Cadastre um projeto artístico antes de cadastrar uma
-          faixa.
-        </p>
-
-        <a routerLink="/projetos">Ir para projetos</a>
-      </div>
-    }
-
-    <form
-      [formGroup]="formulario"
-      (ngSubmit)="salvar()"
-    >
-      <div class="campos">
-        <label>
-          <span>Projeto artístico</span>
-
-          <select formControlName="projeto_id">
-            <option value="">
-              Selecione um projeto
-            </option>
-
-            @for (
-              projeto of dadosFaixas.projetos();
-              track projeto.id
-            ) {
-              <option [value]="projeto.id">
-                {{ projeto.nome }}
-              </option>
-            }
-          </select>
-
-          @if (
-            formulario.controls.projeto_id.touched &&
-            formulario.controls.projeto_id.invalid
-          ) {
-            <small>
-              Selecione o projeto artístico.
-            </small>
-          }
-        </label>
-
-        <label>
-          <span>Título</span>
-
-          <input
-            type="text"
-            formControlName="titulo"
-            placeholder="Ex.: Noite em São Paulo"
-          />
-
-          @if (
-            formulario.controls.titulo.touched &&
-            formulario.controls.titulo.invalid
-          ) {
-            <small>Informe o título da faixa.</small>
-          }
-        </label>
-
-        <label>
-          <span>BPM</span>
-
-          <input
-            type="number"
-            formControlName="bpm"
-            placeholder="Opcional"
-            step="1"
-          />
-        </label>
-
-        <label>
-          <span>Tom</span>
-
-          <input
-            type="text"
-            formControlName="tom"
-            placeholder="Opcional"
-          />
-        </label>
-
-        <label>
-          <span>Status de produção</span>
-
-          <select formControlName="status_producao">
-            @for (
-              opcao of opcoesStatus;
-              track opcao.valor
-            ) {
-              <option [value]="opcao.valor">
-                {{ opcao.rotulo }}
-              </option>
-            }
-          </select>
-        </label>
-
-        <label>
-          <span>Link externo de áudio</span>
-
-          <input
-            type="url"
-            formControlName="link_externo_audio"
-            placeholder="Google Drive, Dropbox, WeTransfer..."
-          />
-        </label>
-
-        <label class="campo-largo">
-          <span>Observações</span>
-
-          <textarea
-            formControlName="observacoes"
-            rows="4"
-            placeholder="Opcional"
-          ></textarea>
-        </label>
-      </div>
-
-      @if (erroFormulario()) {
-        <p class="erro-formulario">
-          {{ erroFormulario() }}
-        </p>
-      }
-
-      <div class="acoes-formulario">
-        @if (faixaEditandoId()) {
           <button
             type="button"
-            class="botao-secundario"
-            [disabled]="salvando()"
-            (click)="cancelarEdicao()"
+            class="fechar-reprodutor"
+            aria-label="Fechar reprodutor"
+            (click)="fecharReprodutor()"
           >
-            Cancelar
+            ×
           </button>
-        }
+        </div>
 
-        <button
-          type="submit"
-          class="botao-principal"
-          [disabled]="
-            salvando() ||
-            dadosFaixas.projetos().length === 0
-          "
-        >
-          @if (salvando()) {
-            Salvando...
-          } @else if (faixaEditandoId()) {
-            Salvar alterações
-          } @else {
-            Cadastrar faixa
-          }
-        </button>
-      </div>
-    </form>
-  </section>
-
-  <section class="painel">
-    <div class="titulo-painel">
-      <h2>Faixas cadastradas</h2>
-      <span>{{ dadosFaixas.faixas().length }}</span>
-    </div>
-@if (erroUpload() && faixaUploadId() === null) {
-  <p class="erro-formulario">
-    {{ erroUpload() }}
-  </p>
-}
-@if (mensagemCompartilhamento()) {
-  <p class="mensagem-compartilhamento">
-    {{ mensagemCompartilhamento() }}
-  </p>
-}
-
-@if (erroCompartilhamento()) {
-  <p class="erro-formulario">
-    {{ erroCompartilhamento() }}
-  </p>
-}
-    @if (dadosFaixas.carregando()) {
-      <p class="estado">Carregando faixas...</p>
-    } @else if (dadosFaixas.erro()) {
-      <div class="estado erro">
-        <p>{{ dadosFaixas.erro() }}</p>
-
-        <button
-          type="button"
-          class="botao-secundario"
-          (click)="carregarDados()"
-        >
-          Tentar novamente
-        </button>
-      </div>
-    } @else if (dadosFaixas.faixas().length === 0) {
-      <p class="estado">Nenhuma faixa cadastrada.</p>
-    } @else {
-      <div class="lista">
-        @for (
-          faixa of dadosFaixas.faixas();
-          track faixa.id
-        ) {
-          <article class="faixa">
-            <div class="linha-faixa">
-              <div class="conteudo-faixa">
-                <div class="cabecalho-faixa">
-                  <div>
-                    <h3>{{ faixa.titulo }}</h3>
-                    <p>{{ faixa.projeto.nome }}</p>
-                  </div>
-
-                  <span class="status">
-                    {{
-                      rotuloStatus(
-                        faixa.status_producao
-                      )
-                    }}
-                  </span>
-                </div>
-
-                @if (
-                  faixa.bpm !== null ||
-                  faixa.tom
-                ) {
-                  <div class="detalhes">
-                    @if (faixa.bpm !== null) {
-                      <span>
-                        {{ faixa.bpm }} BPM
-                      </span>
-                    }
-
-                    @if (faixa.tom) {
-                      <span>
-                        Tom: {{ faixa.tom }}
-                      </span>
-                    }
-                  </div>
-                }
-
-                @if (faixa.observacoes) {
-                  <p class="observacoes">
-                    {{ faixa.observacoes }}
-                  </p>
-                }
-
-                @if (faixa.link_externo_audio) {
-                  <a
-                    class="link-audio"
-                    [href]="faixa.link_externo_audio"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Abrir áudio externo
-                  </a>
-                }
-              </div>
-
-              <div class="acoes-faixa">
-                <button
-                  type="button"
-                  class="botao-upload"
-                  [disabled]="
-                    enviandoFaixaId() !== null ||
-                    dadosVersoes.carregando() ||
-                    dadosVersoes.erro() !== null ||
-                    dadosVersoes.espacoDisponivelBytes() <= 0
-                  "
-                  (click)="abrirUpload(faixa.id)"
-                >
-                  @if (
-                    faixaUploadId() === faixa.id
-                  ) {
-                    Fechar envio
-                  } @else {
-                    Enviar versão
-                  }
-                </button>
-
-                <button
-                  type="button"
-                  class="botao-secundario"
-                  (click)="editar(faixa)"
-                >
-                  Editar
-                </button>
-
-                <button
-                  type="button"
-                  class="botao-excluir"
-                  [disabled]="
-                    excluindoId() === faixa.id
-                  "
-                  [title]="
-                    temVersoes(faixa.id)
-                      ? 'A faixa possui versões armazenadas'
-                      : 'Excluir faixa'
-                  "
-                  (click)="excluir(faixa)"
-                >
-                  @if (
-                    excluindoId() === faixa.id
-                  ) {
-                    Excluindo...
-                  } @else {
-                    Excluir
-                  }
-                </button>
-              </div>
-            </div>
-
-            @if (
-              !dadosVersoes.carregando() &&
-              !dadosVersoes.erro()
-            ) {
-              <section class="versoes-faixa">
-                <div class="cabecalho-versoes">
-                  <h4>Versões</h4>
-
-                  <span>
-                    {{
-                      versoesDaFaixa(
-                        faixa.id
-                      ).length
-                    }}
-                  </span>
-                </div>
-
-                @if (
-                  versoesDaFaixa(faixa.id).length === 0
-                ) {
-                  <p class="sem-versoes">
-                    Nenhuma versão enviada pelo Fleiva.
-                  </p>
-                } @else {
-                  <div class="lista-versoes">
-                    @for (
-                      versao of versoesDaFaixa(
-                        faixa.id
-                      );
-                      track versao.id
-                    ) {
-                      <article class="versao-faixa">
-                        <div>
-                          <strong>
-                            {{ versao.versao }}
-                          </strong>
-
-                          <p>
-                            {{ versao.nome_arquivo }}
-                          </p>
-                        </div>
-
-                        <div class="metadados-versao">
-                          <span>
-                            {{
-                              formatarBytes(
-                                versao.tamanho_bytes
-                              )
-                            }}
-                          </span>
-
-                         <span>
-    {{
-      formatarData(
-        versao.confirmado_em ??
-          versao.criado_em
-      )
-    }}
-  </span>
-
-                          <span>
-                            {{
-                              formatarData(
-                                versao.confirmado_em ??
-                                  versao.criado_em
-                              )
-                            }}
-                          </span>
-                        </div>
-
-                        @if (versao.observacoes) {
-                          <p class="observacoes-versao">
-                            {{ versao.observacoes }}
-                          </p>
-                        }
-                        <div class="acoes-versao">
-  <button
-    type="button"
-    class="botao-secundario"
-    [disabled]="
-      baixandoVersaoId() !== null ||
-      processandoLinkVersaoId() !== null
-    "
-    (click)="baixarVersao(versao)"
-  >
-    @if (baixandoVersaoId() === versao.id) {
-      Preparando...
-    } @else {
-      Baixar
+        <audio
+          #reprodutor
+          class="audio-nativo"
+          preload="metadata"
+          [src]="url"
+          (play)="atualizarEstadoReproducao(true)"
+          (pause)="atualizarEstadoReproducao(false)"
+          (timeupdate)="atualizarDadosReproducao($event)"
+          (loadedmetadata)="atualizarDadosReproducao($event)"
+          (durationchange)="atualizarDadosReproducao($event)"
+          (ended)="atualizarEstadoReproducao(false)"
+          (error)="registrarErroReproducao()"
+        ></audio>
+      </footer>
     }
-  </button>
-
-  <button
-    type="button"
-    class="botao-whatsapp"
-    [disabled]="
-      baixandoVersaoId() !== null ||
-      processandoLinkVersaoId() !== null
-    "
-    (click)="compartilharWhatsApp(faixa, versao)"
-  >
-    @if (
-      processandoLinkVersaoId() === versao.id
-    ) {
-      Preparando...
-    } @else {
-      WhatsApp
-    }
-  </button>
-
-  <button
-    type="button"
-    class="botao-secundario"
-    [disabled]="
-      baixandoVersaoId() !== null ||
-      processandoLinkVersaoId() !== null
-    "
-    (click)="copiarLink(versao)"
-  >
-    Copiar link
-  </button>
-
-  @if (versao.token_compartilhamento) {
-    <button
-      type="button"
-      class="botao-excluir"
-      [disabled]="
-        processandoLinkVersaoId() !== null
-      "
-      (click)="revogarLink(versao)"
-    >
-      @if (
-        processandoLinkVersaoId() === versao.id
-      ) {
-        Revogando...
-      } @else {
-        Revogar link
-      }
-    </button>
   }
-</div>
-                      </article>
-                    }
-                  </div>
-
-                }
-
-              </section>
-            }
-
-            @if (
-              faixaUploadId() === faixa.id
-            ) {
-              <section class="formulario-upload">
-                <div>
-                  <h4>Enviar nova versão</h4>
-                  <p>
-                    O arquivo ficará privado no armazenamento
-                    do Fleiva.
-                  </p>
-                </div>
-
-                <form
-                  [formGroup]="formularioUpload"
-                  (ngSubmit)="enviarVersao(faixa.id)"
-                >
-                  <div class="campos-upload">
-                    <label>
-                      <span>Versão</span>
-
-                      <input
-                        type="text"
-                        formControlName="versao"
-                        placeholder="Ex.: V1, mix 03, master final"
-                      />
-
-                      @if (
-                        formularioUpload.controls.versao.touched &&
-                        formularioUpload.controls.versao.invalid
-                      ) {
-                        <small>
-                          Informe a versão.
-                        </small>
-                      }
-                    </label>
-
-                    <label>
-                      <span>Arquivo</span>
-
-                      <input
-                        type="file"
-                        (change)="selecionarArquivo($event)"
-                      />
-
-                      @if (
-                        formularioUpload.controls.arquivo.touched &&
-                        formularioUpload.controls.arquivo.invalid
-                      ) {
-                        <small>
-                          Selecione o arquivo.
-                        </small>
-                      }
-                    </label>
-
-                    <label class="campo-largo">
-                      <span>
-                        Observações da versão
-                      </span>
-
-                      <textarea
-                        formControlName="observacoes"
-                        rows="3"
-                        placeholder="Ex.: voz mais alta, versão para aprovação..."
-                      ></textarea>
-                    </label>
-                  </div>
-
-                  @if (
-                    formularioUpload.controls.arquivo.value;
-                    as arquivo
-                  ) {
-                    <p class="arquivo-selecionado">
-                      <strong>{{ arquivo.name }}</strong>
-                      <span>
-                        {{ formatarBytes(arquivo.size) }}
-                      </span>
-                    </p>
-                  }
-
-                  <p class="espaco-disponivel">
-                    Espaço disponível:
-                    <strong>
-                      {{
-                        formatarBytes(
-                          dadosVersoes.espacoDisponivelBytes()
-                        )
-                      }}
-                    </strong>
-                  </p>
-
-                  @if (erroUpload()) {
-                    <p class="erro-formulario">
-                      {{ erroUpload() }}
-                    </p>
-                  }
-
-                  <div class="acoes-upload">
-                    <button
-                      type="button"
-                      class="botao-secundario"
-                      [disabled]="
-                        enviandoFaixaId() === faixa.id
-                      "
-                      (click)="cancelarUpload()"
-                    >
-                      Cancelar
-                    </button>
-
-                    <button
-                      type="submit"
-                      class="botao-principal"
-                      [disabled]="
-                        enviandoFaixaId() === faixa.id
-                      "
-                    >
-                      @if (
-                        enviandoFaixaId() === faixa.id
-                      ) {
-                        Enviando...
-                      } @else {
-                        Enviar arquivo
-                      }
-                    </button>
-                  </div>
-                </form>
-              </section>
-            }
-          </article>
-        }
-      </div>
-    }
-  </section>
 </main>

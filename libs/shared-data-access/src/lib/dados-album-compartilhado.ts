@@ -5,68 +5,70 @@ import {
 } from '@angular/core';
 import { ClienteSupabase } from './cliente-supabase';
 
-export interface EstudioArquivoCompartilhado {
+export interface EstudioAlbumCompartilhado {
   nome: string;
   logo_url: string | null;
   cor_principal: string | null;
 }
 
-export interface ArquivoFaixaCompartilhado {
+export interface FaixaAlbumCompartilhado {
+  item_id: string;
+  ordem: number;
   faixa: string;
-  projeto: string;
   versao: string;
   observacoes: string | null;
   nome_arquivo: string;
   tamanho_bytes: number;
   tipo_mime: string | null;
   criado_em: string;
-  capa_url: string | null;
-  estudio: EstudioArquivoCompartilhado;
+  reproducao_url: string;
+  reproducao_expira_em: string;
+  download_url: string;
+  download_expira_em: string;
 }
 
-export interface DownloadArquivoCompartilhado {
+export interface AlbumCompartilhado {
+  nome: string;
+  observacoes: string | null;
+  projeto: string;
+  capa_url: string | null;
+  estudio: EstudioAlbumCompartilhado;
+  faixas: FaixaAlbumCompartilhado[];
+}
+
+export interface DownloadFaixaAlbum {
   url: string;
   nome_arquivo: string;
 }
 
-export interface ReproducaoArquivoCompartilhado {
-  url: string;
+interface RespostaAlbumCompartilhado {
+  album: AlbumCompartilhado;
 }
-
-interface RespostaArquivoCompartilhado {
-  arquivo: ArquivoFaixaCompartilhado;
-  download_url: string;
-  download_expira_em: string;
-  reproducao_url: string;
-  reproducao_expira_em: string;
-}
-
-type TipoUrlTemporaria = 'download' | 'reproducao';
 
 @Injectable({
   providedIn: 'root',
 })
-export class DadosArquivoCompartilhado {
+export class DadosAlbumCompartilhado {
   private readonly clienteSupabase =
     inject(ClienteSupabase);
 
-  private readonly arquivoInterno =
-    signal<ArquivoFaixaCompartilhado | null>(null);
+  private readonly albumInterno =
+    signal<AlbumCompartilhado | null>(null);
 
   private readonly respostaInterna =
-    signal<RespostaArquivoCompartilhado | null>(null);
+    signal<RespostaAlbumCompartilhado | null>(null);
 
   private readonly carregandoInterno = signal(false);
   private readonly erroInterno = signal<string | null>(null);
 
-  readonly arquivo = this.arquivoInterno.asReadonly();
+  readonly album = this.albumInterno.asReadonly();
   readonly carregando = this.carregandoInterno.asReadonly();
   readonly erro = this.erroInterno.asReadonly();
 
   async carregar(token: string): Promise<void> {
     this.carregandoInterno.set(true);
     this.erroInterno.set(null);
-    this.arquivoInterno.set(null);
+    this.albumInterno.set(null);
     this.respostaInterna.set(null);
 
     try {
@@ -84,69 +86,51 @@ export class DadosArquivoCompartilhado {
 
   async obterDownload(
     token: string,
-  ): Promise<DownloadArquivoCompartilhado> {
-    const resposta = await this.obterRespostaValida(
-      token,
-      'download',
+    itemId: string,
+  ): Promise<DownloadFaixaAlbum> {
+    let resposta = this.respostaInterna();
+    let faixa = resposta?.album.faixas.find(
+      (item) => item.item_id === itemId,
     );
-
-    return {
-      url: resposta.download_url,
-      nome_arquivo: resposta.arquivo.nome_arquivo,
-    };
-  }
-
-  async obterReproducao(
-    token: string,
-  ): Promise<ReproducaoArquivoCompartilhado> {
-    const resposta = await this.obterRespostaValida(
-      token,
-      'reproducao',
-    );
-
-    return {
-      url: resposta.reproducao_url,
-    };
-  }
-
-  private async obterRespostaValida(
-    token: string,
-    tipo: TipoUrlTemporaria,
-  ): Promise<RespostaArquivoCompartilhado> {
-    const respostaAtual = this.respostaInterna();
-    const expiraEm =
-      tipo === 'download'
-        ? respostaAtual?.download_expira_em
-        : respostaAtual?.reproducao_expira_em;
 
     if (
-      respostaAtual === null ||
-      !expiraEm ||
-      Date.parse(expiraEm) <= Date.now() + 15_000
+      !faixa ||
+      Date.parse(faixa.download_expira_em) <=
+        Date.now() + 15_000
     ) {
-      const novaResposta = await this.solicitar(token);
+      resposta = await this.solicitar(token);
+      this.atualizarResposta(resposta);
 
-      this.atualizarResposta(novaResposta);
-
-      return novaResposta;
+      faixa = resposta.album.faixas.find(
+        (item) => item.item_id === itemId,
+      );
     }
 
-    return respostaAtual;
+    if (!faixa) {
+      throw new Error(
+        'A faixa não está disponível neste álbum.',
+      );
+    }
+
+    return {
+      url: faixa.download_url,
+      nome_arquivo: faixa.nome_arquivo,
+    };
   }
 
   private atualizarResposta(
-    resposta: RespostaArquivoCompartilhado,
+    resposta: RespostaAlbumCompartilhado,
   ): void {
     this.respostaInterna.set(resposta);
-    this.arquivoInterno.set(resposta.arquivo);
+    this.albumInterno.set(resposta.album);
   }
 
   private async solicitar(
     token: string,
-  ): Promise<RespostaArquivoCompartilhado> {
+  ): Promise<RespostaAlbumCompartilhado> {
     const { data, error } =
       await this.clienteSupabase.cliente.functions.invoke(
-        'abrir-arquivo-faixa',
+        'abrir-album',
         {
           body: {
             token,
@@ -159,18 +143,16 @@ export class DadosArquivoCompartilhado {
     }
 
     const resposta = data as
-      | RespostaArquivoCompartilhado
+      | RespostaAlbumCompartilhado
       | null;
 
     if (
-      !resposta?.arquivo ||
-      !resposta.download_url ||
-      !resposta.download_expira_em ||
-      !resposta.reproducao_url ||
-      !resposta.reproducao_expira_em
+      !resposta?.album ||
+      !resposta.album.estudio ||
+      !Array.isArray(resposta.album.faixas)
     ) {
       throw new Error(
-        'A resposta do arquivo é inválida.',
+        'A resposta do álbum é inválida.',
       );
     }
 

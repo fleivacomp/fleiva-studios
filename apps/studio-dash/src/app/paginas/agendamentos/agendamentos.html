@@ -1,149 +1,348 @@
-<main class="pagina">
-  <header class="cabecalho">
-    <p class="secao">AGENDA</p>
-    <h1>Agendamentos</h1>
-    <p>Cadastre horários com um ou vários serviços.</p>
+<main class="pagina-agenda">
+  <header class="cabecalho-pagina">
+    <div>
+      <p class="secao">Agenda do estúdio</p>
+      <h1>Agendamentos</h1>
+      <p class="descricao">
+        Horários, serviços e acertos em um só lugar.
+      </p>
+    </div>
+
+    <div class="resumo-agenda">
+      <strong>
+        {{ dadosAgendamentos.agendamentos().length }}
+      </strong>
+      <span>horários registrados</span>
+    </div>
   </header>
 
-  <section class="painel formulario-painel">
-    <h2>Novo agendamento</h2>
+  <div class="estrutura-agenda">
+    <section class="agenda-painel">
+      <header class="cabecalho-painel">
+        <div>
+          <p>Visão geral</p>
+          <h2>Agenda</h2>
+        </div>
 
-    <form [formGroup]="formulario" (ngSubmit)="salvar()">
-      <div class="campos-principais">
-        <label>
-          <span>Contato</span>
+        <span class="quantidade-agenda">
+          {{ dadosAgendamentos.agendamentos().length }}
+        </span>
+      </header>
 
-          <select formControlName="contato_id">
-            <option value="">Selecione um contato</option>
+      @if (mensagemAcerto()) {
+        <p class="mensagem-acerto">
+          {{ mensagemAcerto() }}
+        </p>
+      }
 
-            @for (
-              contato of dadosContatos.contatos();
-              track contato.id
-            ) {
-              <option [value]="contato.id">
-                {{ contato.nome }}
-              </option>
-            }
-          </select>
+      @if (erroAcerto() || dadosAcertos.erro()) {
+        <p class="erro-acerto">
+          {{ erroAcerto() || dadosAcertos.erro() }}
+        </p>
+      }
 
-          @if (
-            formulario.controls.contato_id.touched &&
-            formulario.controls.contato_id.invalid
+      @if (dadosAgendamentos.carregando()) {
+        <div class="estado">
+          <span class="carregador"></span>
+          <p>Carregando agendamentos...</p>
+        </div>
+      } @else if (dadosAgendamentos.erro()) {
+        <div class="estado estado-erro">
+          <strong>Não foi possível carregar a agenda.</strong>
+          <p>{{ dadosAgendamentos.erro() }}</p>
+
+          <button
+            type="button"
+            class="secundario"
+            (click)="dadosAgendamentos.listar()"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      } @else if (
+        dadosAgendamentos.agendamentos().length === 0
+      ) {
+        <div class="estado estado-vazio">
+          <span class="icone-vazio" aria-hidden="true"></span>
+          <strong>Nenhum horário registrado.</strong>
+          <p>
+            Use o formulário ao lado para criar o primeiro
+            agendamento.
+          </p>
+        </div>
+      } @else {
+        <div class="lista-agendamentos">
+          @for (
+            agendamento of dadosAgendamentos.agendamentos();
+            track agendamento.id
           ) {
-            <small>Selecione um contato.</small>
-          }
-        </label>
+            <article class="agendamento">
+              <div class="marcador-agenda" aria-hidden="true">
+                <span></span>
+              </div>
 
-        <label>
-          <span>Início</span>
+              <div class="conteudo-agendamento">
+                <header class="topo-agendamento">
+                  <div class="horario">
+                    <time [attr.datetime]="agendamento.inicio">
+                      {{ formatarData(agendamento.inicio) }}
+                    </time>
 
-          <input
-            type="datetime-local"
-            formControlName="inicio"
-          />
+                    <span aria-hidden="true">→</span>
 
-          @if (
-            formulario.controls.inicio.touched &&
-            formulario.controls.inicio.invalid
-          ) {
-            <small>Informe o início.</small>
-          }
-        </label>
+                    <time [attr.datetime]="agendamento.fim">
+                      {{ formatarData(agendamento.fim) }}
+                    </time>
+                  </div>
 
-        <label>
-          <span>Término</span>
-
-          <input
-            type="datetime-local"
-            formControlName="fim"
-          />
-
-          @if (
-            formulario.controls.fim.touched &&
-            formulario.controls.fim.invalid
-          ) {
-            <small>Informe o término.</small>
-          }
-        </label>
-      </div>
-
-      <div class="selecao-servicos">
-        <h3>Serviços</h3>
-
-        @if (dadosServicos.carregando()) {
-          <p>Carregando serviços...</p>
-        } @else if (dadosServicos.servicos().length === 0) {
-          <p>Nenhum serviço cadastrado.</p>
-        } @else {
-          <div class="lista-servicos">
-            @for (
-              servico of dadosServicos.servicos();
-              track servico.id
-            ) {
-              <article
-                class="servico"
-                [class.selecionado]="
-                  servicoEstaSelecionado(servico.id)
-                "
-              >
-                <label class="marcacao-servico">
-                  <input
-                    type="checkbox"
-                    [checked]="
-                      servicoEstaSelecionado(servico.id)
-                    "
-                    (change)="
-                      alternarServico(
-                        servico.id,
-                        $any($event.target).checked
+                  <strong class="valor-agendamento">
+                    {{
+                      formatarPreco(
+                        dadosAgendamentos.calcularValor(
+                          agendamento
+                        )
                       )
+                    }}
+                  </strong>
+                </header>
+
+                <h3>{{ agendamento.contato.nome }}</h3>
+
+                <div class="itens">
+                  @for (
+                    item of agendamento.agendamento_servicos;
+                    track item.servico.id
+                  ) {
+                    <span class="item-servico">
+                      <strong>{{ item.servico.nome }}</strong>
+                      <small>
+                        {{ item.quantidade }}
+                        {{ item.servico.tipo_cobranca }}
+                      </small>
+                    </span>
+                  }
+                </div>
+
+                <footer class="acoes-agendamento">
+                  @if (dadosAcertos.carregando()) {
+                    <button
+                      type="button"
+                      class="secundario"
+                      disabled
+                    >
+                      Verificando acerto...
+                    </button>
+                  } @else if (
+                    acertoDoAgendamento(agendamento.id);
+                    as acerto
+                  ) {
+                    <a
+                      class="acerto-gerado"
+                      routerLink="/acertos"
+                      [queryParams]="{ abrir: acerto.id }"
+                    >
+                      Acerto gerado
+                    </a>
+                  } @else {
+                    <button
+                      type="button"
+                      class="gerar-acerto"
+                      [disabled]="gerandoAcertoId() !== null"
+                      (click)="gerarAcerto(agendamento)"
+                    >
+                      @if (
+                        gerandoAcertoId() === agendamento.id
+                      ) {
+                        Gerando...
+                      } @else {
+                        Gerar acerto
+                      }
+                    </button>
+                  }
+
+                  <button
+                    type="button"
+                    class="excluir"
+                    [disabled]="
+                      excluindoId() === agendamento.id ||
+                      gerandoAcertoId() === agendamento.id
                     "
-                  />
+                    (click)="excluir(agendamento)"
+                  >
+                    @if (excluindoId() === agendamento.id) {
+                      Excluindo...
+                    } @else {
+                      Excluir
+                    }
+                  </button>
+                </footer>
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </section>
 
-                  <span>
-                    <strong>{{ servico.nome }}</strong>
+    <aside class="cadastro-painel">
+      <header class="cabecalho-cadastro">
+        <p>Novo horário</p>
+        <h2>Criar agendamento</h2>
+      </header>
 
-                    <small>
-                      {{ formatarPreco(servico.preco) }}
-                      / {{ servico.tipo_cobranca }}
-                    </small>
-                  </span>
-                </label>
+      <form [formGroup]="formulario" (ngSubmit)="salvar()">
+        <div class="campos-principais">
+          <label>
+            <span>Contato</span>
 
-                @if (servicoEstaSelecionado(servico.id)) {
-                  <label class="quantidade">
-                    <span>Quantidade</span>
+            <select formControlName="contato_id">
+              <option value="">Selecione um contato</option>
 
+              @for (
+                contato of dadosContatos.contatos();
+                track contato.id
+              ) {
+                <option [value]="contato.id">
+                  {{ contato.nome }}
+                </option>
+              }
+            </select>
+
+            @if (
+              formulario.controls.contato_id.touched &&
+              formulario.controls.contato_id.invalid
+            ) {
+              <small>Selecione um contato.</small>
+            }
+          </label>
+
+          <div class="campos-data">
+            <label>
+              <span>Início</span>
+
+              <input
+                type="datetime-local"
+                formControlName="inicio"
+              />
+
+              @if (
+                formulario.controls.inicio.touched &&
+                formulario.controls.inicio.invalid
+              ) {
+                <small>Informe o início.</small>
+              }
+            </label>
+
+            <label>
+  <span>Término</span>
+
+  <input
+    type="time"
+    formControlName="fim"
+    step="60"
+  />
+
+  <p class="ajuda-campo">
+    Se o horário for anterior ao início, será considerado o dia seguinte.
+  </p>
+
+  @if (
+    formulario.controls.fim.touched &&
+    formulario.controls.fim.invalid
+  ) {
+    <small>Informe o horário de término.</small>
+  }
+</label>
+          </div>
+        </div>
+
+        <section class="selecao-servicos">
+          <header>
+            <h3>Serviços</h3>
+            <span>
+              {{ servicosSelecionados().length }} selecionados
+            </span>
+          </header>
+
+          @if (dadosServicos.carregando()) {
+            <p class="estado-servicos">
+              Carregando serviços...
+            </p>
+          } @else if (
+            dadosServicos.servicos().length === 0
+          ) {
+            <p class="estado-servicos">
+              Nenhum serviço cadastrado.
+            </p>
+          } @else {
+            <div class="lista-servicos">
+              @for (
+                servico of dadosServicos.servicos();
+                track servico.id
+              ) {
+                <article
+                  class="servico"
+                  [class.selecionado]="
+                    servicoEstaSelecionado(servico.id)
+                  "
+                >
+                  <label class="marcacao-servico">
                     <input
-                      type="number"
-                      min="0.01"
-                      step="0.01"
-                      [value]="obterQuantidade(servico.id)"
-                      (input)="
-                        alterarQuantidade(
+                      type="checkbox"
+                      [checked]="
+                        servicoEstaSelecionado(servico.id)
+                      "
+                      (change)="
+                        alternarServico(
                           servico.id,
-                          $any($event.target).valueAsNumber
+                          $any($event.target).checked
                         )
                       "
                     />
+
+                    <span>
+                      <strong>{{ servico.nome }}</strong>
+                      <small>
+                        {{ formatarPreco(servico.preco) }}
+                        / {{ servico.tipo_cobranca }}
+                      </small>
+                    </span>
                   </label>
-                }
-              </article>
-            }
-          </div>
+
+                  @if (servicoEstaSelecionado(servico.id)) {
+                    <label class="quantidade">
+                      <span>Qtd.</span>
+
+                      <input
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        [value]="obterQuantidade(servico.id)"
+                        (input)="
+                          alterarQuantidade(
+                            servico.id,
+                            $any($event.target).valueAsNumber
+                          )
+                        "
+                      />
+                    </label>
+                  }
+                </article>
+              }
+            </div>
+          }
+        </section>
+
+        <div class="resumo-formulario">
+          <span>Valor estimado</span>
+          <strong>{{ formatarPreco(valorEstimado()) }}</strong>
+        </div>
+
+        @if (erroFormulario()) {
+          <p class="erro-formulario">
+            {{ erroFormulario() }}
+          </p>
         }
-      </div>
 
-      <div class="resumo">
-        <span>Valor estimado</span>
-        <strong>{{ formatarPreco(valorEstimado()) }}</strong>
-      </div>
-
-      @if (erroFormulario()) {
-        <p class="erro">{{ erroFormulario() }}</p>
-      }
-
-      <div class="acoes-formulario">
         <button
           type="submit"
           class="primario"
@@ -155,154 +354,7 @@
             Criar agendamento
           }
         </button>
-      </div>
-    </form>
-  </section>
-
-  <section class="painel">
-    <div class="titulo-lista">
-      <h2>Agenda</h2>
-      <span>{{ dadosAgendamentos.agendamentos().length }}</span>
-    </div>
-@if (mensagemAcerto()) {
-  <p class="mensagem-acerto">
-    {{ mensagemAcerto() }}
-  </p>
-}
-
-@if (erroAcerto() || dadosAcertos.erro()) {
-  <p class="erro-acerto">
-    {{ erroAcerto() || dadosAcertos.erro() }}
-  </p>
-}
-    @if (dadosAgendamentos.carregando()) {
-      <p class="estado">Carregando agendamentos...</p>
-    } @else if (dadosAgendamentos.erro()) {
-      <div class="estado erro">
-        <p>{{ dadosAgendamentos.erro() }}</p>
-
-        <button
-          type="button"
-          class="secundario"
-          (click)="dadosAgendamentos.listar()"
-        >
-          Tentar novamente
-        </button>
-      </div>
-    } @else if (
-      dadosAgendamentos.agendamentos().length === 0
-    ) {
-      <p class="estado">Nenhum agendamento cadastrado.</p>
-    } @else {
-      <div class="lista-agendamentos">
-        @for (
-          agendamento of dadosAgendamentos.agendamentos();
-          track agendamento.id
-        ) {
-          <article class="agendamento">
-            <div class="dados-agendamento">
-              <div class="horario">
-                <strong>
-                  {{ formatarData(agendamento.inicio) }}
-                </strong>
-
-                <span>
-                  até {{ formatarData(agendamento.fim) }}
-                </span>
-              </div>
-
-              <h3>{{ agendamento.contato.nome }}</h3>
-
-              <div class="itens">
-                @for (
-                  item of agendamento.agendamento_servicos;
-                  track item.servico.id
-                ) {
-                  <p>
-                    {{ item.servico.nome }}
-                    <span>
-                      {{ item.quantidade }}
-                      {{ item.servico.tipo_cobranca }}
-                    </span>
-                  </p>
-                }
-              </div>
-            </div>
-
-            <div class="rodape-agendamento">
-              <strong>
-                {{
-                  formatarPreco(
-                    dadosAgendamentos.calcularValor(
-                      agendamento
-                    )
-                  )
-                }}
-              </strong>
-
-              <div class="acoes-agendamento">
-  @if (dadosAcertos.carregando()) {
-    <button
-      type="button"
-      class="secundario"
-      disabled
-    >
-      Verificando acerto...
-    </button>
-  } @else if (
-    acertoDoAgendamento(agendamento.id);
-    as acerto
-  ) {
-    <a
-      class="acerto-gerado"
-      routerLink="/acertos"
-      [queryParams]="{
-        abrir: acerto.id
-      }"
-    >
-      Acerto gerado
-    </a>
-  } @else {
-    <button
-      type="button"
-      class="gerar-acerto"
-      [disabled]="
-        gerandoAcertoId() !== null
-      "
-      (click)="gerarAcerto(agendamento)"
-    >
-      @if (
-        gerandoAcertoId() === agendamento.id
-      ) {
-        Gerando...
-      } @else {
-        Gerar acerto
-      }
-    </button>
-  }
-
-  <button
-    type="button"
-    class="excluir"
-    [disabled]="
-      excluindoId() === agendamento.id ||
-      gerandoAcertoId() === agendamento.id
-    "
-    (click)="excluir(agendamento)"
-  >
-    @if (
-      excluindoId() === agendamento.id
-    ) {
-      Excluindo...
-    } @else {
-      Excluir
-    }
-  </button>
-</div>
-            </div>
-          </article>
-        }
-      </div>
-    }
-  </section>
+      </form>
+    </aside>
+  </div>
 </main>

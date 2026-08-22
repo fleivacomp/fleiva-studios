@@ -180,27 +180,34 @@ export class Agendamentos implements OnInit {
       return;
     }
 
-    const valor = this.formulario.getRawValue();
-    const inicio = new Date(valor.inicio);
-    const fim = new Date(valor.fim);
+  const valor = this.formulario.getRawValue();
+const inicio = new Date(valor.inicio);
 
-    if (
-      Number.isNaN(inicio.getTime()) ||
-      Number.isNaN(fim.getTime())
-    ) {
-      this.erroFormulario.set(
-        'Informe datas e horários válidos.',
-      );
-      return;
-    }
+if (Number.isNaN(inicio.getTime())) {
+  this.erroFormulario.set(
+    'Informe uma data e um horário de início válidos.',
+  );
+  return;
+}
 
-    if (fim <= inicio) {
-      this.erroFormulario.set(
-        'O término deve ser posterior ao início.',
-      );
-      return;
-    }
+const fim = this.criarFimAgendamento(
+  inicio,
+  valor.fim,
+);
 
+if (fim === null) {
+  this.erroFormulario.set(
+    'Informe um horário de término válido.',
+  );
+  return;
+}
+
+if (fim.getTime() === inicio.getTime()) {
+  this.erroFormulario.set(
+    'O término não pode ser igual ao início.',
+  );
+  return;
+}
     this.salvando.set(true);
 
     try {
@@ -318,6 +325,41 @@ export class Agendamentos implements OnInit {
       .servicos()
       .find((servico) => servico.id === servicoId);
   }
+  private criarFimAgendamento(
+  inicio: Date,
+  horarioFim: string,
+): Date | null {
+  const correspondencia =
+    /^(\d{2}):(\d{2})$/.exec(horarioFim);
+
+  if (!correspondencia) {
+    return null;
+  }
+
+  const horas = Number(correspondencia[1]);
+  const minutos = Number(correspondencia[2]);
+
+  if (
+    !Number.isInteger(horas) ||
+    !Number.isInteger(minutos) ||
+    horas < 0 ||
+    horas > 23 ||
+    minutos < 0 ||
+    minutos > 59
+  ) {
+    return null;
+  }
+
+  const fim = new Date(inicio);
+
+  fim.setHours(horas, minutos, 0, 0);
+
+  if (fim < inicio) {
+    fim.setDate(fim.getDate() + 1);
+  }
+
+  return fim;
+}
 
   private limparFormulario(): void {
     this.formulario.reset({

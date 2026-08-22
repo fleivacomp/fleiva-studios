@@ -5,8 +5,11 @@ import {
 } from 'npm:@aws-sdk/client-s3@3';
 import { getSignedUrl } from 'npm:@aws-sdk/s3-request-presigner@3';
 
+type ModoAcesso = 'download' | 'reproducao';
+
 interface RequisicaoDownload {
   versao_id?: string;
+  modo?: ModoAcesso;
 }
 
 const cabecalhosCors = {
@@ -58,6 +61,11 @@ Deno.serve(async (requisicao) => {
             Authorization: authorization,
           },
         },
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false,
+          detectSessionInUrl: false,
+        },
       },
     );
 
@@ -86,6 +94,21 @@ Deno.serve(async (requisicao) => {
         400,
       );
     }
+
+    if (
+      corpo.modo !== undefined &&
+      corpo.modo !== 'download' &&
+      corpo.modo !== 'reproducao'
+    ) {
+      return responderJson(
+        {
+          erro: 'Modo de acesso inválido.',
+        },
+        400,
+      );
+    }
+
+    const modo = corpo.modo ?? 'download';
 
     const { data: versao, error: erroVersao } =
       await clienteSupabase
@@ -133,7 +156,7 @@ Deno.serve(async (requisicao) => {
       },
     });
 
-    const duracaoSegundos = 300;
+    const duracaoSegundos = modo === 'reproducao' ? 3600 : 300;
     const nomeArquivo = versao.nome_arquivo;
 
     const comando = new GetObjectCommand({
@@ -142,7 +165,7 @@ Deno.serve(async (requisicao) => {
       ResponseContentType:
         versao.tipo_mime ?? 'application/octet-stream',
       ResponseContentDisposition:
-        criarContentDisposition(nomeArquivo),
+        criarContentDisposition(nomeArquivo, modo),
     });
 
     const url = await getSignedUrl(clienteR2, comando, {
@@ -157,11 +180,11 @@ Deno.serve(async (requisicao) => {
       ).toISOString(),
     });
   } catch (erro) {
-    console.error('Erro ao gerar download:', erro);
+    console.error('Erro ao gerar acesso ao arquivo:', erro);
 
     return responderJson(
       {
-        erro: 'Não foi possível preparar o download.',
+        erro: 'Não foi possível preparar o arquivo.',
       },
       500,
     );
@@ -178,7 +201,10 @@ function obterVariavelObrigatoria(nome: string): string {
   return valor;
 }
 
-function criarContentDisposition(nomeArquivo: string): string {
+function criarContentDisposition(
+  nomeArquivo: string,
+  modo: ModoAcesso,
+): string {
   const nomeAscii =
     nomeArquivo
       .normalize('NFD')
@@ -193,7 +219,9 @@ function criarContentDisposition(nomeArquivo: string): string {
       `%${caractere.charCodeAt(0).toString(16).toUpperCase()}`,
   );
 
-  return `attachment; filename="${nomeAscii}"; filename*=UTF-8''${nomeUtf8}`;
+  const disposicao = modo === 'reproducao' ? 'inline' : 'attachment';
+
+  return `${disposicao}; filename="${nomeAscii}"; filename*=UTF-8''${nomeUtf8}`;
 }
 
 function responderJson(
@@ -205,6 +233,7 @@ function responderJson(
     headers: {
       ...cabecalhosCors,
       'Content-Type': 'application/json',
+      'Cache-Control': 'no-store',
     },
   });
 }

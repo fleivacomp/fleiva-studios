@@ -7,32 +7,50 @@ import {
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import {
-  DadosArquivoCompartilhado,
-  type ArquivoFaixaCompartilhado,
+  DadosAlbumCompartilhado,
+  type FaixaAlbumCompartilhado,
 } from '@fleiva-studios/shared-data-access';
 
 @Component({
-  selector: 'app-arquivo-compartilhado',
+  selector: 'app-album-compartilhado',
   standalone: true,
   imports: [],
-  templateUrl: './arquivo-compartilhado.html',
-  styleUrl: './arquivo-compartilhado.scss',
+  templateUrl: './album-compartilhado.html',
+  styleUrl: './album-compartilhado.scss',
 })
-export class ArquivoCompartilhado implements OnInit {
-  readonly dados = inject(DadosArquivoCompartilhado);
+export class AlbumCompartilhado implements OnInit {
+  readonly dados = inject(DadosAlbumCompartilhado);
 
   private readonly rota = inject(ActivatedRoute);
-  readonly token = signal<string | null>(null);
 
-  readonly baixando = signal(false);
-  readonly carregandoReproducao = signal(false);
-  readonly urlReproducao = signal<string | null>(null);
+  readonly token = signal<string | null>(null);
+  readonly faixaAtivaId = signal<string | null>(null);
+  readonly baixandoFaixaId = signal<string | null>(null);
   readonly erroDownload = signal<string | null>(null);
   readonly erroReproducao = signal<string | null>(null);
   readonly erroLocal = signal<string | null>(null);
 
+  readonly faixaAtiva = computed(() => {
+    const faixaAtivaId = this.faixaAtivaId();
+
+    return (
+      this.dados
+        .album()
+        ?.faixas.find(
+          (faixa) => faixa.item_id === faixaAtivaId,
+        ) ?? null
+    );
+  });
+
+  readonly primeiraFaixaReproduzivel = computed(() =>
+    this.dados
+      .album()
+      ?.faixas.find((faixa) => this.podeReproduzir(faixa)) ??
+    null,
+  );
+
   readonly corPrincipal = computed(() => {
-    const cor = this.dados.arquivo()?.estudio.cor_principal;
+    const cor = this.dados.album()?.estudio.cor_principal;
 
     return this.normalizarCor(cor) ?? '#1ed760';
   });
@@ -64,59 +82,61 @@ export class ArquivoCompartilhado implements OnInit {
     void this.carregar(token);
   }
 
-  async prepararReproducao(): Promise<void> {
-    const token = this.token();
-    const arquivo = this.dados.arquivo();
-
-    if (
-      !token ||
-      !arquivo ||
-      !this.podeReproduzir(arquivo) ||
-      this.carregandoReproducao()
-    ) {
+  reproduzir(faixa: FaixaAlbumCompartilhado): void {
+    if (!this.podeReproduzir(faixa)) {
       return;
     }
 
-    this.carregandoReproducao.set(true);
     this.erroReproducao.set(null);
+    this.faixaAtivaId.set(faixa.item_id);
+  }
 
-    try {
-      const reproducao =
-        await this.dados.obterReproducao(token);
+  reproduzirProxima(): void {
+    const album = this.dados.album();
+    const faixaAtual = this.faixaAtiva();
 
-      this.urlReproducao.set(reproducao.url);
-    } catch (erro) {
-      this.erroReproducao.set(
-        this.obterMensagemErro(
-          erro,
-          'Não foi possível preparar a reprodução.',
-        ),
-      );
-    } finally {
-      this.carregandoReproducao.set(false);
+    if (!album || !faixaAtual) {
+      return;
+    }
+
+    const faixasReproduziveis = album.faixas.filter(
+      (faixa) => this.podeReproduzir(faixa),
+    );
+
+    const indiceAtual = faixasReproduziveis.findIndex(
+      (faixa) => faixa.item_id === faixaAtual.item_id,
+    );
+
+    const proximaFaixa = faixasReproduziveis[indiceAtual + 1];
+
+    if (proximaFaixa) {
+      this.faixaAtivaId.set(proximaFaixa.item_id);
     }
   }
 
   registrarErroReproducao(): void {
-    this.urlReproducao.set(null);
     this.erroReproducao.set(
-      'A reprodução foi interrompida. Tente carregar o áudio novamente.',
+      'A reprodução foi interrompida. Recarregue o álbum para renovar o acesso.',
     );
   }
 
-  async baixar(): Promise<void> {
+  async baixar(
+    faixa: FaixaAlbumCompartilhado,
+  ): Promise<void> {
     const token = this.token();
 
-    if (!token || this.baixando()) {
+    if (!token || this.baixandoFaixaId()) {
       return;
     }
 
-    this.baixando.set(true);
+    this.baixandoFaixaId.set(faixa.item_id);
     this.erroDownload.set(null);
 
     try {
-      const download =
-        await this.dados.obterDownload(token);
+      const download = await this.dados.obterDownload(
+        token,
+        faixa.item_id,
+      );
 
       const link = document.createElement('a');
 
@@ -131,44 +151,57 @@ export class ArquivoCompartilhado implements OnInit {
       this.erroDownload.set(
         this.obterMensagemErro(
           erro,
-          'Não foi possível baixar o arquivo.',
+          'Não foi possível baixar a faixa.',
         ),
       );
     } finally {
-      this.baixando.set(false);
+      this.baixandoFaixaId.set(null);
     }
   }
 
-  podeReproduzir(arquivo: ArquivoFaixaCompartilhado): boolean {
-    if (arquivo.tipo_mime?.startsWith('audio/')) {
+  podeReproduzir(
+    faixa: FaixaAlbumCompartilhado,
+  ): boolean {
+    if (faixa.tipo_mime?.startsWith('audio/')) {
       return true;
     }
 
     return /\.(aac|flac|m4a|mp3|ogg|wav|webm)$/i.test(
-      arquivo.nome_arquivo,
+      faixa.nome_arquivo,
     );
   }
 
   inicialEstudio(): string {
-    return this.dados.arquivo()?.estudio.nome
-      .trim()
-      .charAt(0)
-      .toLocaleUpperCase('pt-BR') || 'F';
+    return (
+      this.dados
+        .album()
+        ?.estudio.nome.trim()
+        .charAt(0)
+        .toLocaleUpperCase('pt-BR') || 'F'
+    );
   }
 
   iniciaisProjeto(): string {
-    const projeto = this.dados.arquivo()?.projeto ?? '';
+    const projeto = this.dados.album()?.projeto ?? '';
     const palavras = projeto.trim().split(/\s+/).filter(Boolean);
 
-    if (palavras.length === 0) {
-      return 'FL';
-    }
+    return (
+      palavras
+        .slice(0, 2)
+        .map((palavra) => palavra.charAt(0))
+        .join('')
+        .toLocaleUpperCase('pt-BR') || 'FL'
+    );
+  }
 
-    return palavras
-      .slice(0, 2)
-      .map((palavra) => palavra.charAt(0))
-      .join('')
-      .toLocaleUpperCase('pt-BR');
+  rotuloQuantidadeFaixas(quantidade: number): string {
+    return quantidade === 1
+      ? '1 faixa'
+      : `${quantidade} faixas`;
+  }
+
+  formatarOrdem(ordem: number): string {
+    return String(ordem).padStart(2, '0');
   }
 
   formatarBytes(bytes: number): string {
@@ -193,29 +226,18 @@ export class ArquivoCompartilhado implements OnInit {
     }).format(valor)} ${unidades[indice]}`;
   }
 
-  formatarData(data: string): string {
-    return new Intl.DateTimeFormat('pt-BR', {
-      dateStyle: 'long',
-      timeStyle: 'short',
-    }).format(new Date(data));
-  }
-
   private async carregar(token: string): Promise<void> {
     this.erroLocal.set(null);
     this.erroDownload.set(null);
     this.erroReproducao.set(null);
-    this.urlReproducao.set(null);
+    this.faixaAtivaId.set(null);
 
     await this.dados.carregar(token);
-
-    const arquivo = this.dados.arquivo();
-
-    if (arquivo && this.podeReproduzir(arquivo)) {
-      await this.prepararReproducao();
-    }
   }
 
-  private normalizarCor(cor: string | null | undefined): string | null {
+  private normalizarCor(
+    cor: string | null | undefined,
+  ): string | null {
     const valor = cor?.trim();
 
     return valor && /^#[0-9a-f]{6}$/i.test(valor)

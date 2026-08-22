@@ -1,0 +1,439 @@
+<main
+  class="pagina-perfil tema-estudio"
+  [style.--studio-brand]="corPrevia()"
+  [style.--studio-on-brand]="corContrastePrevia()"
+>
+  <header class="cabecalho-pagina">
+    <div>
+      <p class="secao">IDENTIDADE DO ESTÚDIO</p>
+      <h1>Perfil</h1>
+      <p>
+        A marca que aparece no Fleiva e nos materiais compartilhados.
+      </p>
+    </div>
+
+    <div class="assinatura-fleiva" aria-label="Fleiva Studios">
+      <span aria-hidden="true"></span>
+      <strong>FLEIVA</strong>
+      <small>STUDIOS</small>
+    </div>
+  </header>
+
+  @if (dadosEstudio.carregando()) {
+    <section class="estado estado-carregando">
+      <span class="carregador" aria-hidden="true"></span>
+      <p>Carregando perfil...</p>
+    </section>
+  } @else if (dadosEstudio.erro()) {
+    <section class="estado estado-erro">
+      <span class="simbolo-estado" aria-hidden="true">!</span>
+      <h2>Não foi possível abrir o perfil</h2>
+      <p>{{ dadosEstudio.erro() }}</p>
+
+      <button
+        type="button"
+        class="botao-secundario"
+        (click)="carregarDados()"
+      >
+        Tentar novamente
+      </button>
+    </section>
+  } @else if (dadosEstudio.estudio(); as estudio) {
+    <section class="identidade">
+      <div class="marca-estudio">
+        <div class="logo-atual">
+          @if (dadosEstudio.logoUrl()) {
+            <img
+              [src]="dadosEstudio.logoUrl()"
+              [alt]="'Logo de ' + estudio.nome"
+            />
+          } @else {
+            <span>{{ inicialEstudio() }}</span>
+          }
+        </div>
+
+        <div class="identificacao">
+          <p>PERFIL ATIVO</p>
+          <h2>{{ estudio.nome }}</h2>
+          <span>{{ autenticacao.usuario()?.email }}</span>
+
+          <div class="estado-conta">
+            <span>{{ formatarPlano(estudio.status_plano) }}</span>
+            <i aria-hidden="true"></i>
+            <span>{{ estudio.modulos.length }} módulos</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="edicao-logo">
+        <div>
+          <strong>Logo do estúdio</strong>
+
+          @if (arquivoSelecionado(); as arquivo) {
+            <small>{{ arquivo.name }}</small>
+          } @else {
+            <small>JPG, PNG ou WebP de até 5 MB.</small>
+          }
+        </div>
+
+        <div class="acoes-logo">
+          <label class="seletor-arquivo">
+            <span>Escolher arquivo</span>
+
+            <input
+              #inputLogo
+              type="file"
+              accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+              (change)="selecionarLogo($event)"
+            />
+          </label>
+
+          <button
+            type="button"
+            class="botao-claro"
+            [disabled]="
+              !arquivoSelecionado() ||
+              enviandoLogo() ||
+              removendoLogo()
+            "
+            (click)="enviarLogo(inputLogo)"
+          >
+            @if (enviandoLogo()) {
+              Enviando...
+            } @else {
+              Atualizar logo
+            }
+          </button>
+
+          @if (estudio.logo_caminho) {
+            <button
+              type="button"
+              class="botao-remover-logo"
+              [disabled]="
+                removendoLogo() || enviandoLogo()
+              "
+              (click)="removerLogo()"
+            >
+              @if (removendoLogo()) {
+                Removendo...
+              } @else {
+                Remover
+              }
+            </button>
+          }
+        </div>
+      </div>
+    </section>
+
+    @if (erroOperacao()) {
+      <p class="retorno retorno-erro">
+        {{ erroOperacao() }}
+      </p>
+    }
+
+    @if (mensagemOperacao()) {
+      <p class="retorno retorno-sucesso">
+        {{ mensagemOperacao() }}
+      </p>
+    }
+
+    <section class="aparencia">
+      <header class="titulo-secao">
+        <div>
+          <p class="rotulo-menor">DIREÇÃO DE ARTE</p>
+          <h2>Cor do estúdio</h2>
+          <span>
+            Uma cor principal gera os tons usados pela interface.
+          </span>
+        </div>
+
+        <span class="codigo-cor">{{ corPrevia() }}</span>
+      </header>
+
+      <div class="conteudo-aparencia">
+        <form
+          class="formulario-cor"
+          [formGroup]="formularioCor"
+          (ngSubmit)="salvarCor()"
+        >
+          <div class="introducao-cor">
+            <span class="numero-etapa">01</span>
+            <h3>Escolha a cor da marca</h3>
+            <p>
+              Estados de sucesso, atenção e perigo continuam com
+              cores universais para não gerar confusão.
+            </p>
+          </div>
+
+          <label class="seletor-cor">
+            <input
+              type="color"
+              formControlName="cor_principal"
+              aria-label="Cor principal do estúdio"
+              (input)="selecionarCor($event)"
+            />
+
+            <span>
+              <strong>{{ corPrevia() }}</strong>
+              <small>Clique na amostra para alterar</small>
+            </span>
+          </label>
+
+          @if (
+            formularioCor.controls.cor_principal.touched &&
+            formularioCor.controls.cor_principal.invalid
+          ) {
+            <small class="erro-campo">
+              Selecione uma cor hexadecimal válida.
+            </small>
+          }
+
+          <div class="acoes-formulario">
+            @if (estudio.cor_principal) {
+              <button
+                type="button"
+                class="botao-secundario"
+                [disabled]="salvandoCor()"
+                (click)="restaurarCorPadrao()"
+              >
+                Restaurar padrão
+              </button>
+            }
+
+            <button
+              type="submit"
+              class="botao-principal"
+              [disabled]="salvandoCor()"
+            >
+              @if (salvandoCor()) {
+                Salvando...
+              } @else {
+                Aplicar identidade
+              }
+            </button>
+          </div>
+        </form>
+
+        <div class="previa-paleta">
+          <header class="faixa-previa">
+            <span>
+              <small>PRÉVIA DA MARCA</small>
+              <strong>{{ estudio.nome }}</strong>
+            </span>
+
+            <i aria-hidden="true"></i>
+          </header>
+
+          <div class="corpo-previa">
+            <div class="amostras">
+              <span class="amostra amostra-principal">
+                <i></i>
+                Principal
+              </span>
+
+              <span class="amostra amostra-suave">
+                <i></i>
+                Superfície
+              </span>
+
+              <span class="amostra amostra-borda">
+                <i></i>
+                Seleção
+              </span>
+
+              <span class="amostra amostra-escura">
+                <i></i>
+                Contraste
+              </span>
+            </div>
+
+            <div class="componente-previa">
+              <span class="marcador-previa"></span>
+
+              <span>
+                <strong>Item selecionado</strong>
+                <small>
+                  A identidade aparece nos destaques e ações.
+                </small>
+              </span>
+
+              <button type="button" tabindex="-1">
+                Ação
+              </button>
+            </div>
+
+            <div class="linha-decorativa" aria-hidden="true">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="grade-informacoes">
+      <section class="painel identificacao-painel">
+        <header class="titulo-painel">
+          <div>
+            <p>INFORMAÇÕES PÚBLICAS</p>
+            <h2>Nome do estúdio</h2>
+          </div>
+
+          <span aria-hidden="true">02</span>
+        </header>
+
+        <form
+          [formGroup]="formulario"
+          (ngSubmit)="salvarNome()"
+        >
+          <label class="campo-texto">
+            <span>Nome exibido</span>
+
+            <input
+              type="text"
+              formControlName="nome"
+              placeholder="Nome do estúdio"
+            />
+
+            @if (
+              formulario.controls.nome.touched &&
+              formulario.controls.nome.invalid
+            ) {
+              <small>Informe o nome do estúdio.</small>
+            }
+          </label>
+
+          <p class="ajuda-campo">
+            Aparece no menu, no perfil e nos links compartilhados.
+          </p>
+
+          <div class="acoes-formulario">
+            <button
+              type="submit"
+              class="botao-principal"
+              [disabled]="salvandoNome()"
+            >
+              @if (salvandoNome()) {
+                Salvando...
+              } @else {
+                Salvar nome
+              }
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section class="painel conta-painel">
+        <header class="titulo-painel">
+          <div>
+            <p>ASSINATURA</p>
+            <h2>Conta</h2>
+          </div>
+
+          <span aria-hidden="true">03</span>
+        </header>
+
+        <dl class="informacoes">
+          <div>
+            <dt>E-mail</dt>
+            <dd>{{ autenticacao.usuario()?.email }}</dd>
+          </div>
+
+          <div>
+            <dt>Plano</dt>
+            <dd>
+              <span class="plano">
+                {{ formatarPlano(estudio.status_plano) }}
+              </span>
+            </dd>
+          </div>
+
+          <div>
+            <dt>Endereço interno</dt>
+            <dd class="texto-mono">{{ estudio.slug }}</dd>
+          </div>
+        </dl>
+
+        <div class="modulos">
+          <span class="rotulo">Módulos disponíveis</span>
+
+          <div class="lista-modulos">
+            @for (modulo of estudio.modulos; track modulo) {
+              <span>{{ formatarModulo(modulo) }}</span>
+            }
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section class="painel armazenamento">
+      <header class="titulo-painel">
+        <div>
+          <p>ACERVO DIGITAL</p>
+          <h2>Armazenamento</h2>
+        </div>
+
+        <span aria-hidden="true">04</span>
+      </header>
+
+      @if (dadosVersoes.carregando()) {
+        <div class="estado estado-menor">
+          <span class="carregador" aria-hidden="true"></span>
+          <p>Calculando armazenamento...</p>
+        </div>
+      } @else if (dadosVersoes.erro()) {
+        <div class="estado estado-menor estado-erro">
+          <p>{{ dadosVersoes.erro() }}</p>
+
+          <button
+            type="button"
+            class="botao-secundario"
+            (click)="dadosVersoes.listar()"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      } @else {
+        <div class="cabecalho-armazenamento">
+          <div>
+            <strong>
+              {{ formatarBytes(dadosVersoes.usoBytes()) }}
+            </strong>
+            <span>utilizados</span>
+          </div>
+
+          <div>
+            <strong>
+              {{
+                formatarBytes(
+                  dadosVersoes.espacoDisponivelBytes()
+                )
+              }}
+            </strong>
+            <span>disponíveis</span>
+          </div>
+        </div>
+
+        <div
+          class="barra-armazenamento"
+          role="progressbar"
+          aria-label="Armazenamento utilizado"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          [attr.aria-valuenow]="percentualUso()"
+        >
+          <span [style.width.%]="percentualUso()"></span>
+        </div>
+
+        <div class="resumo-armazenamento">
+          <span>{{ percentualUso() }}% ocupado</span>
+          <span>
+            Limite de
+            {{ formatarBytes(dadosVersoes.limiteBytes()) }}
+          </span>
+        </div>
+      }
+    </section>
+  }
+</main>

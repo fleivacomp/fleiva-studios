@@ -1,26 +1,54 @@
 <main class="pagina">
-  <header class="cabecalho">
+  <header class="cabecalho-pagina">
     <div>
-      <p class="secao">CONFIGURAÇÕES</p>
+      <p class="secao">CATÁLOGO DE TRABALHO</p>
       <h1>Serviços</h1>
-      <p>Cadastre os serviços e as formas de cobrança do estúdio.</p>
+      <p>
+        O que o estúdio oferece, quanto custa e como é cobrado.
+      </p>
+    </div>
+
+    <div class="resumo-cabecalho">
+      <strong>{{ dadosServicos.servicos().length }}</strong>
+      <span>
+        @if (dadosServicos.servicos().length === 1) {
+          serviço disponível
+        } @else {
+          serviços disponíveis
+        }
+      </span>
     </div>
   </header>
 
   <section class="painel formulario-painel">
-    <div class="titulo-painel">
-      <h2>
-        @if (servicoEditandoId()) {
-          Editar serviço
-        } @else {
-          Novo serviço
-        }
-      </h2>
-    </div>
+    <header class="titulo-formulario">
+      <div>
+        <p class="rotulo-menor">
+          @if (servicoEditandoId()) {
+            EDITANDO SERVIÇO
+          } @else {
+            NOVO SERVIÇO
+          }
+        </p>
+
+        <h2>
+          @if (servicoEditandoId()) {
+            Ajustar serviço
+          } @else {
+            Adicionar ao catálogo
+          }
+        </h2>
+      </div>
+
+      <p>
+        A forma de cobrança é livre: hora, faixa, diária ou o que
+        funcionar para o estúdio.
+      </p>
+    </header>
 
     <form [formGroup]="formulario" (ngSubmit)="salvar()">
       <div class="campos">
-        <label>
+        <label class="campo-nome">
           <span>Nome</span>
 
           <input
@@ -40,13 +68,17 @@
         <label>
           <span>Preço</span>
 
-          <input
-            type="number"
-            formControlName="preco"
-            placeholder="0,00"
-            min="0"
-            step="0.01"
-          />
+          <div class="campo-preco">
+            <span>R$</span>
+
+            <input
+              type="number"
+              formControlName="preco"
+              placeholder="0,00"
+              min="0"
+              step="0.01"
+            />
+          </div>
 
           @if (
             formulario.controls.preco.touched &&
@@ -57,12 +89,12 @@
         </label>
 
         <label>
-          <span>Tipo de cobrança</span>
+          <span>Forma de cobrança</span>
 
           <input
             type="text"
             formControlName="tipo_cobranca"
-            placeholder="Ex.: hora, faixa, diária"
+            placeholder="Hora, faixa, diária..."
           />
 
           @if (
@@ -74,15 +106,19 @@
         </label>
 
         <label>
-          <span>Duração em minutos</span>
+          <span>Duração sugerida</span>
 
-          <input
-            type="number"
-            formControlName="duracao_minutos"
-            placeholder="Opcional"
-            min="1"
-            step="1"
-          />
+          <div class="campo-duracao">
+            <input
+              type="number"
+              formControlName="duracao_minutos"
+              placeholder="Opcional"
+              min="1"
+              step="1"
+            />
+
+            <span>min</span>
+          </div>
 
           @if (
             formulario.controls.duracao_minutos.touched &&
@@ -93,49 +129,65 @@
         </label>
       </div>
 
-      @if (erroFormulario()) {
-        <p class="erro">{{ erroFormulario() }}</p>
-      }
+      <div class="rodape-formulario">
+        <p>
+          A duração é apenas uma referência para o agendamento e
+          pode ficar vazia.
+        </p>
 
-      <div class="acoes-formulario">
-        @if (servicoEditandoId()) {
-          <button
-            type="button"
-            class="botao-secundario"
-            [disabled]="salvando()"
-            (click)="cancelarEdicao()"
-          >
-            Cancelar
-          </button>
-        }
-
-        <button
-          type="submit"
-          class="botao-principal"
-          [disabled]="salvando()"
-        >
-          @if (salvando()) {
-            Salvando...
-          } @else if (servicoEditandoId()) {
-            Salvar alterações
-          } @else {
-            Cadastrar serviço
+        <div class="acoes-formulario">
+          @if (servicoEditandoId()) {
+            <button
+              type="button"
+              class="botao-secundario"
+              [disabled]="salvando()"
+              (click)="cancelarEdicao()"
+            >
+              Cancelar
+            </button>
           }
-        </button>
+
+          <button
+            type="submit"
+            class="botao-principal"
+            [disabled]="salvando()"
+          >
+            @if (salvando()) {
+              Salvando...
+            } @else if (servicoEditandoId()) {
+              Salvar alterações
+            } @else {
+              Adicionar serviço
+            }
+          </button>
+        </div>
       </div>
+
+      @if (erroFormulario()) {
+        <p class="mensagem-erro">{{ erroFormulario() }}</p>
+      }
     </form>
   </section>
 
-  <section class="painel">
-    <div class="titulo-painel">
-      <h2>Serviços cadastrados</h2>
+  <section class="catalogo-servicos">
+    <header class="titulo-catalogo">
+      <div>
+        <p class="rotulo-menor">TABELA DO ESTÚDIO</p>
+        <h2>Serviços disponíveis</h2>
+      </div>
+
       <span>{{ dadosServicos.servicos().length }}</span>
-    </div>
+    </header>
 
     @if (dadosServicos.carregando()) {
-      <p class="estado">Carregando serviços...</p>
+      <div class="estado">
+        <span class="carregador" aria-hidden="true"></span>
+        <p>Carregando serviços...</p>
+      </div>
     } @else if (dadosServicos.erro()) {
-      <div class="estado erro">
+      <div class="estado estado-erro">
+        <span class="simbolo-estado" aria-hidden="true">!</span>
+        <h3>Não foi possível abrir os serviços</h3>
         <p>{{ dadosServicos.erro() }}</p>
 
         <button
@@ -147,29 +199,42 @@
         </button>
       </div>
     } @else if (dadosServicos.servicos().length === 0) {
-      <p class="estado">Nenhum serviço cadastrado.</p>
+      <div class="estado estado-vazio">
+        <span class="simbolo-vazio" aria-hidden="true">R$</span>
+        <h3>O catálogo ainda está vazio.</h3>
+        <p>
+          Cadastre o primeiro serviço para usá-lo nos agendamentos
+          e acertos.
+        </p>
+      </div>
     } @else {
       <div class="lista">
         @for (
           servico of dadosServicos.servicos();
-          track servico.id
+          track servico.id;
+          let indice = $index
         ) {
           <article class="servico">
-            <div class="dados-servico">
-              <div>
-                <h3>{{ servico.nome }}</h3>
-                <p>
-                  {{ formatarPreco(servico.preco) }}
-                  <span>/ {{ servico.tipo_cobranca }}</span>
-                </p>
-              </div>
+            <header class="cabecalho-servico">
+              <span class="numero-servico">
+                {{ indice + 1 }}
+              </span>
 
               <span class="duracao">
                 {{ formatarDuracao(servico.duracao_minutos) }}
               </span>
+            </header>
+
+            <div class="dados-servico">
+              <h3>{{ servico.nome }}</h3>
+
+              <div class="preco-servico">
+                <strong>{{ formatarPreco(servico.preco) }}</strong>
+                <span>/ {{ servico.tipo_cobranca }}</span>
+              </div>
             </div>
 
-            <div class="acoes-servico">
+            <footer class="acoes-servico">
               <button
                 type="button"
                 class="botao-secundario"
@@ -190,7 +255,7 @@
                   Excluir
                 }
               </button>
-            </div>
+            </footer>
           </article>
         }
       </div>

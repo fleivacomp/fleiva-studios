@@ -1,0 +1,711 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #0b0c0b;
+  color: #f2f4f1;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.pagina-publica {
+  --studio-accent: #1ed760;
+  --studio-on-accent: #111311;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: clamp(1rem, 3vw, 2.25rem);
+  background:
+    radial-gradient(
+      circle at 78% 4%,
+      color-mix(in oklab, var(--studio-accent) 20%, transparent),
+      transparent 28rem
+    ),
+    linear-gradient(145deg, #151715, #090a09 68%);
+}
+
+button,
+audio {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+button:focus-visible,
+audio:focus-visible {
+  outline: 0.15rem solid var(--studio-accent);
+  outline-offset: 0.15rem;
+}
+
+.topo-publico,
+.apresentacao-album,
+.conteudo-album,
+.player-atual,
+.rodape-publico {
+  width: min(100%, 76rem);
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.topo-publico {
+  display: flex;
+  min-height: 3.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: clamp(2.5rem, 7vh, 5rem);
+}
+
+.identidade-estudio {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.75rem;
+
+  > span:last-child {
+    display: grid;
+    min-width: 0;
+    gap: 0.15rem;
+  }
+
+  strong,
+  small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  strong {
+    font-size: 0.78rem;
+    font-weight: 720;
+  }
+
+  small {
+    color: #8f958f;
+    font-size: 0.6rem;
+  }
+}
+
+.logo-estudio {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: hidden;
+  background: var(--studio-accent);
+  color: var(--studio-on-accent);
+  border-radius: 0.2rem;
+  font-size: 1rem;
+  font-weight: 800;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.selo-privado {
+  padding: 0.32rem 0.48rem;
+  color: #9ca19c;
+  border: 0.0625rem solid #3b3e3b;
+  border-radius: 0.18rem;
+  font-size: 0.54rem;
+  font-weight: 740;
+  letter-spacing: 0.1em;
+}
+
+.apresentacao-album {
+  display: grid;
+  grid-template-columns: minmax(15rem, 25rem) minmax(0, 1fr);
+  align-items: end;
+  gap: clamp(2rem, 6vw, 5.5rem);
+}
+
+.capa-album {
+  position: relative;
+  display: grid;
+  width: 100%;
+  aspect-ratio: 1;
+  place-items: center;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    linear-gradient(
+      135deg,
+      transparent 0 48%,
+      rgb(255 255 255 / 16%) 48% 50%,
+      transparent 50%
+    ),
+    linear-gradient(
+      145deg,
+      color-mix(in oklab, var(--studio-accent) 35%, #252825),
+      var(--studio-accent)
+    );
+  color: var(--studio-on-accent);
+  border: 0.0625rem solid rgb(255 255 255 / 13%);
+  border-radius: 0.18rem;
+  box-shadow:
+    0 0 0 0.0625rem rgb(0 0 0 / 55%),
+    0 2.2rem 5rem rgb(0 0 0 / 42%);
+
+  &::before {
+    position: absolute;
+    z-index: -1;
+    width: 52%;
+    height: 52%;
+    border: 0.0625rem solid currentColor;
+    content: '';
+    opacity: 0.18;
+    transform: rotate(45deg);
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  > strong {
+    font-size: clamp(2.5rem, 8vw, 5rem);
+    font-weight: 800;
+    letter-spacing: -0.08em;
+  }
+
+  > small {
+    position: absolute;
+    right: 1rem;
+    bottom: 0.9rem;
+    left: 1rem;
+    overflow: hidden;
+    font-size: 0.58rem;
+    font-weight: 760;
+    letter-spacing: 0.11em;
+    text-align: center;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+}
+
+.identificacao-album {
+  min-width: 0;
+  padding-bottom: 0.35rem;
+
+  h1 {
+    max-width: 13ch;
+    margin: 0.7rem 0 0;
+    overflow-wrap: anywhere;
+    font-size: clamp(3rem, 8vw, 6.5rem);
+    font-weight: 760;
+    line-height: 0.84;
+    letter-spacing: -0.075em;
+  }
+
+  h2 {
+    margin: 1rem 0 0;
+    color: #c6cac6;
+    font-size: 0.9rem;
+    font-weight: 620;
+  }
+}
+
+.rotulo {
+  margin: 0;
+  color: #858b85;
+  font-size: 0.56rem;
+  font-weight: 760;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.resumo-album {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 0.75rem;
+  color: #7f847f;
+  font-size: 0.62rem;
+
+  i {
+    width: 0.18rem;
+    height: 0.18rem;
+    background: #646964;
+    border-radius: 999rem;
+  }
+}
+
+.observacoes-album {
+  max-width: 45rem;
+  margin: 1.25rem 0 0;
+  color: #a7aca7;
+  font-size: 0.74rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.botao-ouvir-album,
+.botao-secundario {
+  min-height: 2.75rem;
+  padding: 0.62rem 1rem;
+  border-radius: 0.22rem;
+  font-size: 0.68rem;
+  font-weight: 740;
+}
+
+.botao-ouvir-album {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 1.5rem;
+  background: var(--studio-accent);
+  color: var(--studio-on-accent);
+  border: 0.0625rem solid var(--studio-accent);
+
+  &:hover:not(:disabled) {
+    filter: brightness(0.95) saturate(1.08);
+  }
+}
+
+.conteudo-album {
+  margin-top: clamp(2.5rem, 7vh, 5rem);
+  overflow: hidden;
+  background: rgb(17 19 17 / 72%);
+  border: 0.0625rem solid #303330;
+  border-radius: 0.25rem;
+  backdrop-filter: blur(0.8rem);
+}
+
+.cabecalho-lista,
+.lista-faixas li {
+  display: grid;
+  grid-template-columns: 3rem minmax(12rem, 1fr) minmax(9rem, 17rem) 2.5rem;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.cabecalho-lista {
+  min-height: 2.6rem;
+  padding: 0 1rem;
+  color: #666b66;
+  border-bottom: 0.0625rem solid #303330;
+  font-size: 0.53rem;
+  font-weight: 720;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.lista-faixas {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    min-height: 4.6rem;
+    padding: 0.65rem 1rem;
+    border-bottom: 0.0625rem solid #292c29;
+    transition: background-color 130ms ease;
+
+    &:last-child {
+      border-bottom: 0;
+    }
+
+    &:hover,
+    &.faixa-ativa {
+      background: rgb(255 255 255 / 4.5%);
+    }
+  }
+}
+
+.botao-reproduzir {
+  display: grid;
+  width: 2.3rem;
+  height: 2.3rem;
+  place-items: center;
+  padding: 0;
+  background: transparent;
+  color: #767b76;
+  border: 0;
+  border-radius: 999rem;
+}
+
+.icone-reproduzir {
+  display: none;
+  color: var(--studio-accent);
+  font-size: 0.65rem;
+}
+
+.lista-faixas li:hover .numero-faixa,
+.faixa-ativa .numero-faixa {
+  display: none;
+}
+
+.lista-faixas li:hover .icone-reproduzir,
+.faixa-ativa .icone-reproduzir {
+  display: inline;
+}
+
+.numero-faixa {
+  font-size: 0.66rem;
+}
+
+.identificacao-faixa,
+.metadados-faixa {
+  display: grid;
+  min-width: 0;
+  gap: 0.22rem;
+}
+
+.identificacao-faixa {
+  strong {
+    overflow: hidden;
+    font-size: 0.8rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  > span {
+    color: color-mix(
+      in srgb,
+      var(--studio-accent) 58%,
+      #c4c8c4
+    );
+    font-size: 0.6rem;
+  }
+
+  p {
+    max-width: 60ch;
+    margin: 0.18rem 0 0;
+    overflow: hidden;
+    color: #747974;
+    font-size: 0.58rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.metadados-faixa {
+  span {
+    overflow: hidden;
+    color: #8b908b;
+    font-size: 0.62rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  small {
+    color: #616661;
+    font-size: 0.55rem;
+  }
+}
+
+.botao-download {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  padding: 0;
+  background: transparent;
+  color: #9da29d;
+  border: 0.0625rem solid #3b3f3b;
+  border-radius: 999rem;
+  font-size: 0.85rem;
+
+  &:hover:not(:disabled) {
+    background: var(--studio-accent);
+    color: var(--studio-on-accent);
+    border-color: var(--studio-accent);
+  }
+}
+
+.mensagem-erro {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  color: #ff7770;
+  border-top: 0.0625rem solid #303330;
+  font-size: 0.66rem;
+}
+
+.album-vazio {
+  display: grid;
+  min-height: 11rem;
+  place-content: center;
+  justify-items: center;
+  color: #727772;
+
+  > span {
+    font-size: 1.4rem;
+  }
+
+  p {
+    margin: 0.5rem 0 0;
+    font-size: 0.72rem;
+  }
+}
+
+.player-atual {
+  position: sticky;
+  z-index: 10;
+  bottom: 1rem;
+  display: grid;
+  grid-template-columns: minmax(10rem, 0.8fr) minmax(18rem, 1.5fr);
+  align-items: center;
+  gap: 1.25rem;
+  box-sizing: border-box;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: rgb(24 27 24 / 94%);
+  border: 0.0625rem solid #3a3e3a;
+  border-radius: 0.3rem;
+  box-shadow: 0 1.25rem 3rem rgb(0 0 0 / 45%);
+  backdrop-filter: blur(1rem);
+}
+
+.faixa-player {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.7rem;
+
+  > span:last-child {
+    display: grid;
+    min-width: 0;
+    gap: 0.2rem;
+  }
+
+  strong,
+  small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  strong {
+    font-size: 0.72rem;
+  }
+
+  small {
+    color: #898e89;
+    font-size: 0.58rem;
+  }
+}
+
+.miniatura-player {
+  display: grid;
+  width: 2.9rem;
+  height: 2.9rem;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: hidden;
+  background: var(--studio-accent);
+  color: var(--studio-on-accent);
+  font-size: 0.7rem;
+  font-weight: 780;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.controle-player {
+  min-width: 0;
+
+  audio {
+    display: block;
+    width: 100%;
+    height: 2.7rem;
+    accent-color: var(--studio-accent);
+  }
+
+  p {
+    margin: 0.4rem 0 0;
+    color: #ff7770;
+    font-size: 0.58rem;
+  }
+}
+
+.rodape-publico {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: clamp(3rem, 8vh, 6rem);
+  padding-top: 1rem;
+  color: #686d68;
+  border-top: 0.0625rem solid #292c29;
+
+  span {
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.58rem;
+  }
+}
+
+.estado-pagina {
+  display: grid;
+  width: min(100%, 34rem);
+  min-height: calc(100vh - 4rem);
+  place-content: center;
+  justify-items: center;
+  gap: 0.8rem;
+  box-sizing: border-box;
+  margin: 0 auto;
+  text-align: center;
+
+  h1 {
+    margin: 0;
+    font-size: clamp(2rem, 8vw, 3.5rem);
+    line-height: 0.95;
+    letter-spacing: -0.05em;
+  }
+
+  > p:not(.rotulo) {
+    max-width: 28rem;
+    margin: 0;
+    color: #9ba09b;
+    line-height: 1.5;
+  }
+}
+
+.marca-fleiva {
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  margin-bottom: 0.5rem;
+  background: var(--studio-accent);
+  color: var(--studio-on-accent);
+  border-radius: 0.2rem;
+  font-weight: 800;
+}
+
+.botao-secundario {
+  margin-top: 0.5rem;
+  background: transparent;
+  color: #f4f5f1;
+  border: 0.0625rem solid #444844;
+
+  &:hover {
+    background: #202320;
+  }
+}
+
+.carregador {
+  display: block;
+  width: 1.2rem;
+  height: 1.2rem;
+  box-sizing: border-box;
+  border: 0.13rem solid #464a46;
+  border-top-color: var(--studio-accent);
+  border-radius: 999rem;
+  animation: girar 650ms linear infinite;
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carregador {
+    animation: none;
+  }
+}
+
+@media (max-width: 52rem) {
+  .apresentacao-album {
+    grid-template-columns: minmax(10rem, 17rem) minmax(0, 1fr);
+    gap: 2rem;
+  }
+
+  .identificacao-album h1 {
+    font-size: clamp(2.5rem, 8vw, 4.5rem);
+  }
+
+  .cabecalho-lista,
+  .lista-faixas li {
+    grid-template-columns: 2.7rem minmax(9rem, 1fr) 2.5rem;
+  }
+
+  .cabecalho-lista span:nth-child(3),
+  .metadados-faixa {
+    display: none;
+  }
+}
+
+@media (max-width: 38rem) {
+  .pagina-publica {
+    padding: 1rem;
+  }
+
+  .topo-publico {
+    margin-bottom: 2rem;
+  }
+
+  .selo-privado {
+    display: none;
+  }
+
+  .apresentacao-album {
+    grid-template-columns: 1fr;
+  }
+
+  .capa-album {
+    width: min(78vw, 20rem);
+  }
+
+  .identificacao-album h1 {
+    max-width: none;
+    font-size: clamp(2.7rem, 14vw, 4.5rem);
+  }
+
+  .conteudo-album {
+    margin-top: 2.5rem;
+  }
+
+  .cabecalho-lista {
+    display: none;
+  }
+
+  .lista-faixas li {
+    grid-template-columns: 2.5rem minmax(0, 1fr) 2.4rem;
+    gap: 0.55rem;
+    padding: 0.75rem;
+  }
+
+  .player-atual {
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+
+  .miniatura-player {
+    width: 2.4rem;
+    height: 2.4rem;
+  }
+
+  .rodape-publico {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

@@ -1,18 +1,50 @@
 <main class="pagina">
-  <header class="cabecalho">
-    <p class="secao">CADASTROS</p>
-    <h1>Contatos</h1>
-    <p>Pessoas vinculadas ao estúdio.</p>
+  <header class="cabecalho-pagina">
+    <div>
+      <p class="secao">REDE DO ESTÚDIO</p>
+      <h1>Contatos</h1>
+      <p>
+        Artistas, clientes e pessoas que fazem parte do trabalho.
+      </p>
+    </div>
+
+    <div class="resumo-cabecalho">
+      <strong>{{ dadosContatos.contatos().length }}</strong>
+      <span>
+        @if (dadosContatos.contatos().length === 1) {
+          pessoa cadastrada
+        } @else {
+          pessoas cadastradas
+        }
+      </span>
+    </div>
   </header>
 
   <section class="painel formulario-painel">
-    <h2>
-      @if (contatoEditandoId()) {
-        Editar contato
-      } @else {
-        Novo contato
-      }
-    </h2>
+    <header class="titulo-formulario">
+      <div>
+        <p class="rotulo-menor">
+          @if (contatoEditandoId()) {
+            EDITANDO CONTATO
+          } @else {
+            CADASTRO RÁPIDO
+          }
+        </p>
+
+        <h2>
+          @if (contatoEditandoId()) {
+            Ajustar informações
+          } @else {
+            Adicionar uma pessoa
+          }
+        </h2>
+      </div>
+
+      <p>
+        Somente o nome é obrigatório. Complete o restante quando
+        fizer sentido.
+      </p>
+    </header>
 
     <form [formGroup]="formulario" (ngSubmit)="salvar()">
       <div class="campos">
@@ -22,7 +54,7 @@
           <input
             type="text"
             formControlName="nome"
-            placeholder="Nome do contato"
+            placeholder="Nome da pessoa"
           />
 
           @if (
@@ -39,7 +71,7 @@
           <input
             type="tel"
             formControlName="telefone"
-            placeholder="Opcional"
+            placeholder="WhatsApp ou telefone"
           />
         </label>
 
@@ -49,7 +81,7 @@
           <input
             type="email"
             formControlName="email"
-            placeholder="Opcional"
+            placeholder="nome@exemplo.com"
           />
 
           @if (
@@ -59,56 +91,73 @@
             <small>Informe um e-mail válido.</small>
           }
         </label>
+      </div>
 
+      <div class="rodape-formulario">
         <label class="campo-marcacao">
           <input type="checkbox" formControlName="e_cliente" />
-          <span>Pode assumir o pagamento de um serviço</span>
+
+          <span>
+            <strong>Cliente</strong>
+            <small>
+              Permite vincular cobranças e acertos a este contato.
+            </small>
+          </span>
         </label>
+
+        <div class="acoes">
+          @if (contatoEditandoId()) {
+            <button
+              type="button"
+              class="secundario"
+              [disabled]="salvando()"
+              (click)="cancelarEdicao()"
+            >
+              Cancelar
+            </button>
+          }
+
+          <button
+            type="submit"
+            class="primario"
+            [disabled]="salvando()"
+          >
+            @if (salvando()) {
+              Salvando...
+            } @else if (contatoEditandoId()) {
+              Salvar alterações
+            } @else {
+              Adicionar contato
+            }
+          </button>
+        </div>
       </div>
 
       @if (erroFormulario()) {
-        <p class="erro">{{ erroFormulario() }}</p>
+        <p class="mensagem-erro">{{ erroFormulario() }}</p>
       }
-
-      <div class="acoes">
-        @if (contatoEditandoId()) {
-          <button
-            type="button"
-            class="secundario"
-            [disabled]="salvando()"
-            (click)="cancelarEdicao()"
-          >
-            Cancelar
-          </button>
-        }
-
-        <button
-          type="submit"
-          class="primario"
-          [disabled]="salvando()"
-        >
-          @if (salvando()) {
-            Salvando...
-          } @else if (contatoEditandoId()) {
-            Salvar alterações
-          } @else {
-            Cadastrar contato
-          }
-        </button>
-      </div>
     </form>
   </section>
 
-  <section class="painel">
-    <div class="titulo-lista">
-      <h2>Contatos cadastrados</h2>
+  <section class="catalogo-contatos">
+    <header class="titulo-lista">
+      <div>
+        <p class="rotulo-menor">AGENDA DE CONTATOS</p>
+        <h2>Pessoas do estúdio</h2>
+      </div>
+
       <span>{{ dadosContatos.contatos().length }}</span>
-    </div>
+    </header>
 
     @if (dadosContatos.carregando()) {
-      <p class="estado">Carregando contatos...</p>
+      <div class="estado">
+        <span class="carregador" aria-hidden="true"></span>
+        <p>Carregando contatos...</p>
+      </div>
     } @else if (dadosContatos.erro()) {
-      <div class="estado erro">
+      <div class="estado estado-erro">
+        <span class="simbolo-estado" aria-hidden="true">!</span>
+        <h3>Não foi possível abrir os contatos</h3>
         <p>{{ dadosContatos.erro() }}</p>
 
         <button
@@ -120,7 +169,14 @@
         </button>
       </div>
     } @else if (dadosContatos.contatos().length === 0) {
-      <p class="estado">Nenhum contato cadastrado.</p>
+      <div class="estado estado-vazio">
+        <span class="avatar-vazio" aria-hidden="true">＋</span>
+        <h3>Sua rede começa aqui.</h3>
+        <p>
+          Cadastre a primeira pessoa para usar na agenda, nos
+          projetos e nos acertos.
+        </p>
+      </div>
     } @else {
       <div class="lista">
         @for (
@@ -128,23 +184,53 @@
           track contato.id
         ) {
           <article class="contato">
-            <div>
+            <div class="identidade-contato">
+              <span class="avatar-contato" aria-hidden="true">
+                {{ contato.nome.charAt(0) }}
+              </span>
+
               <div class="nome">
                 <h3>{{ contato.nome }}</h3>
 
                 @if (contato.e_cliente) {
                   <span>Cliente</span>
+                } @else {
+                  <span class="contato-simples">Contato</span>
                 }
               </div>
-
-              <p>
-                {{ contato.telefone || 'Sem telefone' }}
-                ·
-                {{ contato.email || 'Sem e-mail' }}
-              </p>
             </div>
 
-            <div class="acoes">
+            <div class="informacoes-contato">
+              @if (contato.telefone) {
+                <a [href]="'tel:' + contato.telefone">
+                  <span>TELEFONE</span>
+                  <strong>{{ contato.telefone }}</strong>
+                </a>
+              } @else {
+                <div>
+                  <span>TELEFONE</span>
+                  <strong class="informacao-ausente">
+                    Não informado
+                  </strong>
+                </div>
+              }
+
+              @if (contato.email) {
+                <a [href]="'mailto:' + contato.email">
+                  <span>E-MAIL</span>
+                  <strong>{{ contato.email }}</strong>
+                </a>
+              } @else {
+                <div>
+                  <span>E-MAIL</span>
+                  <strong class="informacao-ausente">
+                    Não informado
+                  </strong>
+                </div>
+              }
+            </div>
+
+            <div class="acoes acoes-contato">
               <button
                 type="button"
                 class="secundario"

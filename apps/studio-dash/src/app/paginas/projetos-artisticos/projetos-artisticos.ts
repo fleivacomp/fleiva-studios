@@ -29,11 +29,12 @@ export class ProjetosArtisticos implements OnInit {
   readonly projetoEditandoId = signal<string | null>(null);
   readonly projetoMembroId = signal<string | null>(null);
   readonly membroEditandoId = signal<string | null>(null);
-
   readonly salvandoProjeto = signal(false);
   readonly salvandoMembro = signal(false);
   readonly excluindoProjetoId = signal<string | null>(null);
   readonly excluindoMembroId = signal<string | null>(null);
+  readonly enviandoCapaId = signal<string | null>(null);
+  readonly removendoCapaId = signal<string | null>(null);
   readonly erroOperacao = signal<string | null>(null);
 
   readonly formularioProjeto = this.construtorFormulario.group({
@@ -111,10 +112,12 @@ export class ProjetosArtisticos implements OnInit {
       tipo: projeto.tipo,
     });
 
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    });
+    document
+      .getElementById('formulario-projeto')
+      ?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
   }
 
   cancelarEdicaoProjeto(): void {
@@ -149,6 +152,60 @@ export class ProjetosArtisticos implements OnInit {
       this.erroOperacao.set(this.obterMensagemErro(erro));
     } finally {
       this.excluindoProjetoId.set(null);
+    }
+  }
+
+  async enviarCapa(
+    projeto: ProjetoArtisticoCompleto,
+    evento: Event,
+  ): Promise<void> {
+    const input = evento.target as HTMLInputElement;
+    const arquivo = input.files?.item(0) ?? null;
+
+    if (!arquivo) {
+      return;
+    }
+
+    this.enviandoCapaId.set(projeto.id);
+    this.erroOperacao.set(null);
+
+    try {
+      await this.dadosProjetos.enviarCapa(
+        projeto.id,
+        arquivo,
+      );
+    } catch (erro) {
+      this.erroOperacao.set(this.obterMensagemErro(erro));
+    } finally {
+      input.value = '';
+      this.enviandoCapaId.set(null);
+    }
+  }
+
+  async removerCapa(
+    projeto: ProjetoArtisticoCompleto,
+  ): Promise<void> {
+    if (!projeto.capa_caminho) {
+      return;
+    }
+
+    const confirmou = window.confirm(
+      `Remover a capa de "${projeto.nome}"?`,
+    );
+
+    if (!confirmou) {
+      return;
+    }
+
+    this.removendoCapaId.set(projeto.id);
+    this.erroOperacao.set(null);
+
+    try {
+      await this.dadosProjetos.removerCapa(projeto.id);
+    } catch (erro) {
+      this.erroOperacao.set(this.obterMensagemErro(erro));
+    } finally {
+      this.removendoCapaId.set(null);
     }
   }
 

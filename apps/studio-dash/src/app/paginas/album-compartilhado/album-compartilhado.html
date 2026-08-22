@@ -1,0 +1,215 @@
+<main
+  class="pagina-publica"
+  [style.--studio-accent]="corPrincipal()"
+  [style.--studio-on-accent]="corSobrePrincipal()"
+>
+  @if (dados.carregando()) {
+    <section class="estado-pagina">
+      <span class="carregador" aria-hidden="true"></span>
+      <p>Preparando álbum...</p>
+    </section>
+  } @else if (erroLocal() || dados.erro()) {
+    <section class="estado-pagina estado-erro">
+      <div class="marca-fleiva">F</div>
+      <p class="rotulo">ÁLBUM COMPARTILHADO</p>
+      <h1>Álbum indisponível</h1>
+      <p>{{ erroLocal() || dados.erro() }}</p>
+
+      @if (token()) {
+        <button
+          type="button"
+          class="botao-secundario"
+          (click)="recarregar()"
+        >
+          Tentar novamente
+        </button>
+      }
+    </section>
+  } @else if (dados.album(); as album) {
+    <header class="topo-publico">
+      <div class="identidade-estudio">
+        <span class="logo-estudio">
+          @if (album.estudio.logo_url) {
+            <img
+              [src]="album.estudio.logo_url"
+              [alt]="'Logo de ' + album.estudio.nome"
+            />
+          } @else {
+            {{ inicialEstudio() }}
+          }
+        </span>
+
+        <span>
+          <strong>{{ album.estudio.nome }}</strong>
+          <small>Compartilhado pelo Fleiva</small>
+        </span>
+      </div>
+
+      <span class="selo-privado">LINK PRIVADO</span>
+    </header>
+
+    <section class="apresentacao-album">
+      <div class="capa-album">
+        @if (album.capa_url) {
+          <img
+            [src]="album.capa_url"
+            [alt]="'Capa de ' + album.projeto"
+          />
+        } @else {
+          <strong>{{ iniciaisProjeto() }}</strong>
+          <small>{{ album.projeto }}</small>
+        }
+      </div>
+
+      <div class="identificacao-album">
+        <p class="rotulo">ÁLBUM</p>
+        <h1>{{ album.nome }}</h1>
+        <h2>{{ album.projeto }}</h2>
+
+        <div class="resumo-album">
+          <span>
+            {{ rotuloQuantidadeFaixas(album.faixas.length) }}
+          </span>
+          <i aria-hidden="true"></i>
+          <span>Versões privadas</span>
+        </div>
+
+        @if (album.observacoes) {
+          <p class="observacoes-album">
+            {{ album.observacoes }}
+          </p>
+        }
+
+        @if (primeiraFaixaReproduzivel(); as primeiraFaixa) {
+          <button
+            type="button"
+            class="botao-ouvir-album"
+            (click)="reproduzir(primeiraFaixa)"
+          >
+            <span aria-hidden="true">▶</span>
+            Ouvir do início
+          </button>
+        }
+      </div>
+    </section>
+
+    <section class="conteudo-album">
+      <header class="cabecalho-lista" aria-hidden="true">
+        <span>#</span>
+        <span>Faixa</span>
+        <span>Arquivo</span>
+        <span></span>
+      </header>
+
+      @if (album.faixas.length === 0) {
+        <div class="album-vazio">
+          <span aria-hidden="true">♪</span>
+          <p>Este álbum ainda não possui faixas disponíveis.</p>
+        </div>
+      } @else {
+        <ol class="lista-faixas">
+          @for (faixa of album.faixas; track faixa.item_id) {
+            <li
+              [class.faixa-ativa]="
+                faixaAtivaId() === faixa.item_id
+              "
+            >
+              <button
+                type="button"
+                class="botao-reproduzir"
+                [disabled]="!podeReproduzir(faixa)"
+                [attr.aria-label]="'Ouvir ' + faixa.faixa"
+                (click)="reproduzir(faixa)"
+              >
+                <span class="numero-faixa">
+                  {{ formatarOrdem(faixa.ordem) }}
+                </span>
+                <span class="icone-reproduzir" aria-hidden="true">
+                  ▶
+                </span>
+              </button>
+
+              <div class="identificacao-faixa">
+                <strong>{{ faixa.faixa }}</strong>
+                <span>{{ faixa.versao }}</span>
+
+                @if (faixa.observacoes) {
+                  <p>{{ faixa.observacoes }}</p>
+                }
+              </div>
+
+              <div class="metadados-faixa">
+                <span>{{ faixa.nome_arquivo }}</span>
+                <small>
+                  {{ formatarBytes(faixa.tamanho_bytes) }}
+                </small>
+              </div>
+
+              <button
+                type="button"
+                class="botao-download"
+                [disabled]="baixandoFaixaId() !== null"
+                [attr.aria-label]="'Baixar ' + faixa.faixa"
+                (click)="baixar(faixa)"
+              >
+                @if (baixandoFaixaId() === faixa.item_id) {
+                  ...
+                } @else {
+                  ↓
+                }
+              </button>
+            </li>
+          }
+        </ol>
+      }
+
+      @if (erroDownload()) {
+        <p class="mensagem-erro">
+          {{ erroDownload() }}
+        </p>
+      }
+    </section>
+
+    @if (faixaAtiva(); as faixa) {
+      <section class="player-atual">
+        <div class="faixa-player">
+          <span class="miniatura-player">
+            @if (album.capa_url) {
+              <img
+                [src]="album.capa_url"
+                alt=""
+              />
+            } @else {
+              {{ iniciaisProjeto() }}
+            }
+          </span>
+
+          <span>
+            <strong>{{ faixa.faixa }}</strong>
+            <small>{{ faixa.versao }}</small>
+          </span>
+        </div>
+
+        <div class="controle-player">
+          <audio
+            controls
+            autoplay
+            preload="metadata"
+            [src]="faixa.reproducao_url"
+            (ended)="reproduzirProxima()"
+            (error)="registrarErroReproducao()"
+          ></audio>
+
+          @if (erroReproducao()) {
+            <p>{{ erroReproducao() }}</p>
+          }
+        </div>
+      </section>
+    }
+
+    <footer class="rodape-publico">
+      <span>FLEIVA STUDIOS</span>
+      <p>Arquivos profissionais, organizados em um só lugar.</p>
+    </footer>
+  }
+</main>

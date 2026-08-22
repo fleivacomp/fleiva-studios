@@ -1,8 +1,6 @@
 import { Routes } from '@angular/router';
 
-import {
-  exigirAutenticacao,
-} from '@fleiva-studios/shared-data-access';
+import { exigirAutenticacao } from '@fleiva-studios/shared-data-access';
 
 export const rotasAplicacao: Routes = [
   {
@@ -19,6 +17,15 @@ export const rotasAplicacao: Routes = [
         './paginas/arquivo-compartilhado/arquivo-compartilhado'
       ).then(
         (modulo) => modulo.ArquivoCompartilhado,
+      ),
+  },
+  {
+    path: 'album/:token',
+    loadComponent: () =>
+      import(
+        './paginas/album-compartilhado/album-compartilhado'
+      ).then(
+        (modulo) => modulo.AlbumCompartilhado,
       ),
   },
   {
@@ -48,9 +55,7 @@ export const rotasAplicacao: Routes = [
       {
         path: 'contatos',
         loadComponent: () =>
-          import(
-            './paginas/contatos/contatos'
-          ).then(
+          import('./paginas/contatos/contatos').then(
             (modulo) => modulo.Contatos,
           ),
       },
@@ -60,35 +65,42 @@ export const rotasAplicacao: Routes = [
           import(
             './paginas/projetos-artisticos/projetos-artisticos'
           ).then(
-            (modulo) =>
-              modulo.ProjetosArtisticos,
-          ),
-      },
-      {
-        path: 'faixas',
-        loadComponent: () =>
-          import(
-            './paginas/faixas/faixas'
-          ).then(
-            (modulo) => modulo.Faixas,
+            (modulo) => modulo.ProjetosArtisticos,
           ),
       },
       {
         path: 'servicos',
         loadComponent: () =>
-          import(
-            './paginas/servicos/servicos'
-          ).then(
+          import('./paginas/servicos/servicos').then(
             (modulo) => modulo.Servicos,
+          ),
+      },
+      {
+        path: 'faixas',
+        loadComponent: () =>
+          import('./paginas/faixas/faixas').then(
+            (modulo) => modulo.Faixas,
+          ),
+      },
+      {
+        path: 'albuns',
+        loadComponent: () =>
+          import('./paginas/albuns/albuns').then(
+            (modulo) => modulo.Albuns,
           ),
       },
       {
         path: 'acertos',
         loadComponent: () =>
-          import(
-            './paginas/acertos/acertos'
-          ).then(
+          import('./paginas/acertos/acertos').then(
             (modulo) => modulo.Acertos,
+          ),
+      },
+      {
+        path: 'perfil',
+        loadComponent: () =>
+          import('./paginas/perfil/perfil').then(
+            (modulo) => modulo.Perfil,
           ),
       },
     ],

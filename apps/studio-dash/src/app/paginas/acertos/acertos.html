@@ -45,17 +45,19 @@
     </article>
   </section>
 
-  @if (mensagemPagina()) {
-    <p class="mensagem-sucesso">
-      {{ mensagemPagina() }}
-    </p>
-  }
+  <div class="retornos-pagina">
+    @if (mensagemPagina()) {
+      <p class="mensagem-sucesso">
+        {{ mensagemPagina() }}
+      </p>
+    }
 
-  @if (erroPagina()) {
-    <p class="mensagem-erro">
-      {{ erroPagina() }}
-    </p>
-  }
+    @if (erroPagina()) {
+      <p class="mensagem-erro">
+        {{ erroPagina() }}
+      </p>
+    }
+  </div>
 
   <section class="grade-criacao">
     <article class="painel">

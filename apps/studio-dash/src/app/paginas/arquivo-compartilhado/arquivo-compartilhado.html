@@ -1,93 +1,168 @@
-<main class="pagina-publica">
-  <header class="marca">
-    <span class="marca-simbolo">F</span>
-
-    <div>
-      <strong>Fleiva Studios</strong>
-      <span>Arquivo compartilhado</span>
-    </div>
-  </header>
-
+<main
+  class="pagina-publica"
+  [style.--studio-accent]="corPrincipal()"
+  [style.--studio-on-accent]="corSobrePrincipal()"
+>
   @if (dados.carregando()) {
-    <section class="painel estado">
-      <p>Carregando arquivo...</p>
+    <section class="estado-pagina">
+      <span class="carregador" aria-hidden="true"></span>
+      <p>Preparando arquivo...</p>
     </section>
-  } @else if (dados.erro()) {
-    <section class="painel estado estado-erro">
+  } @else if (erroLocal() || dados.erro()) {
+    <section class="estado-pagina estado-erro">
+      <div class="marca-fleiva">F</div>
+      <p class="rotulo">LINK COMPARTILHADO</p>
       <h1>Arquivo indisponível</h1>
-      <p>{{ dados.erro() }}</p>
+      <p>{{ erroLocal() || dados.erro() }}</p>
 
-      <button
-        type="button"
-        class="botao-secundario"
-        (click)="recarregar()"
-      >
-        Tentar novamente
-      </button>
+      @if (token()) {
+        <button
+          type="button"
+          class="botao-secundario"
+          (click)="recarregar()"
+        >
+          Tentar novamente
+        </button>
+      }
     </section>
   } @else if (dados.arquivo(); as arquivo) {
-    <section class="painel arquivo">
-      <div class="identificacao">
-        <p class="secao">FAIXA</p>
-        <h1>{{ arquivo.faixa }}</h1>
-        <p>{{ arquivo.projeto }}</p>
+    <header class="topo-publico">
+      <div class="identidade-estudio">
+        <span class="logo-estudio">
+          @if (arquivo.estudio.logo_url) {
+            <img
+              [src]="arquivo.estudio.logo_url"
+              [alt]="'Logo de ' + arquivo.estudio.nome"
+            />
+          } @else {
+            {{ inicialEstudio() }}
+          }
+        </span>
+
+        <span>
+          <strong>{{ arquivo.estudio.nome }}</strong>
+          <small>Compartilhado pelo Fleiva</small>
+        </span>
       </div>
 
-      <dl class="informacoes">
-        <div>
-          <dt>Versão</dt>
-          <dd>{{ arquivo.versao }}</dd>
+      <span class="selo-privado">LINK PRIVADO</span>
+    </header>
+
+    <section class="experiencia-arquivo">
+      <div class="lado-visual">
+        <div
+          class="capa-projeto"
+          [class.com-imagem]="arquivo.capa_url !== null"
+        >
+          @if (arquivo.capa_url) {
+            <img
+              [src]="arquivo.capa_url"
+              [alt]="'Capa de ' + arquivo.projeto"
+            />
+          } @else {
+            <span>{{ iniciaisProjeto() }}</span>
+            <small>{{ arquivo.projeto }}</small>
+          }
         </div>
 
-        <div>
-          <dt>Arquivo</dt>
-          <dd>{{ arquivo.nome_arquivo }}</dd>
+        <div class="credito-projeto">
+          <span>PROJETO</span>
+          <strong>{{ arquivo.projeto }}</strong>
         </div>
+      </div>
 
-        <div>
-          <dt>Tamanho</dt>
-          <dd>
-            {{ formatarBytes(arquivo.tamanho_bytes) }}
-          </dd>
-        </div>
+      <div class="conteudo-arquivo">
+        <header class="titulo-arquivo">
+          <p>FAIXA COMPARTILHADA</p>
+          <h1>{{ arquivo.faixa }}</h1>
+          <span>{{ arquivo.versao }}</span>
+        </header>
 
-        <div>
-          <dt>Enviado em</dt>
-          <dd>
-            {{ formatarData(arquivo.criado_em) }}
-          </dd>
-        </div>
-      </dl>
+        @if (podeReproduzir(arquivo)) {
+          <section class="reproducao">
+            <div class="titulo-reproducao">
+              <span>OUVIR ARQUIVO</span>
 
-      @if (arquivo.observacoes) {
-        <div class="observacoes">
-          <h2>Observações</h2>
-          <p>{{ arquivo.observacoes }}</p>
-        </div>
-      }
+              @if (carregandoReproducao()) {
+                <small>Preparando áudio...</small>
+              }
+            </div>
 
-      @if (erroDownload()) {
-        <p class="erro-download">
-          {{ erroDownload() }}
-        </p>
-      }
+            @if (urlReproducao(); as url) {
+              <audio
+                controls
+                preload="metadata"
+                [src]="url"
+                (error)="registrarErroReproducao()"
+              ></audio>
+            } @else if (!carregandoReproducao()) {
+              <button
+                type="button"
+                class="botao-carregar-audio"
+                (click)="prepararReproducao()"
+              >
+                Carregar áudio
+              </button>
+            }
 
-      <button
-        type="button"
-        class="botao-download"
-        [disabled]="baixando()"
-        (click)="baixar()"
-      >
-        @if (baixando()) {
-          Preparando download...
-        } @else {
-          Baixar arquivo
+            @if (erroReproducao()) {
+              <p class="mensagem-erro">
+                {{ erroReproducao() }}
+              </p>
+            }
+          </section>
         }
-      </button>
-    </section>
-  }
 
-  <footer>
-    Arquivo privado compartilhado pelo Fleiva Studios.
-  </footer>
+        @if (arquivo.observacoes) {
+          <section class="observacoes">
+            <span>NOTAS DA VERSÃO</span>
+            <p>{{ arquivo.observacoes }}</p>
+          </section>
+        }
+
+        <dl class="informacoes">
+          <div>
+            <dt>Arquivo</dt>
+            <dd>{{ arquivo.nome_arquivo }}</dd>
+          </div>
+
+          <div>
+            <dt>Tamanho</dt>
+            <dd>{{ formatarBytes(arquivo.tamanho_bytes) }}</dd>
+          </div>
+
+          <div>
+            <dt>Enviado em</dt>
+            <dd>{{ formatarData(arquivo.criado_em) }}</dd>
+          </div>
+        </dl>
+
+        @if (erroDownload()) {
+          <p class="mensagem-erro">
+            {{ erroDownload() }}
+          </p>
+        }
+
+        <button
+          type="button"
+          class="botao-download"
+          [disabled]="baixando()"
+          (click)="baixar()"
+        >
+          <span aria-hidden="true">↓</span>
+
+          @if (baixando()) {
+            Preparando download...
+          } @else {
+            Baixar arquivo original
+          }
+        </button>
+      </div>
+    </section>
+
+    <footer class="rodape-publico">
+      <span>FLEIVA STUDIOS</span>
+      <p>Arquivos profissionais, organizados em um só lugar.</p>
+    </footer>
+  }
 </main>

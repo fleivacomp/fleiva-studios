@@ -21,3 +21,9 @@ export * from './lib/dados-versoes-faixa';
 export * from './lib/dados-arquivo-compartilhado';
 
 export * from './lib/dados-acertos';
+
+export * from './lib/dados-estudio';
+
+export * from './lib/dados-albuns';
+
+export * from './lib/dados-album-compartilhado';

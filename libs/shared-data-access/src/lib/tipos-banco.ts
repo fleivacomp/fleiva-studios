@@ -96,6 +96,96 @@ export type Database = {
           },
         ]
       }
+      album_faixas: {
+        Row: {
+          album_id: string
+          criado_em: string
+          id: string
+          ordem: number
+          versao_id: string
+        }
+        Insert: {
+          album_id: string
+          criado_em?: string
+          id?: string
+          ordem: number
+          versao_id: string
+        }
+        Update: {
+          album_id?: string
+          criado_em?: string
+          id?: string
+          ordem?: number
+          versao_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "album_faixas_album_id_fkey"
+            columns: ["album_id"]
+            isOneToOne: false
+            referencedRelation: "albuns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "album_faixas_versao_id_fkey"
+            columns: ["versao_id"]
+            isOneToOne: false
+            referencedRelation: "versoes_faixa"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      albuns: {
+        Row: {
+          atualizado_em: string
+          capa_caminho: string | null
+          criado_em: string
+          estudio_id: string
+          id: string
+          nome: string
+          observacoes: string | null
+          projeto_id: string
+          token_compartilhamento: string
+        }
+        Insert: {
+          atualizado_em?: string
+          capa_caminho?: string | null
+          criado_em?: string
+          estudio_id: string
+          id?: string
+          nome: string
+          observacoes?: string | null
+          projeto_id: string
+          token_compartilhamento?: string
+        }
+        Update: {
+          atualizado_em?: string
+          capa_caminho?: string | null
+          criado_em?: string
+          estudio_id?: string
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          projeto_id?: string
+          token_compartilhamento?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "albuns_estudio_id_fkey"
+            columns: ["estudio_id"]
+            isOneToOne: false
+            referencedRelation: "estudios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "albuns_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos_artisticos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       armazenamento_estudios: {
         Row: {
           atualizado_em: string
@@ -282,8 +372,10 @@ export type Database = {
       estudios: {
         Row: {
           atualizado_em: string
+          cor_principal: string | null
           criado_em: string
           id: string
+          logo_caminho: string | null
           modulos: string[]
           nome: string
           slug: string
@@ -291,8 +383,10 @@ export type Database = {
         }
         Insert: {
           atualizado_em?: string
+          cor_principal?: string | null
           criado_em?: string
           id: string
+          logo_caminho?: string | null
           modulos?: string[]
           nome: string
           slug: string
@@ -300,8 +394,10 @@ export type Database = {
         }
         Update: {
           atualizado_em?: string
+          cor_principal?: string | null
           criado_em?: string
           id?: string
+          logo_caminho?: string | null
           modulos?: string[]
           nome?: string
           slug?: string
@@ -489,6 +585,7 @@ export type Database = {
       projetos_artisticos: {
         Row: {
           atualizado_em: string
+          capa_caminho: string | null
           criado_em: string
           estudio_id: string
           id: string
@@ -497,6 +594,7 @@ export type Database = {
         }
         Insert: {
           atualizado_em?: string
+          capa_caminho?: string | null
           criado_em?: string
           estudio_id: string
           id?: string
@@ -505,6 +603,7 @@ export type Database = {
         }
         Update: {
           atualizado_em?: string
+          capa_caminho?: string | null
           criado_em?: string
           estudio_id?: string
           id?: string

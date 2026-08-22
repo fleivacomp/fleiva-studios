@@ -2,7 +2,8 @@ import { inject, Injectable, signal } from '@angular/core';
 import { ClienteSupabase } from './cliente-supabase';
 import type { Database } from './tipos-banco';
 
-type FaixaBanco = Database['public']['Tables']['faixas']['Row'];
+type FaixaBanco =
+  Database['public']['Tables']['faixas']['Row'];
 
 type ProjetoBanco =
   Database['public']['Tables']['projetos_artisticos']['Row'];
@@ -10,7 +11,10 @@ type ProjetoBanco =
 export type StatusProducaoFaixa =
   Database['public']['Enums']['status_producao_faixa'];
 
-export type ProjetoFaixa = Pick<ProjetoBanco, 'id' | 'nome' | 'tipo'>
+export type ProjetoFaixa = Pick<
+  ProjetoBanco,
+  'id' | 'nome' | 'tipo' | 'capa_caminho'
+>;
 
 export type FaixaCompleta = FaixaBanco & {
   projeto: ProjetoFaixa;
@@ -25,6 +29,9 @@ export interface CadastroFaixa {
   observacoes: string | null;
   status_producao: StatusProducaoFaixa;
 }
+
+const URL_PUBLICA_IMAGENS =
+  'https://pub-b1d515cf725c469ea3d43e6cdc3546a7.r2.dev';
 
 @Injectable({
   providedIn: 'root',
@@ -67,7 +74,8 @@ export class DadosFaixas {
             projeto:projetos_artisticos (
               id,
               nome,
-              tipo
+              tipo,
+              capa_caminho
             )
           `)
           .eq('estudio_id', estudioId)
@@ -77,7 +85,8 @@ export class DadosFaixas {
           .select(`
             id,
             nome,
-            tipo
+            tipo,
+            capa_caminho
           `)
           .eq('estudio_id', estudioId)
           .order('nome'),
@@ -179,6 +188,19 @@ export class DadosFaixas {
     this.listaInterna.update((faixas) =>
       faixas.filter((faixa) => faixa.id !== faixaId),
     );
+  }
+
+  capaUrl(projeto: Pick<ProjetoBanco, 'capa_caminho'>): string | null {
+    if (!projeto.capa_caminho) {
+      return null;
+    }
+
+    const caminhoSeguro = projeto.capa_caminho
+      .split('/')
+      .map((parte) => encodeURIComponent(parte))
+      .join('/');
+
+    return `${URL_PUBLICA_IMAGENS}/${caminhoSeguro}`;
   }
 
   private async obterEstudioId(): Promise<string> {

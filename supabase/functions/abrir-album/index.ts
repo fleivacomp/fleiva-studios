@@ -5,7 +5,7 @@ import {
 } from 'npm:@aws-sdk/client-s3@3';
 import { getSignedUrl } from 'npm:@aws-sdk/s3-request-presigner@3';
 
-interface RequisicaoArquivo {
+interface RequisicaoAlbum {
   token?: string;
 }
 
@@ -16,7 +16,25 @@ interface ProjetoConsultado {
 
 interface FaixaConsultada {
   titulo: string;
-  projeto: ProjetoConsultado | ProjetoConsultado[] | null;
+}
+
+interface VersaoConsultada {
+  estudio_id: string;
+  versao: string;
+  observacoes: string | null;
+  nome_arquivo: string;
+  chave_objeto: string;
+  tamanho_bytes: number;
+  tipo_mime: string | null;
+  criado_em: string;
+  confirmado_em: string | null;
+  faixa: FaixaConsultada | FaixaConsultada[] | null;
+}
+
+interface ItemAlbumConsultado {
+  id: string;
+  ordem: number;
+  versao: VersaoConsultada | VersaoConsultada[] | null;
 }
 
 const URL_PUBLICA_CAPAS =
@@ -49,7 +67,7 @@ Deno.serve(async (requisicao) => {
 
   try {
     const corpo =
-      (await requisicao.json()) as RequisicaoArquivo;
+      (await requisicao.json()) as RequisicaoAlbum;
 
     const token = corpo.token?.trim();
 
@@ -82,36 +100,45 @@ Deno.serve(async (requisicao) => {
       },
     );
 
-    const { data: versao, error: erroVersao } =
+    const { data: album, error: erroAlbum } =
       await clienteSupabase
-        .from('versoes_faixa')
+        .from('albuns')
         .select(`
           id,
           estudio_id,
-          versao,
+          nome,
           observacoes,
-          nome_arquivo,
-          chave_objeto,
-          tamanho_bytes,
-          tipo_mime,
-          criado_em,
-          faixa:faixas!versoes_faixa_faixa_estudio_fkey (
-            titulo,
-            projeto:projetos_artisticos!faixas_projeto_estudio_id_fkey (
-              nome,
-              capa_caminho
+          projeto:projetos_artisticos!albuns_projeto_id_fkey (
+            nome,
+            capa_caminho
+          ),
+          faixas:album_faixas!album_faixas_album_id_fkey (
+            id,
+            ordem,
+            versao:versoes_faixa!album_faixas_versao_id_fkey (
+              estudio_id,
+              versao,
+              observacoes,
+              nome_arquivo,
+              chave_objeto,
+              tamanho_bytes,
+              tipo_mime,
+              criado_em,
+              confirmado_em,
+              faixa:faixas!versoes_faixa_faixa_estudio_fkey (
+                titulo
+              )
             )
           )
         `)
         .eq('token_compartilhamento', token)
-        .not('confirmado_em', 'is', null)
         .maybeSingle();
 
-    if (erroVersao) {
-      throw erroVersao;
+    if (erroAlbum) {
+      throw erroAlbum;
     }
 
-    if (!versao) {
+    if (!album) {
       return responderJson(
         {
           erro: 'Link inválido ou indisponível.',
@@ -120,18 +147,14 @@ Deno.serve(async (requisicao) => {
       );
     }
 
-    const faixa = obterPrimeiroRegistro(
-      versao.faixa as unknown as
-        | FaixaConsultada
-        | FaixaConsultada[]
+    const projeto = obterPrimeiroRegistro(
+      album.projeto as unknown as
+        | ProjetoConsultado
+        | ProjetoConsultado[]
         | null,
     );
 
-    const projeto = faixa
-      ? obterPrimeiroRegistro(faixa.projeto)
-      : null;
-
-    if (!faixa || !projeto) {
+    if (!projeto) {
       return responderJson(
         {
           erro: 'Link inválido ou indisponível.',
@@ -148,7 +171,7 @@ Deno.serve(async (requisicao) => {
           logo_caminho,
           cor_principal
         `)
-        .eq('id', versao.estudio_id)
+        .eq('id', album.estudio_id)
         .maybeSingle();
 
     if (erroEstudio) {
@@ -163,6 +186,37 @@ Deno.serve(async (requisicao) => {
         404,
       );
     }
+
+    const itensConsultados =
+      (album.faixas ?? []) as unknown as ItemAlbumConsultado[];
+
+    const itensValidos = itensConsultados
+      .map((item) => {
+        const versao = obterPrimeiroRegistro(item.versao);
+        const faixa = versao
+          ? obterPrimeiroRegistro(versao.faixa)
+          : null;
+
+        if (
+          !versao ||
+          !faixa ||
+          !versao.confirmado_em ||
+          versao.estudio_id !== album.estudio_id
+        ) {
+          return null;
+        }
+
+        return {
+          item,
+          versao,
+          faixa,
+        };
+      })
+      .filter(itemValido)
+      .sort(
+        (primeiro, segundo) =>
+          primeiro.item.ordem - segundo.item.ordem,
+      );
 
     const accountId =
       obterVariavelObrigatoria('R2_ACCOUNT_ID');
@@ -190,54 +244,73 @@ Deno.serve(async (requisicao) => {
       },
     });
 
-    const tipoMime =
-      versao.tipo_mime ?? 'application/octet-stream';
-
     const duracaoDownloadSegundos = 300;
     const duracaoReproducaoSegundos = 3600;
 
-    const comandoDownload = new GetObjectCommand({
-      Bucket: bucket,
-      Key: versao.chave_objeto,
-      ResponseContentType: tipoMime,
-      ResponseContentDisposition:
-        criarContentDisposition(
-          versao.nome_arquivo,
-          'attachment',
-        ),
-    });
+    const faixas = await Promise.all(
+      itensValidos.map(async ({ item, versao, faixa }) => {
+        const tipoMime =
+          versao.tipo_mime ?? 'application/octet-stream';
 
-    const comandoReproducao = new GetObjectCommand({
-      Bucket: bucket,
-      Key: versao.chave_objeto,
-      ResponseContentType: tipoMime,
-      ResponseContentDisposition:
-        criarContentDisposition(
-          versao.nome_arquivo,
-          'inline',
-        ),
-    });
+        const comandoDownload = new GetObjectCommand({
+          Bucket: bucket,
+          Key: versao.chave_objeto,
+          ResponseContentType: tipoMime,
+          ResponseContentDisposition:
+            criarContentDisposition(
+              versao.nome_arquivo,
+              'attachment',
+            ),
+        });
 
-    const [downloadUrl, reproducaoUrl] =
-      await Promise.all([
-        getSignedUrl(clienteR2, comandoDownload, {
-          expiresIn: duracaoDownloadSegundos,
-        }),
-        getSignedUrl(clienteR2, comandoReproducao, {
-          expiresIn: duracaoReproducaoSegundos,
-        }),
-      ]);
+        const comandoReproducao = new GetObjectCommand({
+          Bucket: bucket,
+          Key: versao.chave_objeto,
+          ResponseContentType: tipoMime,
+          ResponseContentDisposition:
+            criarContentDisposition(
+              versao.nome_arquivo,
+              'inline',
+            ),
+        });
+
+        const [downloadUrl, reproducaoUrl] =
+          await Promise.all([
+            getSignedUrl(clienteR2, comandoDownload, {
+              expiresIn: duracaoDownloadSegundos,
+            }),
+            getSignedUrl(clienteR2, comandoReproducao, {
+              expiresIn: duracaoReproducaoSegundos,
+            }),
+          ]);
+
+        return {
+          item_id: item.id,
+          ordem: item.ordem,
+          faixa: faixa.titulo,
+          versao: versao.versao,
+          observacoes: versao.observacoes,
+          nome_arquivo: versao.nome_arquivo,
+          tamanho_bytes: versao.tamanho_bytes,
+          tipo_mime: versao.tipo_mime,
+          criado_em: versao.criado_em,
+          reproducao_url: reproducaoUrl,
+          reproducao_expira_em: new Date(
+            Date.now() + duracaoReproducaoSegundos * 1000,
+          ).toISOString(),
+          download_url: downloadUrl,
+          download_expira_em: new Date(
+            Date.now() + duracaoDownloadSegundos * 1000,
+          ).toISOString(),
+        };
+      }),
+    );
 
     return responderJson({
-      arquivo: {
-        faixa: faixa.titulo,
+      album: {
+        nome: album.nome,
+        observacoes: album.observacoes,
         projeto: projeto.nome,
-        versao: versao.versao,
-        observacoes: versao.observacoes,
-        nome_arquivo: versao.nome_arquivo,
-        tamanho_bytes: versao.tamanho_bytes,
-        tipo_mime: versao.tipo_mime,
-        criado_em: versao.criado_em,
         capa_url: criarUrlPublica(
           URL_PUBLICA_CAPAS,
           projeto.capa_caminho,
@@ -250,25 +323,18 @@ Deno.serve(async (requisicao) => {
           ),
           cor_principal: estudio.cor_principal,
         },
+        faixas,
       },
-      download_url: downloadUrl,
-      download_expira_em: new Date(
-        Date.now() + duracaoDownloadSegundos * 1000,
-      ).toISOString(),
-      reproducao_url: reproducaoUrl,
-      reproducao_expira_em: new Date(
-        Date.now() + duracaoReproducaoSegundos * 1000,
-      ).toISOString(),
     });
   } catch (erro) {
     console.error(
-      'Erro ao abrir arquivo compartilhado:',
+      'Erro ao abrir álbum compartilhado:',
       erro,
     );
 
     return responderJson(
       {
-        erro: 'Não foi possível abrir o arquivo.',
+        erro: 'Não foi possível abrir o álbum.',
       },
       500,
     );
@@ -289,6 +355,12 @@ function obterPrimeiroRegistro<T>(
   }
 
   return valor ?? null;
+}
+
+function itemValido<T>(
+  item: T | null,
+): item is T {
+  return item !== null;
 }
 
 function obterVariavelObrigatoria(

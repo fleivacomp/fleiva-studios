@@ -1,0 +1,567 @@
+<main class="pagina">
+  <header class="cabecalho-pagina">
+    <div>
+      <p class="secao">CATÁLOGO MUSICAL</p>
+
+      <h1>Álbuns</h1>
+      <p>
+        Monte sequências com as versões que já estão no acervo.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="botao-principal"
+      [disabled]="dadosProjetos.projetos().length === 0"
+      (click)="abrirNovoAlbum()"
+    >
+      <span aria-hidden="true">＋</span>
+      Novo álbum
+    </button>
+  </header>
+
+  @if (
+    !dadosProjetos.carregando() &&
+    dadosProjetos.projetos().length === 0
+  ) {
+    <section class="aviso-projetos">
+      <div>
+        <strong>Comece por um projeto artístico</strong>
+        <p>Todo álbum pertence a um artista, banda ou projeto.</p>
+      </div>
+
+      <a routerLink="/projetos">Ir para projetos</a>
+    </section>
+  }
+
+  @if (formularioAberto()) {
+    <section
+      id="formulario-album"
+      class="painel formulario-album"
+    >
+      <header class="titulo-formulario">
+        <div>
+          <p class="rotulo-menor">
+            @if (albumEditandoId()) {
+              EDITANDO ÁLBUM
+            } @else {
+              NOVA SEQUÊNCIA
+            }
+          </p>
+
+          <h2>
+            @if (albumEditandoId()) {
+              Ajustar informações
+            } @else {
+              Criar álbum
+            }
+          </h2>
+        </div>
+
+        <button
+          type="button"
+          class="botao-icone"
+          aria-label="Fechar formulário"
+          [disabled]="salvandoAlbum()"
+          (click)="cancelarFormulario()"
+        >
+          ×
+        </button>
+      </header>
+
+      <form
+        [formGroup]="formularioAlbum"
+        (ngSubmit)="salvarAlbum()"
+      >
+        <div class="campos-album">
+          <label>
+            <span>Projeto artístico</span>
+
+            <select formControlName="projeto_id">
+              <option value="">Selecione um projeto</option>
+
+              @for (
+                projeto of dadosProjetos.projetos();
+                track projeto.id
+              ) {
+                <option [value]="projeto.id">
+                  {{ projeto.nome }}
+                </option>
+              }
+            </select>
+
+            @if (
+              formularioAlbum.controls.projeto_id.touched &&
+              formularioAlbum.controls.projeto_id.invalid
+            ) {
+              <small>Selecione o projeto artístico.</small>
+            }
+          </label>
+
+          <label>
+            <span>Nome do álbum</span>
+
+            <input
+              type="text"
+              formControlName="nome"
+              placeholder="Ex.: Depois da Meia-Noite"
+            />
+
+            @if (
+              formularioAlbum.controls.nome.touched &&
+              formularioAlbum.controls.nome.invalid
+            ) {
+              <small>Informe o nome do álbum.</small>
+            }
+          </label>
+
+          <label class="campo-largo">
+            <span>Observações</span>
+
+            <textarea
+              formControlName="observacoes"
+              rows="3"
+              placeholder="Conceito, momento do projeto ou alguma referência opcional"
+            ></textarea>
+          </label>
+        </div>
+
+        <div class="acoes-formulario">
+          <button
+            type="button"
+            class="botao-secundario"
+            [disabled]="salvandoAlbum()"
+            (click)="cancelarFormulario()"
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="submit"
+            class="botao-principal"
+            [disabled]="salvandoAlbum()"
+          >
+            @if (salvandoAlbum()) {
+              Salvando...
+            } @else if (albumEditandoId()) {
+              Salvar alterações
+            } @else {
+              Criar álbum
+            }
+          </button>
+        </div>
+      </form>
+    </section>
+  }
+
+  @if (erroOperacao()) {
+    <p class="mensagem mensagem-erro">
+      {{ erroOperacao() }}
+    </p>
+  }
+
+  @if (mensagemOperacao()) {
+    <p class="mensagem mensagem-sucesso">
+      {{ mensagemOperacao() }}
+    </p>
+  }
+
+  @if (dadosAlbuns.carregando()) {
+    <section class="estado">
+      <span class="carregador" aria-hidden="true"></span>
+      <p>Organizando o catálogo...</p>
+    </section>
+  } @else if (dadosAlbuns.erro()) {
+    <section class="estado estado-erro">
+      <h2>Não foi possível abrir os álbuns</h2>
+      <p>{{ dadosAlbuns.erro() }}</p>
+
+      <button
+        type="button"
+        class="botao-secundario"
+        (click)="carregarDados()"
+      >
+        Tentar novamente
+      </button>
+    </section>
+  } @else if (dadosAlbuns.albuns().length === 0) {
+    <section class="vazio-catalogo">
+      <div class="capa-vazia" aria-hidden="true">
+        <span>01</span>
+        <i></i>
+        <strong>FLEIVA</strong>
+      </div>
+
+      <div>
+        <p class="rotulo-menor">PRIMEIRA SEQUÊNCIA</p>
+        <h2>Transforme faixas soltas em um trabalho.</h2>
+        <p>
+          Use os arquivos que já estão no Fleiva para testar a
+          ordem de um álbum, EP, demo ou mixtape.
+        </p>
+
+        <button
+          type="button"
+          class="botao-principal"
+          [disabled]="dadosProjetos.projetos().length === 0"
+          (click)="abrirNovoAlbum()"
+        >
+          Criar primeiro álbum
+        </button>
+      </div>
+    </section>
+  } @else {
+    <section class="catalogo">
+      <header class="cabecalho-catalogo">
+        <div>
+          <p class="rotulo-menor">DISCOGRAFIA</p>
+          <h2>Trabalhos em construção</h2>
+        </div>
+
+        <span>
+          {{ dadosAlbuns.totalAlbuns() }}
+        </span>
+      </header>
+
+      <div class="grade-albuns">
+        @for (album of dadosAlbuns.albuns(); track album.id) {
+          <article
+            class="cartao-album"
+            [class.album-selecionado]="
+              albumAbertoId() === album.id
+            "
+          >
+            <button
+              type="button"
+              class="abertura-album"
+              (click)="abrirAlbum(album.id)"
+            >
+              <span class="capa-album">
+                @if (capaAlbum(album); as capa) {
+                  <img
+                    [src]="capa"
+                    [alt]="'Capa de ' + album.projeto.nome"
+                  />
+                } @else {
+                  <strong>{{ iniciaisProjeto(album) }}</strong>
+                  <small>{{ album.projeto.nome }}</small>
+                }
+
+                <i aria-hidden="true">▶</i>
+              </span>
+
+              <span class="dados-album">
+                <strong>{{ album.nome }}</strong>
+                <small>{{ album.projeto.nome }}</small>
+                <em>
+                  {{ rotuloQuantidadeFaixas(album.faixas.length) }}
+                </em>
+              </span>
+            </button>
+
+            <div class="acoes-cartao">
+              <button
+                type="button"
+                (click)="editarAlbum(album)"
+              >
+                Editar
+              </button>
+
+              <button
+                type="button"
+                class="acao-perigo"
+                [disabled]="excluindoAlbumId() === album.id"
+                (click)="excluirAlbum(album)"
+              >
+                @if (excluindoAlbumId() === album.id) {
+                  Excluindo...
+                } @else {
+                  Excluir
+                }
+              </button>
+            </div>
+          </article>
+        }
+      </div>
+    </section>
+  }
+
+  @if (albumAberto(); as album) {
+    <section
+      id="editor-sequencia"
+      class="editor-sequencia"
+    >
+      <header class="topo-editor">
+        <div class="miniatura-editor">
+          @if (capaAlbum(album); as capa) {
+            <img
+              [src]="capa"
+              [alt]="'Capa de ' + album.projeto.nome"
+            />
+          } @else {
+            {{ iniciaisProjeto(album) }}
+          }
+        </div>
+
+        <div class="identificacao-editor">
+          <p class="rotulo-menor">ORDEM DO ÁLBUM</p>
+          <h2>{{ album.nome }}</h2>
+          <span>
+            {{ album.projeto.nome }} ·
+            {{ rotuloQuantidadeFaixas(album.faixas.length) }}
+          </span>
+        </div>
+
+        <div class="acoes-topo-editor">
+          <div class="acoes-compartilhamento">
+            <button
+              type="button"
+              class="botao-copiar-link"
+              [disabled]="
+                album.faixas.length === 0 ||
+                copiandoLinkId() !== null
+              "
+              (click)="copiarLink(album)"
+            >
+              <span aria-hidden="true">↗</span>
+
+              @if (copiandoLinkId() === album.id) {
+                Copiando...
+              } @else {
+                Copiar link
+              }
+            </button>
+
+            <button
+              type="button"
+              class="botao-whatsapp"
+              [disabled]="album.faixas.length === 0"
+              (click)="enviarWhatsApp(album)"
+            >
+              WhatsApp
+            </button>
+          </div>
+
+          <button
+            type="button"
+            class="botao-fechar-editor"
+            aria-label="Fechar álbum"
+            (click)="fecharAlbum()"
+          >
+            ×
+          </button>
+        </div>
+      </header>
+
+      <div class="gerenciador-capa">
+        <div class="estado-capa">
+          <span aria-hidden="true">▣</span>
+
+          <div>
+            <strong>{{ origemCapa(album) }}</strong>
+            <small>
+              A capa própria é opcional. Sem ela, o Fleiva usa a
+              capa do projeto automaticamente.
+            </small>
+          </div>
+        </div>
+
+        <div class="acoes-capa">
+          <label
+            class="seletor-capa"
+            [class.desativado]="
+              enviandoCapaId() !== null ||
+              removendoCapaId() !== null
+            "
+          >
+            <input
+              type="file"
+              accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+              [disabled]="
+                enviandoCapaId() !== null ||
+                removendoCapaId() !== null
+              "
+              (change)="selecionarCapa(album, $event)"
+            />
+
+            <span>
+              @if (enviandoCapaId() === album.id) {
+                Enviando...
+              } @else if (album.capa_caminho) {
+                Trocar capa
+              } @else {
+                Adicionar capa
+              }
+            </span>
+          </label>
+
+          @if (album.capa_caminho) {
+            <button
+              type="button"
+              class="botao-herdar-capa"
+              [disabled]="
+                enviandoCapaId() !== null ||
+                removendoCapaId() !== null
+              "
+              (click)="usarCapaProjeto(album)"
+            >
+              @if (removendoCapaId() === album.id) {
+                Removendo...
+              } @else if (album.projeto.capa_caminho) {
+                Usar capa do projeto
+              } @else {
+                Usar capa padrão
+              }
+            </button>
+          }
+        </div>
+      </div>
+
+      @if (album.observacoes) {
+        <p class="observacoes-album">
+          {{ album.observacoes }}
+        </p>
+      }
+
+      @if (album.faixas.length === 0) {
+        <div class="sequencia-vazia">
+          <span aria-hidden="true">♪</span>
+          <p>Este álbum ainda não tem faixas.</p>
+        </div>
+      } @else {
+        <div class="cabecalho-faixas" aria-hidden="true">
+          <span>#</span>
+          <span>Faixa</span>
+          <span>Versão usada</span>
+          <span>Ações</span>
+        </div>
+
+        <ol class="lista-faixas">
+          @for (
+            item of album.faixas;
+            track item.id;
+            let primeiro = $first;
+            let ultimo = $last
+          ) {
+            <li>
+              <span class="numero-faixa">
+                {{ item.ordem }}
+              </span>
+
+              <div class="identificacao-faixa">
+                <strong>{{ item.versao.faixa.titulo }}</strong>
+                <span>{{ item.versao.nome_arquivo }}</span>
+              </div>
+
+              <label class="seletor-versao">
+                <span class="rotulo-acessivel">Versão usada</span>
+
+                <select
+                  [disabled]="alterandoVersaoId() === item.id"
+                  (change)="trocarVersao(item, $event)"
+                >
+                  @for (
+                    versao of dadosAlbuns.versoesDaFaixa(
+                      item.versao.faixa_id
+                    );
+                    track versao.id
+                  ) {
+                    <option
+                      [value]="versao.id"
+                      [selected]="versao.id === item.versao_id"
+                    >
+                      {{ versao.versao }}
+                    </option>
+                  }
+                </select>
+              </label>
+
+              <div class="acoes-faixa">
+                <button
+                  type="button"
+                  aria-label="Mover faixa para cima"
+                  [disabled]="
+                    primeiro || ordenandoAlbumId() === album.id
+                  "
+                  (click)="moverFaixa(album, item.id, -1)"
+                >
+                  ↑
+                </button>
+
+                <button
+                  type="button"
+                  aria-label="Mover faixa para baixo"
+                  [disabled]="
+                    ultimo || ordenandoAlbumId() === album.id
+                  "
+                  (click)="moverFaixa(album, item.id, 1)"
+                >
+                  ↓
+                </button>
+
+                <button
+                  type="button"
+                  class="remover-faixa"
+                  [disabled]="removendoFaixaId() === item.id"
+                  (click)="removerFaixa(item)"
+                >
+                  @if (removendoFaixaId() === item.id) {
+                    ...
+                  } @else {
+                    Remover
+                  }
+                </button>
+              </div>
+            </li>
+          }
+        </ol>
+      }
+
+      <form
+        class="adicionar-faixa"
+        [formGroup]="formularioFaixa"
+        (ngSubmit)="adicionarFaixa(album)"
+      >
+        <div>
+          <label>
+            <span>Adicionar faixa</span>
+
+            <select formControlName="faixa_id">
+              <option value="">Selecione no acervo</option>
+
+              @for (
+                item of faixasDisponiveis(album);
+                track item.faixa.id
+              ) {
+                <option [value]="item.faixa.id">
+                  {{ item.faixa.titulo }}
+                </option>
+              }
+            </select>
+          </label>
+
+          <small>
+            O Fleiva usa a versão mais recente. Você pode trocá-la
+            depois.
+          </small>
+        </div>
+
+        @if (faixasDisponiveis(album).length > 0) {
+          <button
+            type="submit"
+            class="botao-claro"
+            [disabled]="adicionandoFaixa()"
+          >
+            @if (adicionandoFaixa()) {
+              Adicionando...
+            } @else {
+              Adicionar à sequência
+            }
+          </button>
+        } @else {
+          <a routerLink="/faixas">Enviar primeira versão</a>
+        }
+      </form>
+    </section>
+  }
+</main>

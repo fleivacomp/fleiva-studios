@@ -219,12 +219,32 @@ export class DadosVersoesFaixa {
   async obterDownload(
     versaoId: string,
   ): Promise<DownloadVersaoFaixa> {
+    return this.obterAcessoArquivo(
+      versaoId,
+      'download',
+    );
+  }
+
+  async obterReproducao(
+    versaoId: string,
+  ): Promise<DownloadVersaoFaixa> {
+    return this.obterAcessoArquivo(
+      versaoId,
+      'reproducao',
+    );
+  }
+
+  private async obterAcessoArquivo(
+    versaoId: string,
+    modo: 'download' | 'reproducao',
+  ): Promise<DownloadVersaoFaixa> {
     const { data, error } =
       await this.clienteSupabase.cliente.functions.invoke(
         'baixar-versao-faixa',
         {
           body: {
             versao_id: versaoId,
+            modo,
           },
         },
       );
@@ -232,7 +252,9 @@ export class DadosVersoesFaixa {
     if (error) {
       throw await this.criarErroFuncao(
         error,
-        'Não foi possível preparar o download.',
+        modo === 'reproducao'
+          ? 'Não foi possível preparar a reprodução.'
+          : 'Não foi possível preparar o download.',
       );
     }
 
@@ -246,7 +268,7 @@ export class DadosVersoesFaixa {
       !resposta.expira_em
     ) {
       throw new Error(
-        'A resposta de download é inválida.',
+        'A resposta de acesso ao arquivo é inválida.',
       );
     }
 

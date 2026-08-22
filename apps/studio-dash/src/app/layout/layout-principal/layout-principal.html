@@ -1,6 +1,8 @@
 <div
-  class="estrutura"
+  class="estrutura tema-estudio"
   [class.menu-aberto]="menuAberto()"
+  [style.--studio-brand]="dadosEstudio.corPrincipal()"
+  [style.--studio-on-brand]="dadosEstudio.corTextoPrincipal()"
 >
   <aside class="barra-lateral">
     <a
@@ -8,16 +10,28 @@
       routerLink="/agendamentos"
       (click)="fecharMenu()"
     >
-      <span class="marca-simbolo">F</span>
+      <span class="marca-simbolo">
+        @if (dadosEstudio.logoUrl()) {
+          <img
+            [src]="dadosEstudio.logoUrl()"
+            [alt]="'Logo de ' + nomeEstudio()"
+          />
+        } @else {
+          {{ inicialEstudio() }}
+        }
+      </span>
 
       <span class="marca-texto">
-        <strong>Fleiva</strong>
-        <small>Studios</small>
+        <strong>{{ nomeEstudio() }}</strong>
+        <small>Fleiva Studios</small>
       </span>
     </a>
 
-    <nav class="navegacao" aria-label="Navegação principal">
-      <p class="titulo-menu">Gerenciamento</p>
+    <nav
+      class="navegacao"
+      aria-label="Navegação principal"
+    >
+      <p class="titulo-menu">Estúdio</p>
 
       <a
         routerLink="/agendamentos"
@@ -25,7 +39,15 @@
         [routerLinkActiveOptions]="{ exact: true }"
         (click)="fecharMenu()"
       >
-        <span class="indicador">01</span>
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path d="M6 3v3M18 3v3M4 9h16" />
+          <rect x="4" y="5" width="16" height="16" rx="2" />
+          <path d="M8 13h3M8 17h5" />
+        </svg>
+
         <span>Agenda</span>
       </a>
 
@@ -34,53 +56,143 @@
         routerLinkActive="ativo"
         (click)="fecharMenu()"
       >
-        <span class="indicador">02</span>
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <circle cx="9" cy="8" r="3" />
+          <path d="M3.5 19c.4-4 2.4-6 5.5-6s5.1 2 5.5 6" />
+          <path d="M16 6.5a3 3 0 0 1 0 5.5M16 14c2.6.3 4.1 2 4.5 5" />
+        </svg>
+
         <span>Contatos</span>
       </a>
+
+      <p class="titulo-menu titulo-menu-secundario">
+        Catálogo
+      </p>
 
       <a
         routerLink="/projetos"
         routerLinkActive="ativo"
         (click)="fecharMenu()"
       >
-        <span class="indicador">03</span>
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path d="M3 7.5h7l2-2h9v14H3z" />
+          <path d="M3 10h18" />
+        </svg>
+
         <span>Projetos</span>
       </a>
+
+      <a
+        routerLink="/faixas"
+        routerLinkActive="ativo"
+        (click)="fecharMenu()"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path d="M9 18V5l10-2v13" />
+          <ellipse cx="6" cy="18" rx="3" ry="2" />
+          <ellipse cx="16" cy="16" rx="3" ry="2" />
+        </svg>
+
+        <span>Faixas</span>
+      </a>
+
+      <a
+        routerLink="/albuns"
+        routerLinkActive="ativo"
+        (click)="fecharMenu()"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <rect x="3" y="3" width="18" height="18" rx="2" />
+          <circle cx="12" cy="12" r="5" />
+          <circle cx="12" cy="12" r="1" />
+          <path d="M17.5 6.5h.01" />
+        </svg>
+
+        <span>Álbuns</span>
+      </a>
+
+      <p class="titulo-menu titulo-menu-secundario">
+        Operação
+      </p>
 
       <a
         routerLink="/servicos"
         routerLinkActive="ativo"
         (click)="fecharMenu()"
       >
-        <span class="indicador">04</span>
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path d="M4 7h10M18 7h2M4 17h2M10 17h10" />
+          <circle cx="16" cy="7" r="2" />
+          <circle cx="8" cy="17" r="2" />
+        </svg>
+
         <span>Serviços</span>
       </a>
 
-    <a
-        routerLink="/faixas"
-        routerLinkActive="ativo"
-        (click)="fecharMenu()"
-      >
-        <span class="indicador">05</span>
-        <span>Faixas</span>
-      </a>
-       <a
+      <a
         routerLink="/acertos"
         routerLinkActive="ativo"
         (click)="fecharMenu()"
       >
-        <span class="indicador">06</span>
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <rect x="3" y="5" width="18" height="14" rx="2" />
+          <path d="M3 9h18M16 14h2" />
+        </svg>
+
         <span>Acertos</span>
       </a>
     </nav>
 
     <footer class="rodape-menu">
-      <div class="usuario">
-        <span>Conectado como</span>
-        <strong>
-          {{ autenticacao.usuario()?.email }}
-        </strong>
-      </div>
+      <a
+        class="usuario"
+        routerLink="/perfil"
+        routerLinkActive="ativo-perfil"
+        (click)="fecharMenu()"
+      >
+        <span class="usuario-icone">
+          <svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="8" r="3.5" />
+            <path d="M5 20c.5-4.5 2.9-6.8 7-6.8s6.5 2.3 7 6.8" />
+          </svg>
+        </span>
+
+        <span class="usuario-texto">
+          <small>Perfil do estúdio</small>
+          <strong>
+            {{ autenticacao.usuario()?.email }}
+          </strong>
+        </span>
+
+        <svg
+          class="usuario-seta"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path d="m9 5 7 7-7 7" />
+        </svg>
+      </a>
 
       @if (erroSaida()) {
         <p class="erro-saida">{{ erroSaida() }}</p>
@@ -92,10 +204,17 @@
         [disabled]="saindo()"
         (click)="sair()"
       >
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path d="M10 5H5v14h5M14 8l4 4-4 4M8 12h10" />
+        </svg>
+
         @if (saindo()) {
-          Saindo...
+          <span>Saindo...</span>
         } @else {
-          Sair
+          <span>Sair</span>
         }
       </button>
     </footer>
@@ -116,7 +235,18 @@
         class="marca-movel"
         routerLink="/agendamentos"
       >
-        Fleiva Studios
+        <span class="marca-simbolo-movel">
+          @if (dadosEstudio.logoUrl()) {
+            <img
+              [src]="dadosEstudio.logoUrl()"
+              [alt]="'Logo de ' + nomeEstudio()"
+            />
+          } @else {
+            {{ inicialEstudio() }}
+          }
+        </span>
+
+        <span>{{ nomeEstudio() }}</span>
       </a>
 
       <button
@@ -126,7 +256,10 @@
         [attr.aria-expanded]="menuAberto()"
         (click)="alternarMenu()"
       >
-        Menu
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <strong>Menu</strong>
       </button>
     </header>
 
