@@ -979,3 +979,104 @@ button:disabled {
     gap: 0.4rem;
   }
 }
+
+.configuracao-publica {
+  margin-top: 1rem;
+}
+
+.estado-publicacao {
+  padding: 0.35rem 0.65rem;
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+  border: 0.0625rem solid
+    var(--color-warning-border);
+  border-radius: var(--radius-round);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.estado-publicacao.publicada {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+  border-color: var(--color-success-border);
+}
+
+.campos-publicos {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.campo-publico-largo {
+  grid-column: 1 / -1;
+}
+
+.campo-texto textarea {
+  width: 100%;
+  min-height: 8rem;
+  padding: 0.75rem;
+  resize: vertical;
+  background: var(--app-surface);
+  color: var(--app-text);
+  border: 0.0625rem solid var(--app-border);
+  border-radius: var(--radius-medium);
+  outline: none;
+
+  &:focus {
+    border-color: var(--studio-brand);
+    box-shadow: 0 0 0 0.18rem
+      color-mix(
+        in srgb,
+        var(--studio-brand) 14%,
+        transparent
+      );
+  }
+}
+
+.ajuda-campo {
+  color: var(--app-text-muted) !important;
+}
+
+.controle-publicacao {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  padding: 1rem;
+  background: var(--app-surface-muted);
+  border: 0.0625rem solid var(--app-border);
+  border-radius: var(--radius-medium);
+
+  input {
+    width: 1.1rem;
+    height: 1.1rem;
+    flex: 0 0 auto;
+    margin-top: 0.15rem;
+    accent-color: var(--studio-brand);
+  }
+
+  > span {
+    display: grid;
+    gap: 0.2rem;
+  }
+
+  strong {
+    font-size: 0.85rem;
+  }
+
+  small {
+    color: var(--app-text-muted);
+    line-height: 1.45;
+  }
+}
+
+@media (max-width: 44rem) {
+  .campos-publicos {
+    grid-template-columns: 1fr;
+  }
+
+  .campo-publico-largo {
+    grid-column: auto;
+  }
+}

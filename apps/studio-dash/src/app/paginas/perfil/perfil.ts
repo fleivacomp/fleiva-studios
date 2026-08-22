@@ -16,6 +16,7 @@ import {
   DadosVersoesFaixa,
   normalizarCorEstudio,
   obterCorContrasteEstudio,
+  type ConfiguracaoPublicaEstudio,
 } from '@fleiva-studios/shared-data-access';
 
 @Component({
@@ -41,6 +42,7 @@ export class Perfil implements OnInit {
   readonly erroOperacao = signal<string | null>(null);
   readonly mensagemOperacao = signal<string | null>(null);
   readonly corPrevia = signal(COR_PADRAO_ESTUDIO);
+  readonly salvandoPaginaPublica = signal(false);
 
   readonly formulario = this.construtorFormulario.group({
     nome: this.construtorFormulario.nonNullable.control('', [
@@ -58,6 +60,15 @@ export class Perfil implements OnInit {
         ],
       ),
   });
+  readonly formularioPaginaPublica =
+  this.construtorFormulario.nonNullable.group({
+    descricao_publica: [''],
+    cidade: [''],
+    whatsapp_publico: [''],
+    instagram: [''],
+    landing_publicada: [false],
+  });
+
 
   ngOnInit(): void {
     void this.carregarDados();
@@ -75,6 +86,16 @@ export class Perfil implements OnInit {
 
     if (estudio) {
       this.formulario.controls.nome.setValue(estudio.nome);
+      this.formularioPaginaPublica.setValue({
+  descricao_publica:
+    estudio.descricao_publica ?? '',
+  cidade: estudio.cidade ?? '',
+  whatsapp_publico:
+    estudio.whatsapp_publico ?? '',
+  instagram: estudio.instagram ?? '',
+  landing_publicada:
+    estudio.landing_publicada,
+});
 
       const cor =
         normalizarCorEstudio(estudio.cor_principal) ??
@@ -248,7 +269,59 @@ export class Perfil implements OnInit {
       this.removendoLogo.set(false);
     }
   }
+async salvarPaginaPublica(): Promise<void> {
+  if (this.salvandoPaginaPublica()) {
+    return;
+  }
 
+  this.salvandoPaginaPublica.set(true);
+  this.limparRetornoOperacao();
+
+  try {
+    const valor =
+      this.formularioPaginaPublica.getRawValue();
+
+    const configuracao: ConfiguracaoPublicaEstudio = {
+      descricao_publica:
+        valor.descricao_publica,
+      cidade: valor.cidade,
+      whatsapp_publico:
+        valor.whatsapp_publico,
+      instagram: valor.instagram,
+      landing_publicada:
+        valor.landing_publicada,
+    };
+
+    const estudio =
+      await this.dadosEstudio
+        .atualizarConfiguracaoPublica(
+          configuracao,
+        );
+
+    this.formularioPaginaPublica.setValue({
+      descricao_publica:
+        estudio.descricao_publica ?? '',
+      cidade: estudio.cidade ?? '',
+      whatsapp_publico:
+        estudio.whatsapp_publico ?? '',
+      instagram: estudio.instagram ?? '',
+      landing_publicada:
+        estudio.landing_publicada,
+    });
+
+    this.mensagemOperacao.set(
+      estudio.landing_publicada
+        ? 'Página pública atualizada e publicada.'
+        : 'Configurações salvas. A página continua em rascunho.',
+    );
+  } catch (erro) {
+    this.erroOperacao.set(
+      this.obterMensagemErro(erro),
+    );
+  } finally {
+    this.salvandoPaginaPublica.set(false);
+  }
+}
   inicialEstudio(): string {
     const nome = this.dadosEstudio.estudio()?.nome.trim();
 

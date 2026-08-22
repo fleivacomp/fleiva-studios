@@ -274,6 +274,113 @@
         </div>
       </div>
     </section>
+    <section class="painel configuracao-publica">
+  <header class="titulo-painel">
+    <div>
+      <p>Presença digital</p>
+      <h2>Página pública</h2>
+    </div>
+
+    <span
+      class="estado-publicacao"
+      [class.publicada]="
+        formularioPaginaPublica.controls
+          .landing_publicada.value
+      "
+    >
+      @if (
+        formularioPaginaPublica.controls
+          .landing_publicada.value
+      ) {
+        Publicada
+      } @else {
+        Rascunho
+      }
+    </span>
+  </header>
+
+  <form
+    [formGroup]="formularioPaginaPublica"
+    (ngSubmit)="salvarPaginaPublica()"
+  >
+    <div class="campos-publicos">
+      <label class="campo-texto campo-publico-largo">
+        <span>Apresentação do estúdio</span>
+
+        <textarea
+          rows="5"
+          formControlName="descricao_publica"
+          placeholder="Conte brevemente sobre o estúdio, sua proposta e o tipo de trabalho realizado."
+        ></textarea>
+
+        <small class="ajuda-campo">
+          Esse texto aparecerá na página pública.
+        </small>
+      </label>
+
+      <label class="campo-texto">
+        <span>Cidade</span>
+
+        <input
+          type="text"
+          formControlName="cidade"
+          placeholder="Ex.: São Paulo, SP"
+        />
+      </label>
+
+      <label class="campo-texto">
+        <span>WhatsApp público</span>
+
+        <input
+          type="tel"
+          inputmode="tel"
+          formControlName="whatsapp_publico"
+          placeholder="Ex.: +55 11 99999-9999"
+        />
+      </label>
+
+      <label class="campo-texto">
+        <span>Instagram</span>
+
+        <input
+          type="text"
+          formControlName="instagram"
+          placeholder="Ex.: @nomedoestudio"
+        />
+      </label>
+    </div>
+
+    <label class="controle-publicacao">
+      <input
+        type="checkbox"
+        formControlName="landing_publicada"
+      />
+
+      <span>
+        <strong>Publicar página do estúdio</strong>
+
+        <small>
+          Quando desativada, as informações permanecem
+          salvas como rascunho.
+        </small>
+      </span>
+    </label>
+
+    <div class="acoes-formulario">
+      <button
+        type="submit"
+        class="botao-principal"
+        [disabled]="salvandoPaginaPublica()"
+      >
+        @if (salvandoPaginaPublica()) {
+          Salvando...
+        } @else {
+          Salvar página pública
+        }
+      </button>
+    </div>
+  </form>
+</section>
 
     <div class="grade-informacoes">
       <section class="painel identificacao-painel">

@@ -22,7 +22,13 @@ const TIPOS_LOGO_PERMITIDOS = new Set([
   'image/png',
   'image/webp',
 ]);
-
+export interface ConfiguracaoPublicaEstudio {
+  descricao_publica: string | null;
+  cidade: string | null;
+  whatsapp_publico: string | null;
+  instagram: string | null;
+  landing_publicada: boolean;
+}
 export function normalizarCorEstudio(
   valor: string | null | undefined,
 ): string | null {
@@ -216,6 +222,52 @@ export class DadosEstudio {
     }
   }
 
+  async atualizarConfiguracaoPublica(
+  dados: ConfiguracaoPublicaEstudio,
+): Promise<Estudio> {
+  this.salvandoInterno.set(true);
+
+  try {
+    const estudioId = await this.obterEstudioId();
+
+    const { data, error } =
+      await this.clienteSupabase.cliente
+        .from('estudios')
+        .update({
+          descricao_publica:
+            this.normalizarTextoOpcional(
+              dados.descricao_publica,
+            ),
+          cidade: this.normalizarTextoOpcional(
+            dados.cidade,
+          ),
+          whatsapp_publico:
+            this.normalizarTextoOpcional(
+              dados.whatsapp_publico,
+            ),
+          instagram: this.normalizarTextoOpcional(
+            dados.instagram,
+          ),
+          landing_publicada:
+            dados.landing_publicada,
+        })
+        .eq('id', estudioId)
+        .select()
+        .single();
+
+    if (error) {
+      throw error;
+    }
+
+    this.estudioInterno.set(data);
+
+    return data;
+  } finally {
+    this.salvandoInterno.set(false);
+  }
+}
+
+
   async enviarLogo(arquivo: File): Promise<Estudio> {
     this.validarLogo(arquivo);
     this.salvandoInterno.set(true);
@@ -307,7 +359,13 @@ export class DadosEstudio {
       this.salvandoInterno.set(false);
     }
   }
+private normalizarTextoOpcional(
+  valor: string | null,
+): string | null {
+  const texto = valor?.trim();
 
+  return texto || null;
+}
   private validarLogo(arquivo: File): void {
     if (arquivo.size <= 0) {
       throw new Error(

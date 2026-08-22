@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.15"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       agendamento_servicos: {
@@ -145,6 +170,7 @@ export type Database = {
           nome: string
           observacoes: string | null
           projeto_id: string
+          publico_na_landing: boolean
           token_compartilhamento: string
         }
         Insert: {
@@ -156,6 +182,7 @@ export type Database = {
           nome: string
           observacoes?: string | null
           projeto_id: string
+          publico_na_landing?: boolean
           token_compartilhamento?: string
         }
         Update: {
@@ -167,6 +194,7 @@ export type Database = {
           nome?: string
           observacoes?: string | null
           projeto_id?: string
+          publico_na_landing?: boolean
           token_compartilhamento?: string
         }
         Relationships: [
@@ -372,36 +400,51 @@ export type Database = {
       estudios: {
         Row: {
           atualizado_em: string
+          cidade: string | null
           cor_principal: string | null
           criado_em: string
+          descricao_publica: string | null
           id: string
+          instagram: string | null
+          landing_publicada: boolean
           logo_caminho: string | null
           modulos: string[]
           nome: string
           slug: string
           status_plano: string
+          whatsapp_publico: string | null
         }
         Insert: {
           atualizado_em?: string
+          cidade?: string | null
           cor_principal?: string | null
           criado_em?: string
+          descricao_publica?: string | null
           id: string
+          instagram?: string | null
+          landing_publicada?: boolean
           logo_caminho?: string | null
           modulos?: string[]
           nome: string
           slug: string
           status_plano?: string
+          whatsapp_publico?: string | null
         }
         Update: {
           atualizado_em?: string
+          cidade?: string | null
           cor_principal?: string | null
           criado_em?: string
+          descricao_publica?: string | null
           id?: string
+          instagram?: string | null
+          landing_publicada?: boolean
           logo_caminho?: string | null
           modulos?: string[]
           nome?: string
           slug?: string
           status_plano?: string
+          whatsapp_publico?: string | null
         }
         Relationships: []
       }
@@ -627,6 +670,7 @@ export type Database = {
           id: string
           nome: string
           preco: number
+          publico_na_landing: boolean
           tipo_cobranca: string
         }
         Insert: {
@@ -635,6 +679,7 @@ export type Database = {
           id?: string
           nome: string
           preco: number
+          publico_na_landing?: boolean
           tipo_cobranca: string
         }
         Update: {
@@ -643,6 +688,7 @@ export type Database = {
           id?: string
           nome?: string
           preco?: number
+          publico_na_landing?: boolean
           tipo_cobranca?: string
         }
         Relationships: [
@@ -962,6 +1008,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       status_producao_faixa: [
