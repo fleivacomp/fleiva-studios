@@ -160,6 +160,16 @@ button:disabled {
   }
 }
 
+.logo-atual.tem-logo {
+  background: transparent;
+  border-color: rgb(255 255 255 / 18%);
+  box-shadow: 0 1rem 2.5rem rgb(0 0 0 / 28%);
+
+  img {
+    object-fit: contain;
+  }
+}
+
 .identificacao {
   min-width: 0;
 

@@ -136,8 +136,8 @@
               type="button"
               class="linha-faixa"
               role="option"
-              [class.selecionada]="faixaSelecionada()?.id === faixa.id"
-              [attr.aria-selected]="faixaSelecionada()?.id === faixa.id"
+              [class.selecionada]="faixaSelecionada().id === faixa.id"
+[attr.aria-selected]="faixaSelecionada().id === faixa.id"
               (click)="selecionarFaixa(faixa.id)"
             >
               <span

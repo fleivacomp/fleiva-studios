@@ -1,7 +1,10 @@
+layout-principal.scss
+
+
 :host {
-  --studio-accent: var(--studio-brand, #1ed760);
-  --studio-on-accent: var(--studio-brand-contrast, #07130c);
-  --sidebar: #111311;
+  --studio-accent: var(--studio-brand);
+  --studio-on-accent: var(--studio-on-brand);
+  --sidebar: var(--studio-on-brand)#111311;
   --sidebar-elevated: #1b1e1b;
   --sidebar-hover: #222522;
   --sidebar-line: #303330;
@@ -12,30 +15,10 @@
 }
 
 .estrutura {
-  --studio-brand-soft: color-mix(
-  in oklab,
-  var(--studio-brand) 10%,
-  #f7f8f4
-);
---studio-brand-muted: color-mix(
-  in oklab,
-  var(--studio-brand) 24%,
-  #dfe2dc
-);
---studio-brand-border: color-mix(
-  in oklab,
-  var(--studio-brand) 38%,
-  #c6cac3
-);
---studio-brand-dark: color-mix(
-  in oklab,
-  var(--studio-brand) 42%,
-  #111311
-);
   display: grid;
   min-height: 100vh;
   grid-template-columns: 15rem minmax(0, 1fr);
-  background: #ebece8;
+  background: var(--app-background);
 }
 
 .barra-lateral {
@@ -88,6 +71,8 @@
 .marca:focus-visible,
 .navegacao a:focus-visible,
 .usuario:focus-visible,
+.botao-tema:focus-visible,
+.botao-luz:focus-visible,
 .botao-sair:focus-visible,
 .botao-menu:focus-visible {
   outline: 0.125rem solid var(--studio-accent);
@@ -120,7 +105,14 @@
 .marca-simbolo-movel img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+}
+
+.marca-simbolo.tem-logo,
+.marca-simbolo-movel.tem-logo {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
 }
 
 .marca-texto {
@@ -220,6 +212,8 @@
 
 .navegacao svg,
 .usuario svg,
+.botao-tema svg,
+.botao-luz svg,
 .botao-sair svg {
   width: 1.05rem;
   height: 1.05rem;
@@ -304,6 +298,14 @@
   color: #686e68;
 }
 
+.controles-aparencia {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.botao-tema,
+.botao-luz,
 .botao-sair {
   display: flex;
   min-height: 2.3rem;
@@ -323,6 +325,15 @@
     color 120ms ease,
     background-color 120ms ease,
     border-color 120ms ease;
+}
+
+.botao-tema:hover:not(:disabled),
+.botao-tema.ativo,
+.botao-luz:hover:not(:disabled),
+.botao-luz.ativo {
+  background: #222622;
+  color: var(--studio-accent);
+  border-color: #3d433d;
 }
 
 .botao-sair:hover:not(:disabled) {
@@ -354,7 +365,14 @@
 
 .area-principal {
   min-height: 100vh;
-  background: #ebece8;
+  background: var(--app-background);
+  transition:
+    background-color 180ms ease,
+    filter 180ms ease;
+}
+
+.luz-baixa .area-principal {
+  filter: brightness(0.68) saturate(0.88);
 }
 
 .cabecalho-movel,

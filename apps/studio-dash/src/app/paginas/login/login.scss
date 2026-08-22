@@ -1,16 +1,25 @@
 :host {
-  --login-accent: #d9ff43;
-  --login-accent-strong: #c4ed24;
+  --login-accent: var(--studio-accent);
+  --login-accent-strong: #d9e982;
   --login-ink: #101210;
-  --login-panel: #f4f5ef;
-  --login-surface: #fcfdf8;
-  --login-border: #cfd3ca;
+  --login-panel: #eeefe9;
+  --login-surface: #fafbf6;
+  --login-border: #c8ccc3;
   --login-text: #151815;
   --login-soft: #626862;
   --login-muted: #8b918b;
   display: block;
   min-height: 100dvh;
   color: var(--login-text);
+  font-family: var(
+    --font-sans,
+    Inter,
+    ui-sans-serif,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif
+  );
 }
 
 .pagina-login {
@@ -22,6 +31,7 @@
 
 .apresentacao {
   position: relative;
+  isolation: isolate;
   display: flex;
   min-width: 0;
   min-height: 100dvh;
@@ -30,8 +40,13 @@
   overflow: hidden;
   padding: clamp(1.5rem, 3.5vw, 3.5rem);
   background:
-    linear-gradient(115deg, rgb(255 255 255 / 3%), transparent 36%),
-    radial-gradient(circle at 80% 22%, rgb(217 255 67 / 8%), transparent 23rem),
+    linear-gradient(115deg, rgb(255 255 255 / 4%), transparent 36%),
+    radial-gradient(
+      circle at 80% 22%,
+      color-mix(in srgb, var(--login-accent) 11%, transparent),
+      transparent 24rem
+    ),
+    linear-gradient(155deg, #151815, var(--login-ink) 58%),
     var(--login-ink);
   color: #f4f6ef;
 }
@@ -46,8 +61,15 @@
 .apresentacao::before {
   inset: 0;
   background-image:
-    linear-gradient(rgb(255 255 255 / 2.5%) 0.0625rem, transparent 0.0625rem),
-    linear-gradient(90deg, rgb(255 255 255 / 2.5%) 0.0625rem, transparent 0.0625rem);
+    linear-gradient(
+      rgb(255 255 255 / 2.4%) 0.0625rem,
+      transparent 0.0625rem
+    ),
+    linear-gradient(
+      90deg,
+      rgb(255 255 255 / 2.4%) 0.0625rem,
+      transparent 0.0625rem
+    );
   background-size: 3.25rem 3.25rem;
   mask-image: linear-gradient(to bottom, black, transparent 88%);
 }
@@ -84,7 +106,10 @@
   border-radius: 0.16rem;
   font-size: 1.15rem;
   font-weight: 850;
-  box-shadow: 0 0.75rem 2rem rgb(0 0 0 / 25%);
+  box-shadow:
+    0 0.75rem 2rem rgb(0 0 0 / 25%),
+    0 0 0 0.0625rem
+      color-mix(in srgb, var(--login-accent) 70%, white);
 }
 
 .marca-nome {
@@ -130,10 +155,10 @@
 
 .manifesto h1 {
   margin: 0;
-  font-size: clamp(3rem, 6.8vw, 7.6rem);
-  font-weight: 760;
-  line-height: 0.82;
-  letter-spacing: -0.075em;
+  font-size: clamp(3rem, 6.2vw, 7rem);
+  font-weight: 740;
+  line-height: 0.86;
+  letter-spacing: -0.07em;
 }
 
 .manifesto h1 span {
@@ -150,13 +175,28 @@
 }
 
 .modulo-visual {
+  position: relative;
   width: min(100%, 42rem);
   box-sizing: border-box;
   margin-bottom: auto;
   border: 0.0625rem solid #353935;
-  background: rgb(25 28 25 / 88%);
-  box-shadow: 0 2rem 5rem rgb(0 0 0 / 24%);
+  background:
+    linear-gradient(135deg, rgb(255 255 255 / 3%), transparent 48%),
+    rgb(25 28 25 / 92%);
+  box-shadow:
+    0 2rem 5rem rgb(0 0 0 / 24%),
+    inset 0 0.12rem rgb(255 255 255 / 3%);
   backdrop-filter: blur(0.5rem);
+}
+
+.modulo-visual::before {
+  position: absolute;
+  top: -0.0625rem;
+  right: 12%;
+  width: 24%;
+  height: 0.125rem;
+  background: var(--login-accent);
+  content: '';
 }
 
 .topo-modulo,
@@ -203,6 +243,7 @@
   box-shadow:
     inset 0 0 0 0.38rem #151715,
     0 1rem 2rem rgb(0 0 0 / 30%);
+  animation: girar-disco 18s linear infinite;
 }
 
 .disco::before {
@@ -318,7 +359,12 @@
   flex-direction: column;
   padding: clamp(1.5rem, 4vw, 3.5rem);
   background:
-    linear-gradient(135deg, rgb(255 255 255 / 70%), transparent 42%),
+    radial-gradient(
+      circle at 92% 8%,
+      color-mix(in srgb, var(--login-accent) 12%, transparent),
+      transparent 20rem
+    ),
+    linear-gradient(135deg, rgb(255 255 255 / 76%), transparent 42%),
     var(--login-panel);
 }
 
@@ -346,7 +392,21 @@
 
 .formulario-login {
   width: min(100%, 27rem);
+  box-sizing: border-box;
   margin: auto;
+  padding: clamp(1.5rem, 3vw, 2.25rem);
+  background: color-mix(
+    in srgb,
+    var(--login-surface) 94%,
+    transparent
+  );
+  border: 0.0625rem solid var(--login-border);
+  border-top: 0.2rem solid var(--login-accent);
+  border-radius: 0.38rem;
+  box-shadow:
+    0 0.2rem 0.4rem rgb(16 18 16 / 4%),
+    0 1.75rem 4.5rem rgb(16 18 16 / 9%);
+  backdrop-filter: blur(0.7rem);
 }
 
 .cabecalho-formulario {
@@ -413,8 +473,13 @@
 
 .controle:focus-within {
   background: #ffffff;
-  border-color: #4d554d;
-  box-shadow: 0 0 0 0.22rem rgb(16 18 16 / 7%);
+  border-color: color-mix(
+    in srgb,
+    var(--login-accent) 72%,
+    #4d554d
+  );
+  box-shadow: 0 0 0 0.22rem
+    color-mix(in srgb, var(--login-accent) 15%, transparent);
 }
 
 .controle.controle-invalido {
@@ -490,6 +555,7 @@
   background: var(--login-ink);
   color: #f7f8f3;
   border: 0.0625rem solid var(--login-ink);
+  border-left: 0.2rem solid var(--login-accent);
   border-radius: 0.3rem;
   font: inherit;
   font-size: 0.76rem;
@@ -504,9 +570,10 @@
 }
 
 .botao-entrar:hover:not(:disabled) {
-  background: #242824;
-  color: var(--login-accent);
-  border-color: #242824;
+  background: #202420;
+  color: var(--login-accent-strong);
+  border-color: #202420;
+  border-left-color: var(--login-accent-strong);
   box-shadow: 0 0.75rem 1.75rem rgb(16 18 16 / 15%);
   transform: translateY(-0.08rem);
 }
@@ -575,6 +642,12 @@
   }
 }
 
+@keyframes girar-disco {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (max-width: 62rem) {
   .pagina-login {
     grid-template-columns: minmax(20rem, 0.9fr) minmax(24rem, 1.1fr);
@@ -638,7 +711,8 @@
   }
 
   .formulario-login {
-    padding: 3rem 0;
+    margin: 3rem auto;
+    padding: 1.5rem;
   }
 }
 
@@ -666,6 +740,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .onda i,
+  .disco,
   .carregador {
     animation: none;
   }

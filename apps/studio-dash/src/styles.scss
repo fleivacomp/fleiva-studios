@@ -170,6 +170,87 @@
   --secondary: var(--studio-brand);
 }
 
+/*
+ * Tema escuro aplicado no contêiner autenticado.
+ * A identidade do estúdio continua sendo a cor de destaque.
+ */
+.tema-escuro {
+  color-scheme: dark;
+
+  --app-background: #0d0f0d;
+  --app-surface: #171a17;
+  --app-surface-muted: #1e211e;
+  --app-surface-hover: #272b27;
+  --app-surface-strong: #303530;
+
+  --app-text: #edf0eb;
+  --app-text-soft: #b6bdb5;
+  --app-text-muted: #858d84;
+  --app-text-inverse: #111311;
+
+  --app-border: #303530;
+  --app-border-strong: #444b44;
+  --app-border-dark: #596159;
+
+  --studio-brand-soft: color-mix(
+    in oklab,
+    var(--studio-brand) 12%,
+    var(--app-surface)
+  );
+  --studio-brand-muted: color-mix(
+    in oklab,
+    var(--studio-brand) 24%,
+    var(--app-surface-muted)
+  );
+  --studio-brand-border: color-mix(
+    in oklab,
+    var(--studio-brand) 38%,
+    var(--app-border)
+  );
+
+  --color-success-soft: #13261b;
+  --color-success-border: #315f45;
+  --color-warning-soft: #2a2110;
+  --color-warning-border: #6d5723;
+  --color-danger-soft: #2c1716;
+  --color-danger-border: #6d3431;
+
+  --shadow-small:
+    0 0.125rem 0.35rem rgb(0 0 0 / 18%);
+  --shadow-medium:
+    0 0.125rem 0.35rem rgb(0 0 0 / 20%),
+    0 1rem 2.5rem rgb(0 0 0 / 24%);
+  --shadow-large:
+    0 0.2rem 0.5rem rgb(0 0 0 / 22%),
+    0 1.6rem 4rem rgb(0 0 0 / 30%);
+
+  /* Compatibilidade com os componentes já migrados. */
+  --background: var(--app-background);
+  --surface: var(--app-surface);
+  --surface-muted: var(--app-surface-muted);
+  --surface-hover: var(--app-surface-hover);
+  --text: var(--app-text);
+  --text-soft: var(--app-text-soft);
+  --text-muted: var(--app-text-muted);
+  --border: var(--app-border);
+  --shadow: var(--shadow-large);
+  --shadow-soft: var(--shadow-medium);
+}
+
+/* Campos antigos ainda com fundo branco acompanham o tema sem !important. */
+.tema-escuro .conteudo input:not([type='color']),
+.tema-escuro .conteudo select,
+.tema-escuro .conteudo textarea {
+  background-color: var(--app-surface-muted);
+  color: var(--app-text);
+  border-color: var(--app-border-strong);
+}
+
+.tema-escuro .conteudo input::placeholder,
+.tema-escuro .conteudo textarea::placeholder {
+  color: var(--app-text-muted);
+}
+
 *,
 *::before,
 *::after {

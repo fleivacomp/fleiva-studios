@@ -41,7 +41,10 @@
   } @else if (dadosEstudio.estudio(); as estudio) {
     <section class="identidade">
       <div class="marca-estudio">
-        <div class="logo-atual">
+        <div
+          class="logo-atual"
+          [class.tem-logo]="dadosEstudio.logoUrl()"
+        >
           @if (dadosEstudio.logoUrl()) {
             <img
               [src]="dadosEstudio.logoUrl()"
