@@ -165,36 +165,48 @@ export type Database = {
           atualizado_em: string
           capa_caminho: string | null
           criado_em: string
+          descricao_publica: string | null
+          download_publico: boolean
           estudio_id: string
           id: string
           nome: string
           observacoes: string | null
           projeto_id: string
           publico_na_landing: boolean
+          reproducao_publica: boolean
+          tipo_publico: string | null
           token_compartilhamento: string
         }
         Insert: {
           atualizado_em?: string
           capa_caminho?: string | null
           criado_em?: string
+          descricao_publica?: string | null
+          download_publico?: boolean
           estudio_id: string
           id?: string
           nome: string
           observacoes?: string | null
           projeto_id: string
           publico_na_landing?: boolean
+          reproducao_publica?: boolean
+          tipo_publico?: string | null
           token_compartilhamento?: string
         }
         Update: {
           atualizado_em?: string
           capa_caminho?: string | null
           criado_em?: string
+          descricao_publica?: string | null
+          download_publico?: boolean
           estudio_id?: string
           id?: string
           nome?: string
           observacoes?: string | null
           projeto_id?: string
           publico_na_landing?: boolean
+          reproducao_publica?: boolean
+          tipo_publico?: string | null
           token_compartilhamento?: string
         }
         Relationships: [

@@ -1,0 +1,447 @@
+<main
+  class="pagina-estudio"
+  [style.--cor-estudio]="dados.corPrincipal()"
+  [style.--contraste-estudio]="dados.corContraste()"
+>
+  @if (dados.carregando()) {
+    <section class="estado-pagina">
+      <span class="carregador" aria-hidden="true"></span>
+      <p>Carregando estúdio...</p>
+    </section>
+  } @else if (dados.erro()) {
+    <section class="estado-pagina estado-erro">
+      <span class="codigo-estado">404</span>
+
+      <h1>Página indisponível</h1>
+      <p>{{ dados.erro() }}</p>
+
+      <button
+        type="button"
+        (click)="recarregar()"
+      >
+        Tentar novamente
+      </button>
+    </section>
+  } @else if (dados.estudio(); as estudio) {
+    <header class="topo">
+      <a
+        class="marca"
+        [href]="'/estudio/' + estudio.slug"
+      >
+        <span class="logo-marca">
+          @if (estudio.logo_url) {
+            <img
+              [src]="estudio.logo_url"
+              [alt]="'Logo de ' + estudio.nome"
+            />
+          } @else {
+            {{ inicialEstudio() }}
+          }
+        </span>
+
+        <span>
+          <strong>{{ estudio.nome }}</strong>
+          <small>Estúdio independente</small>
+        </span>
+      </a>
+
+      <nav aria-label="Contato do estúdio">
+        @if (dados.albuns().length > 0) {
+          <a href="#trabalhos">
+            Trabalhos
+          </a>
+        }
+
+        @if (dados.servicos().length > 0) {
+          <a href="#servicos">
+            Serviços
+          </a>
+        }
+
+        @if (linkInstagram(); as instagram) {
+          <a
+            [href]="instagram"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Instagram
+          </a>
+        }
+
+        @if (linkWhatsapp(); as whatsapp) {
+          <a
+            class="contato-topo"
+            [href]="whatsapp"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Entrar em contato
+          </a>
+        }
+      </nav>
+    </header>
+
+    <section class="hero">
+      <div class="conteudo-hero">
+        <div class="metadados">
+          <span class="indicador"></span>
+          <span>ESTÚDIO INDEPENDENTE</span>
+
+          @if (estudio.cidade) {
+            <span class="separador">/</span>
+            <span>{{ estudio.cidade }}</span>
+          }
+        </div>
+
+        <h1>{{ estudio.nome }}</h1>
+
+        @if (estudio.descricao) {
+          <p class="descricao">
+            {{ estudio.descricao }}
+          </p>
+        }
+
+        <div class="acoes-hero">
+          @if (linkWhatsapp(); as whatsapp) {
+            <a
+              class="acao-principal"
+              [href]="whatsapp"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span>Falar com o estúdio</span>
+
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path d="M5 12h14" />
+                <path d="m13 6 6 6-6 6" />
+              </svg>
+            </a>
+          }
+
+          @if (linkInstagram(); as instagram) {
+            <a
+              class="acao-secundaria"
+              [href]="instagram"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              @{{ usuarioInstagram() }}
+            </a>
+          }
+        </div>
+      </div>
+
+      <div
+        class="cartao-estudio"
+        aria-label="Identidade do estúdio"
+      >
+        <header>
+          <span>STUDIO PROFILE</span>
+          <span>FLEIVA / PUBLIC</span>
+        </header>
+
+        <div class="centro-cartao">
+          <div class="logo-grande">
+            @if (estudio.logo_url) {
+              <img
+                [src]="estudio.logo_url"
+                [alt]="'Logo de ' + estudio.nome"
+              />
+            } @else {
+              <span>{{ inicialEstudio() }}</span>
+            }
+          </div>
+
+          <div class="leitura-cartao">
+            <span>IDENTIFICAÇÃO</span>
+            <strong>{{ estudio.nome }}</strong>
+
+            @if (estudio.cidade) {
+              <small>{{ estudio.cidade }}</small>
+            }
+          </div>
+        </div>
+
+        <footer>
+          <span>PÁGINA OFICIAL</span>
+
+          <strong>
+            <i></i>
+            ONLINE
+          </strong>
+        </footer>
+      </div>
+    </section>
+
+    @if (dados.albuns().length > 0) {
+      <section
+        id="trabalhos"
+        class="albuns-publicos"
+      >
+        <header class="cabecalho-secao-publica">
+          <div>
+            <p>TRABALHOS SELECIONADOS</p>
+            <h2>Catálogo</h2>
+          </div>
+
+          <span>
+            {{ dados.albuns().length }}
+
+            @if (dados.albuns().length === 1) {
+              trabalho
+            } @else {
+              trabalhos
+            }
+          </span>
+        </header>
+
+        <div class="grade-albuns-publicos">
+          @for (
+            album of dados.albuns();
+            track album.id;
+            let indice = $index
+          ) {
+            <a
+              class="album-publico"
+              [attr.href]="
+                '/estudio/' +
+                estudio.slug +
+                '/trabalho/' +
+                album.id
+              "
+              [attr.aria-label]="
+                'Abrir ' + album.nome
+              "
+            >
+              <div class="capa-album-publico">
+                @if (album.capa_url) {
+                  <img
+                    [src]="album.capa_url"
+                    [alt]="'Capa de ' + album.nome"
+                  />
+                } @else {
+                  <span>{{ iniciaisAlbum(album) }}</span>
+                  <small>{{ album.projeto }}</small>
+                }
+
+                <span class="numero-album">
+                  {{ formatarOrdem(indice) }}
+                </span>
+              </div>
+
+              <div class="conteudo-album-publico">
+                <header>
+                  <div>
+                    <p>
+                      {{ album.tipo || 'Trabalho' }}
+                    </p>
+
+                    <h3>{{ album.nome }}</h3>
+                    <span>{{ album.projeto }}</span>
+                  </div>
+
+                  <small>
+                    {{
+                      rotuloQuantidadeFaixas(
+                        album.quantidade_faixas
+                      )
+                    }}
+                  </small>
+                </header>
+
+                @if (album.descricao) {
+                  <p class="descricao-album-publico">
+                    {{ album.descricao }}
+                  </p>
+                }
+
+                <footer class="permissoes-album-publico">
+                  @if (album.reproducao_publica) {
+                    <span class="permissao-ativa">
+                      <i aria-hidden="true"></i>
+                      Audição liberada
+                    </span>
+                  }
+
+                  @if (album.download_publico) {
+                    <span class="permissao-ativa">
+                      <i aria-hidden="true"></i>
+                      Download liberado
+                    </span>
+                  }
+
+                  @if (
+                    !album.reproducao_publica &&
+                    !album.download_publico
+                  ) {
+                    <span>
+                      Apresentação do trabalho
+                    </span>
+                  }
+                </footer>
+              </div>
+            </a>
+          }
+        </div>
+      </section>
+    }
+
+    @if (dados.servicos().length > 0) {
+      <section
+        id="servicos"
+        class="servicos-publicos"
+      >
+        <header class="cabecalho-secao-publica">
+          <div>
+            <p>CATÁLOGO DO ESTÚDIO</p>
+            <h2>Serviços</h2>
+          </div>
+
+          <span>
+            {{ dados.servicos().length }}
+
+            @if (dados.servicos().length === 1) {
+              serviço
+            } @else {
+              serviços
+            }
+          </span>
+        </header>
+
+        <div class="grade-servicos-publicos">
+          @for (
+            servico of dados.servicos();
+            track servico.id;
+            let indice = $index
+          ) {
+            <article class="servico-publico">
+              <header>
+                <span>
+                  {{ formatarOrdem(indice) }}
+                </span>
+
+                @if (
+                  formatarDuracao(
+                    servico.duracao_minutos
+                  );
+                  as duracao
+                ) {
+                  <small>{{ duracao }}</small>
+                }
+              </header>
+
+              <div class="conteudo-servico-publico">
+                <h3>{{ servico.nome }}</h3>
+
+                <div class="preco-publico">
+                  <strong>
+                    {{ formatarPreco(servico.preco) }}
+                  </strong>
+
+                  <span>
+                    / {{ servico.tipo_cobranca }}
+                  </span>
+                </div>
+              </div>
+
+              @if (linkWhatsapp(); as whatsapp) {
+                <a
+                  [href]="whatsapp"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Consultar disponibilidade
+                  <span aria-hidden="true">↗</span>
+                </a>
+              }
+            </article>
+          }
+        </div>
+      </section>
+    }
+
+    @if (
+      estudio.descricao ||
+      estudio.cidade ||
+      linkWhatsapp() ||
+      linkInstagram()
+    ) {
+      <section class="informacoes-publicas">
+        <div class="titulo-secao">
+          <div>
+            <p>CONTATO E INFORMAÇÕES</p>
+            <h2>Conheça o estúdio</h2>
+          </div>
+        </div>
+
+        <div class="grade-informacoes">
+          @if (estudio.descricao) {
+            <article class="bloco-sobre">
+              <span class="rotulo">SOBRE</span>
+              <p>{{ estudio.descricao }}</p>
+            </article>
+          }
+
+          <article class="bloco-contato">
+            <span class="rotulo">INFORMAÇÕES</span>
+
+            <dl>
+              @if (estudio.cidade) {
+                <div>
+                  <dt>Localização</dt>
+                  <dd>{{ estudio.cidade }}</dd>
+                </div>
+              }
+
+              @if (linkWhatsapp(); as whatsapp) {
+                <div>
+                  <dt>WhatsApp</dt>
+
+                  <dd>
+                    <a
+                      [href]="whatsapp"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {{ estudio.whatsapp }}
+                    </a>
+                  </dd>
+                </div>
+              }
+
+              @if (linkInstagram(); as instagram) {
+                <div>
+                  <dt>Instagram</dt>
+
+                  <dd>
+                    <a
+                      [href]="instagram"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      @{{ usuarioInstagram() }}
+                    </a>
+                  </dd>
+                </div>
+              }
+            </dl>
+          </article>
+        </div>
+      </section>
+    }
+
+    <footer class="rodape-pagina">
+      <div>
+        <strong>{{ estudio.nome }}</strong>
+        <span>© {{ anoAtual }}</span>
+      </div>
+
+      <a href="https://fleiva.com.br">
+        Gerenciado com Fleiva
+      </a>
+    </footer>
+  }
+</main>

@@ -1,0 +1,278 @@
+<main
+  class="pagina-album"
+  [style.--cor-estudio]="dados.corPrincipal()"
+  [style.--contraste-estudio]="dados.corContraste()"
+>
+  <audio
+    #audioPlayer
+    preload="metadata"
+    (play)="aoReproduzir()"
+    (pause)="aoPausar()"
+    (ended)="aoEncerrar()"
+    (timeupdate)="aoAtualizarTempo(audioPlayer)"
+    (loadedmetadata)="aoCarregarMetadados(audioPlayer)"
+  ></audio>
+
+  @if (dados.carregando()) {
+    <section class="estado-pagina">
+      <span class="carregador" aria-hidden="true"></span>
+      <p>Carregando trabalho...</p>
+    </section>
+  } @else if (dados.erro()) {
+    <section class="estado-pagina estado-erro">
+      <span class="codigo-estado">404</span>
+      <h1>Trabalho indisponível</h1>
+      <p>{{ dados.erro() }}</p>
+
+      <button
+        type="button"
+        (click)="carregar()"
+      >
+        Tentar novamente
+      </button>
+    </section>
+  } @else if (
+    dados.estudio(); as estudio
+  ) {
+    @if (dados.album(); as album) {
+      <header class="topo">
+        <a
+          class="marca"
+          [routerLink]="['/estudio', estudio.slug]"
+        >
+          <span class="logo-estudio">
+            @if (estudio.logo_url) {
+              <img
+                [src]="estudio.logo_url"
+                [alt]="'Logo de ' + estudio.nome"
+              />
+            } @else {
+              {{ inicialEstudio() }}
+            }
+          </span>
+
+          <span>
+            <strong>{{ estudio.nome }}</strong>
+            <small>Voltar para o estúdio</small>
+          </span>
+        </a>
+
+        <span class="selo-publico">
+          FLEIVA / PUBLIC
+        </span>
+      </header>
+
+      <section class="apresentacao-album">
+        <div class="capa-principal">
+          @if (album.capa_url) {
+            <img
+              [src]="album.capa_url"
+              [alt]="'Capa de ' + album.nome"
+            />
+          } @else {
+            <span>{{ iniciaisProjeto() }}</span>
+            <small>{{ album.projeto }}</small>
+          }
+        </div>
+
+        <div class="identificacao-album">
+          <div class="metadados-album">
+            <span>{{ album.tipo || 'Trabalho' }}</span>
+            <i></i>
+            <span>
+              {{ album.faixas.length }}
+              @if (album.faixas.length === 1) {
+                faixa
+              } @else {
+                faixas
+              }
+            </span>
+          </div>
+
+          <h1>{{ album.nome }}</h1>
+          <h2>{{ album.projeto }}</h2>
+
+          @if (album.descricao) {
+            <p>{{ album.descricao }}</p>
+          }
+
+          <div class="permissoes">
+            @if (album.reproducao_publica) {
+              <span>
+                <i></i>
+                Audição disponível
+              </span>
+            }
+
+            @if (album.download_publico) {
+              <span>
+                <i></i>
+                Download disponível
+              </span>
+            }
+
+            @if (
+              !album.reproducao_publica &&
+              !album.download_publico
+            ) {
+              <span>Apresentação pública</span>
+            }
+          </div>
+        </div>
+      </section>
+
+      @if (erroAcao()) {
+        <p class="erro-acao" role="alert">
+          {{ erroAcao() }}
+        </p>
+      }
+
+      <section class="sequencia">
+        <header class="cabecalho-sequencia">
+          <div>
+            <p>SEQUÊNCIA OFICIAL</p>
+            <h2>Faixas</h2>
+          </div>
+
+          <span>{{ album.faixas.length }}</span>
+        </header>
+
+        @if (album.faixas.length === 0) {
+          <p class="sequencia-vazia">
+            Este trabalho ainda não possui faixas disponíveis.
+          </p>
+        } @else {
+          <ol class="lista-faixas">
+            @for (
+              faixa of album.faixas;
+              track faixa.id
+            ) {
+              <li
+                [class.faixa-ativa]="
+                  faixaAtivaId() === faixa.id
+                "
+              >
+                <div class="controle-faixa">
+                  @if (album.reproducao_publica) {
+                    <button
+                      type="button"
+                      [attr.aria-label]="
+                        faixaAtivaId() === faixa.id &&
+                        reproduzindo()
+                          ? 'Pausar ' + faixa.faixa
+                          : 'Ouvir ' + faixa.faixa
+                      "
+                      [disabled]="
+                        carregandoAudioId() !== null
+                      "
+                      (click)="
+                        reproduzir(faixa, audioPlayer)
+                      "
+                    >
+                      @if (
+                        carregandoAudioId() === faixa.id
+                      ) {
+                        <span class="mini-carregador"></span>
+                      } @else if (
+                        faixaAtivaId() === faixa.id &&
+                        reproduzindo()
+                      ) {
+                        <span aria-hidden="true">Ⅱ</span>
+                      } @else {
+                        <span aria-hidden="true">▶</span>
+                      }
+                    </button>
+                  } @else {
+                    <span aria-hidden="true">•</span>
+                  }
+                </div>
+
+                <span class="ordem-faixa">
+                  {{ formatarOrdem(faixa.ordem) }}
+                </span>
+
+                <div class="identificacao-faixa">
+                  <strong>{{ faixa.faixa }}</strong>
+                  <span>
+                    Versão {{ faixa.versao }}
+                    · {{ faixa.nome_arquivo }}
+                  </span>
+                </div>
+
+                <span class="tamanho-faixa">
+                  {{ formatarBytes(faixa.tamanho_bytes) }}
+                </span>
+
+                @if (album.download_publico) {
+                  <button
+                    type="button"
+                    class="botao-download"
+                    [disabled]="baixandoId() !== null"
+                    (click)="baixar(faixa)"
+                  >
+                    @if (baixandoId() === faixa.id) {
+                      Preparando...
+                    } @else {
+                      Baixar
+                    }
+                  </button>
+                }
+              </li>
+            }
+          </ol>
+        }
+      </section>
+
+      @if (faixaAtiva(); as faixa) {
+        <aside class="player-publico">
+          <button
+            type="button"
+            class="controle-player"
+            [disabled]="carregandoAudioId() !== null"
+            (click)="reproduzir(faixa, audioPlayer)"
+          >
+            @if (reproduzindo()) {
+              <span aria-hidden="true">Ⅱ</span>
+              <span class="rotulo-acessivel">Pausar</span>
+            } @else {
+              <span aria-hidden="true">▶</span>
+              <span class="rotulo-acessivel">Reproduzir</span>
+            }
+          </button>
+
+          <div class="faixa-player">
+            <strong>{{ faixa.faixa }}</strong>
+            <span>{{ album.projeto }}</span>
+          </div>
+
+          <div class="progresso-player">
+            <span>{{ formatarTempo(tempoAtual()) }}</span>
+
+            <input
+              type="range"
+              min="0"
+              [max]="duracao() || 0"
+              step="0.1"
+              [value]="tempoAtual()"
+              aria-label="Posição da reprodução"
+              (input)="
+                alterarTempo($event, audioPlayer)
+              "
+            />
+
+            <span>{{ formatarTempo(duracao()) }}</span>
+          </div>
+        </aside>
+      }
+
+      <footer class="rodape-pagina">
+        <span>{{ estudio.nome }}</span>
+        <a
+          [routerLink]="['/estudio', estudio.slug]"
+        >
+          Ver página do estúdio
+        </a>
+      </footer>
+    }
+  }
+</main>

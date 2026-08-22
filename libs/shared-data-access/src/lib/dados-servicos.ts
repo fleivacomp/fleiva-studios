@@ -1,5 +1,7 @@
 import { inject, Injectable, signal } from '@angular/core';
+
 import { ClienteSupabase } from './cliente-supabase';
+
 import type { Database } from './tipos-banco';
 
 export type Servico =
@@ -10,20 +12,29 @@ export interface CadastroServico {
   preco: number;
   tipo_cobranca: string;
   duracao_minutos: number | null;
+  publico_na_landing: boolean;
 }
 
 @Injectable({
   providedIn: 'root',
 })
 export class DadosServicos {
-  private readonly clienteSupabase = inject(ClienteSupabase);
+  private readonly clienteSupabase =
+    inject(ClienteSupabase);
 
-  private readonly listaInterna = signal<Servico[]>([]);
+  private readonly listaInterna =
+    signal<Servico[]>([]);
+
   private readonly carregandoInterno = signal(false);
-  private readonly erroInterno = signal<string | null>(null);
+
+  private readonly erroInterno =
+    signal<string | null>(null);
 
   readonly servicos = this.listaInterna.asReadonly();
-  readonly carregando = this.carregandoInterno.asReadonly();
+
+  readonly carregando =
+    this.carregandoInterno.asReadonly();
+
   readonly erro = this.erroInterno.asReadonly();
 
   async listar(): Promise<void> {
@@ -33,11 +44,12 @@ export class DadosServicos {
     try {
       const estudioId = await this.obterEstudioId();
 
-      const { data, error } = await this.clienteSupabase.cliente
-        .from('servicos')
-        .select('*')
-        .eq('estudio_id', estudioId)
-        .order('nome');
+      const { data, error } =
+        await this.clienteSupabase.cliente
+          .from('servicos')
+          .select('*')
+          .eq('estudio_id', estudioId)
+          .order('nome');
 
       if (error) {
         throw error;
@@ -45,26 +57,35 @@ export class DadosServicos {
 
       this.listaInterna.set(data);
     } catch (erro) {
-      this.erroInterno.set(this.obterMensagemErro(erro));
+      this.erroInterno.set(
+        this.obterMensagemErro(erro),
+      );
     } finally {
       this.carregandoInterno.set(false);
     }
   }
 
-  async cadastrar(dados: CadastroServico): Promise<Servico> {
+  async cadastrar(
+    dados: CadastroServico,
+  ): Promise<Servico> {
     const estudioId = await this.obterEstudioId();
 
-    const { data, error } = await this.clienteSupabase.cliente
-      .from('servicos')
-      .insert({
-        estudio_id: estudioId,
-        nome: dados.nome.trim(),
-        preco: dados.preco,
-        tipo_cobranca: dados.tipo_cobranca.trim(),
-        duracao_minutos: dados.duracao_minutos,
-      })
-      .select()
-      .single();
+    const { data, error } =
+      await this.clienteSupabase.cliente
+        .from('servicos')
+        .insert({
+          estudio_id: estudioId,
+          nome: dados.nome.trim(),
+          preco: dados.preco,
+          tipo_cobranca:
+            dados.tipo_cobranca.trim(),
+          duracao_minutos:
+            dados.duracao_minutos,
+          publico_na_landing:
+            dados.publico_na_landing,
+        })
+        .select()
+        .single();
 
     if (error) {
       throw error;
@@ -85,18 +106,23 @@ export class DadosServicos {
   ): Promise<Servico> {
     const estudioId = await this.obterEstudioId();
 
-    const { data, error } = await this.clienteSupabase.cliente
-      .from('servicos')
-      .update({
-        nome: dados.nome.trim(),
-        preco: dados.preco,
-        tipo_cobranca: dados.tipo_cobranca.trim(),
-        duracao_minutos: dados.duracao_minutos,
-      })
-      .eq('id', servicoId)
-      .eq('estudio_id', estudioId)
-      .select()
-      .single();
+    const { data, error } =
+      await this.clienteSupabase.cliente
+        .from('servicos')
+        .update({
+          nome: dados.nome.trim(),
+          preco: dados.preco,
+          tipo_cobranca:
+            dados.tipo_cobranca.trim(),
+          duracao_minutos:
+            dados.duracao_minutos,
+          publico_na_landing:
+            dados.publico_na_landing,
+        })
+        .eq('id', servicoId)
+        .eq('estudio_id', estudioId)
+        .select()
+        .single();
 
     if (error) {
       throw error;
@@ -105,29 +131,38 @@ export class DadosServicos {
     this.listaInterna.update((servicos) =>
       servicos
         .map((servico) =>
-          servico.id === servicoId ? data : servico,
+          servico.id === servicoId
+            ? data
+            : servico,
         )
-        .sort((a, b) => a.nome.localeCompare(b.nome)),
+        .sort((a, b) =>
+          a.nome.localeCompare(b.nome),
+        ),
     );
 
     return data;
   }
 
-  async excluir(servicoId: string): Promise<void> {
+  async excluir(
+    servicoId: string,
+  ): Promise<void> {
     const estudioId = await this.obterEstudioId();
 
-    const { error } = await this.clienteSupabase.cliente
-      .from('servicos')
-      .delete()
-      .eq('id', servicoId)
-      .eq('estudio_id', estudioId);
+    const { error } =
+      await this.clienteSupabase.cliente
+        .from('servicos')
+        .delete()
+        .eq('id', servicoId)
+        .eq('estudio_id', estudioId);
 
     if (error) {
       throw error;
     }
 
     this.listaInterna.update((servicos) =>
-      servicos.filter((servico) => servico.id !== servicoId),
+      servicos.filter(
+        (servico) => servico.id !== servicoId,
+      ),
     );
   }
 
@@ -135,7 +170,8 @@ export class DadosServicos {
     const {
       data: { user },
       error,
-    } = await this.clienteSupabase.cliente.auth.getUser();
+    } =
+      await this.clienteSupabase.cliente.auth.getUser();
 
     if (error || !user) {
       throw new Error('Usuário não autenticado.');

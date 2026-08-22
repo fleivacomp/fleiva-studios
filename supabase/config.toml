@@ -415,3 +415,4 @@ enabled = true
 
 [functions.abrir-arquivo-faixa]
 verify_jwt = false
+

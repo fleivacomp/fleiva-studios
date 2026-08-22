@@ -1,9 +1,16 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  inject,
+  signal,
+} from '@angular/core';
+
 import {
   FormBuilder,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+
 import {
   DadosServicos,
   type CadastroServico,
@@ -14,35 +21,60 @@ import {
   selector: 'app-servicos',
   standalone: true,
   imports: [ReactiveFormsModule],
-  templateUrl:  './servicos.html',
+  templateUrl: './servicos.html',
   styleUrl: './servicos.scss',
 })
 export class Servicos implements OnInit {
   readonly dadosServicos = inject(DadosServicos);
 
-  private readonly construtorFormulario = inject(FormBuilder);
+  private readonly construtorFormulario =
+    inject(FormBuilder);
 
   readonly salvando = signal(false);
-  readonly excluindoId = signal<string | null>(null);
-  readonly servicoEditandoId = signal<string | null>(null);
-  readonly erroFormulario = signal<string | null>(null);
 
-  readonly formulario = this.construtorFormulario.group({
-    nome: this.construtorFormulario.nonNullable.control('', [
-      Validators.required,
-    ]),
-    preco: this.construtorFormulario.control<number | null>(null, [
-      Validators.required,
-      Validators.min(0),
-    ]),
-    tipo_cobranca: this.construtorFormulario.nonNullable.control('', [
-      Validators.required,
-    ]),
-    duracao_minutos: this.construtorFormulario.control<number | null>(
-      null,
-      [Validators.min(1)],
-    ),
-  });
+  readonly excluindoId =
+    signal<string | null>(null);
+
+  readonly servicoEditandoId =
+    signal<string | null>(null);
+
+  readonly erroFormulario =
+    signal<string | null>(null);
+
+  readonly formulario =
+    this.construtorFormulario.group({
+      nome:
+        this.construtorFormulario.nonNullable.control(
+          '',
+          [Validators.required],
+        ),
+
+      preco:
+        this.construtorFormulario.control<number | null>(
+          null,
+          [
+            Validators.required,
+            Validators.min(0),
+          ],
+        ),
+
+      tipo_cobranca:
+        this.construtorFormulario.nonNullable.control(
+          '',
+          [Validators.required],
+        ),
+
+      duracao_minutos:
+        this.construtorFormulario.control<number | null>(
+          null,
+          [Validators.min(1)],
+        ),
+
+      publico_na_landing:
+        this.construtorFormulario.nonNullable.control(
+          true,
+        ),
+    });
 
   ngOnInit(): void {
     void this.dadosServicos.listar();
@@ -58,26 +90,36 @@ export class Servicos implements OnInit {
     this.erroFormulario.set(null);
 
     try {
-      const valor = this.formulario.getRawValue();
+      const valor =
+        this.formulario.getRawValue();
 
       const dados: CadastroServico = {
         nome: valor.nome,
         preco: Number(valor.preco),
         tipo_cobranca: valor.tipo_cobranca,
-        duracao_minutos: valor.duracao_minutos,
+        duracao_minutos:
+          valor.duracao_minutos,
+        publico_na_landing:
+          valor.publico_na_landing,
       };
 
-      const servicoId = this.servicoEditandoId();
+      const servicoId =
+        this.servicoEditandoId();
 
       if (servicoId) {
-        await this.dadosServicos.atualizar(servicoId, dados);
+        await this.dadosServicos.atualizar(
+          servicoId,
+          dados,
+        );
       } else {
         await this.dadosServicos.cadastrar(dados);
       }
 
       this.limparFormulario();
     } catch (erro) {
-      this.erroFormulario.set(this.obterMensagemErro(erro));
+      this.erroFormulario.set(
+        this.obterMensagemErro(erro),
+      );
     } finally {
       this.salvando.set(false);
     }
@@ -91,7 +133,10 @@ export class Servicos implements OnInit {
       nome: servico.nome,
       preco: servico.preco,
       tipo_cobranca: servico.tipo_cobranca,
-      duracao_minutos: servico.duracao_minutos,
+      duracao_minutos:
+        servico.duracao_minutos,
+      publico_na_landing:
+        servico.publico_na_landing,
     });
 
     window.scrollTo({
@@ -119,11 +164,15 @@ export class Servicos implements OnInit {
     try {
       await this.dadosServicos.excluir(servico.id);
 
-      if (this.servicoEditandoId() === servico.id) {
+      if (
+        this.servicoEditandoId() === servico.id
+      ) {
         this.limparFormulario();
       }
     } catch (erro) {
-      this.erroFormulario.set(this.obterMensagemErro(erro));
+      this.erroFormulario.set(
+        this.obterMensagemErro(erro),
+      );
     } finally {
       this.excluindoId.set(null);
     }
@@ -136,7 +185,9 @@ export class Servicos implements OnInit {
     }).format(preco);
   }
 
-  formatarDuracao(duracaoMinutos: number | null): string {
+  formatarDuracao(
+    duracaoMinutos: number | null,
+  ): string {
     if (duracaoMinutos === null) {
       return 'Não informada';
     }
@@ -145,7 +196,10 @@ export class Servicos implements OnInit {
       return `${duracaoMinutos} min`;
     }
 
-    const horas = Math.floor(duracaoMinutos / 60);
+    const horas = Math.floor(
+      duracaoMinutos / 60,
+    );
+
     const minutos = duracaoMinutos % 60;
 
     return minutos > 0
@@ -161,10 +215,13 @@ export class Servicos implements OnInit {
       preco: null,
       tipo_cobranca: '',
       duracao_minutos: null,
+      publico_na_landing: false,
     });
   }
 
-  private obterMensagemErro(erro: unknown): string {
+  private obterMensagemErro(
+    erro: unknown,
+  ): string {
     if (
       typeof erro === 'object' &&
       erro !== null &&

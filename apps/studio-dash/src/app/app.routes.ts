@@ -4,6 +4,26 @@ import { exigirAutenticacao } from '@fleiva-studios/shared-data-access';
 
 export const rotasAplicacao: Routes = [
   {
+  path: 'estudio/:slug/trabalho/:albumId',
+  loadComponent: () =>
+    import(
+      './paginas/album-publico/album-publico'
+    ).then(
+      (modulo) => modulo.AlbumPublico,
+    ),
+},
+
+  {
+
+  path: 'estudio/:slug',
+  loadComponent: () =>
+    import(
+      './paginas/pagina-estudio/pagina-estudio'
+    ).then(
+      (modulo) => modulo.PaginaEstudio,
+    ),
+},
+  {
     path: 'login',
     loadComponent: () =>
       import('./paginas/login/login').then(
@@ -105,6 +125,7 @@ export const rotasAplicacao: Routes = [
       },
     ],
   },
+
   {
     path: '**',
     redirectTo: '',

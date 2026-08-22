@@ -4,7 +4,34 @@ interface RequisicaoPaginaEstudio {
   slug?: string;
 }
 
+interface ProjetoAlbumConsultado {
+  nome: string;
+  capa_caminho: string | null;
+}
+
+interface ItemAlbumConsultado {
+  id: string;
+}
+
+interface AlbumConsultado {
+  id: string;
+  nome: string;
+  tipo_publico: string | null;
+  descricao_publica: string | null;
+  capa_caminho: string | null;
+  reproducao_publica: boolean;
+  download_publico: boolean;
+  projeto:
+    | ProjetoAlbumConsultado
+    | ProjetoAlbumConsultado[]
+    | null;
+  faixas: ItemAlbumConsultado[] | null;
+}
+
 const BUCKET_LOGOS = 'logos-estudios';
+
+const URL_PUBLICA_CAPAS =
+  'https://pub-b1d515cf725c469ea3d43e6cdc3546a7.r2.dev';
 
 const cabecalhosCors = {
   'Access-Control-Allow-Origin': '*',
@@ -35,7 +62,7 @@ Deno.serve(async (requisicao) => {
 
     const slug = corpo.slug
       ?.trim()
-      .toLocaleLowerCase();
+      .toLocaleLowerCase('pt-BR');
 
     if (!slug || !slugValido(slug)) {
       return responderIndisponivel();
@@ -61,31 +88,123 @@ Deno.serve(async (requisicao) => {
       },
     );
 
-    const { data: estudio, error } =
-      await clienteSupabase
-        .from('estudios')
-        .select(`
-          id,
-          nome,
-          slug,
-          logo_caminho,
-          cor_principal,
-          descricao_publica,
-          cidade,
-          whatsapp_publico,
-          instagram
-        `)
-        .eq('slug', slug)
-        .eq('landing_publicada', true)
-        .maybeSingle();
+    const {
+      data: estudio,
+      error: erroEstudio,
+    } = await clienteSupabase
+      .from('estudios')
+      .select(`
+        id,
+        nome,
+        slug,
+        logo_caminho,
+        cor_principal,
+        descricao_publica,
+        cidade,
+        whatsapp_publico,
+        instagram
+      `)
+      .eq('slug', slug)
+      .eq('landing_publicada', true)
+      .maybeSingle();
 
-    if (error) {
-      throw error;
+    if (erroEstudio) {
+      throw erroEstudio;
     }
 
     if (!estudio) {
       return responderIndisponivel();
     }
+
+    const [
+      resultadoServicos,
+      resultadoAlbuns,
+    ] = await Promise.all([
+      clienteSupabase
+        .from('servicos')
+        .select(`
+          id,
+          nome,
+          preco,
+          tipo_cobranca,
+          duracao_minutos
+        `)
+        .eq('estudio_id', estudio.id)
+        .eq('publico_na_landing', true)
+        .order('nome'),
+
+      clienteSupabase
+        .from('albuns')
+        .select(`
+          id,
+          nome,
+          tipo_publico,
+          descricao_publica,
+          capa_caminho,
+          reproducao_publica,
+          download_publico,
+          projeto:projetos_artisticos!albuns_projeto_id_fkey (
+            nome,
+            capa_caminho
+          ),
+          faixas:album_faixas!album_faixas_album_id_fkey (
+            id
+          )
+        `)
+        .eq('estudio_id', estudio.id)
+        .eq('publico_na_landing', true)
+        .order('criado_em', {
+          ascending: false,
+        }),
+    ]);
+
+    if (resultadoServicos.error) {
+      throw resultadoServicos.error;
+    }
+
+    if (resultadoAlbuns.error) {
+      throw resultadoAlbuns.error;
+    }
+
+    const albunsConsultados =
+      (resultadoAlbuns.data ?? []) as unknown as
+        AlbumConsultado[];
+
+    const albuns = albunsConsultados
+      .map((album) => {
+        const projeto =
+          obterPrimeiroRegistro(
+            album.projeto,
+          );
+
+        if (!projeto) {
+          return null;
+        }
+
+        const caminhoCapa =
+          album.capa_caminho ??
+          projeto.capa_caminho;
+
+        return {
+          id: album.id,
+          nome: album.nome,
+          projeto: projeto.nome,
+          tipo: album.tipo_publico,
+          descricao:
+            album.descricao_publica,
+          capa_url: criarUrlPublica(
+            URL_PUBLICA_CAPAS,
+            caminhoCapa,
+          ),
+          quantidade_faixas:
+            album.faixas?.length ?? 0,
+          reproducao_publica:
+            album.reproducao_publica,
+          download_publico:
+            album.download_publico,
+        };
+      })
+      .filter(itemValido);
 
     let logoUrl: string | null = null;
 
@@ -93,10 +212,25 @@ Deno.serve(async (requisicao) => {
       const { data } =
         clienteSupabase.storage
           .from(BUCKET_LOGOS)
-          .getPublicUrl(estudio.logo_caminho);
+          .getPublicUrl(
+            estudio.logo_caminho,
+          );
 
       logoUrl = data.publicUrl;
     }
+
+    const servicos =
+      (resultadoServicos.data ?? []).map(
+        (servico) => ({
+          id: servico.id,
+          nome: servico.nome,
+          preco: servico.preco,
+          tipo_cobranca:
+            servico.tipo_cobranca,
+          duracao_minutos:
+            servico.duracao_minutos,
+        }),
+      );
 
     return responderJson({
       estudio: {
@@ -112,6 +246,10 @@ Deno.serve(async (requisicao) => {
           estudio.whatsapp_publico,
         instagram: estudio.instagram,
       },
+
+      servicos,
+
+      albuns,
     });
   } catch (erro) {
     console.error(
@@ -131,8 +269,46 @@ Deno.serve(async (requisicao) => {
 function slugValido(slug: string): boolean {
   return (
     slug.length <= 120 &&
-    /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)
+    /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(
+      slug,
+    )
   );
+}
+
+function criarUrlPublica(
+  base: string,
+  caminho: string | null,
+): string | null {
+  if (!caminho) {
+    return null;
+  }
+
+  const caminhoSeguro = caminho
+    .split('/')
+    .map((parte) =>
+      encodeURIComponent(parte),
+    )
+    .join('/');
+
+  return `${
+    base.replace(/\/$/, '')
+  }/${caminhoSeguro}`;
+}
+
+function obterPrimeiroRegistro<T>(
+  valor: T | T[] | null,
+): T | null {
+  if (Array.isArray(valor)) {
+    return valor[0] ?? null;
+  }
+
+  return valor ?? null;
+}
+
+function itemValido<T>(
+  item: T | null,
+): item is T {
+  return item !== null;
 }
 
 function responderIndisponivel(): Response {

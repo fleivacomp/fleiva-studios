@@ -27,3 +27,9 @@ export * from './lib/dados-estudio';
 export * from './lib/dados-albuns';
 
 export * from './lib/dados-album-compartilhado';
+
+export * from './lib/dados-pagina-estudio';
+
+export * from './lib/dados-servicos';
+
+export * from './lib/dados-album-publico';

@@ -81,7 +81,7 @@ button:disabled {
 
 .botao-principal {
   background: var(--primary);
-  color: #ffffff;
+  color: var(--studio-on-brand, #ffffff);
   border: 0.0625rem solid var(--primary);
   box-shadow: 0 0.55rem 1.4rem
     color-mix(in srgb, var(--primary) 20%, transparent);
@@ -182,7 +182,7 @@ textarea {
   width: 100%;
   box-sizing: border-box;
   padding: 0.68rem 0.75rem;
-  background: #ffffff;
+  background: var(--surface);
   color: var(--text);
   border: 0.0625rem solid var(--border);
   border-radius: var(--radius);
@@ -311,40 +311,45 @@ textarea {
 .grade-albuns {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: clamp(0.8rem, 2vw, 1.25rem);
+  gap: clamp(1rem, 2vw, 1.4rem);
 }
 
 .cartao-album {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
   min-width: 0;
   overflow: hidden;
   background: var(--surface);
   border: 0.0625rem solid var(--border);
-  border-radius: 0.3rem;
+  border-radius: var(--radius-grande);
+  box-shadow: var(--shadow-small);
   transition:
     transform 160ms ease,
     box-shadow 160ms ease,
     border-color 160ms ease;
 
-  &:hover,
+  &:hover {
+    border-color: color-mix(
+      in srgb,
+      var(--primary) 26%,
+      var(--border)
+    );
+    box-shadow: var(--shadow-medium);
+    transform: translateY(-0.15rem);
+  }
+
   &.album-selecionado {
     border-color: color-mix(
       in srgb,
-      var(--primary) 52%,
+      var(--primary) 58%,
       var(--border)
     );
-    box-shadow: var(--shadow);
-    transform: translateY(-0.2rem);
+    box-shadow:
+      0 0 0 0.12rem
+        color-mix(in srgb, var(--primary) 12%, transparent),
+      var(--shadow-medium);
   }
-}
-
-.abertura-album {
-  display: grid;
-  width: 100%;
-  padding: 0;
-  background: transparent;
-  color: inherit;
-  border: 0;
-  text-align: left;
 }
 
 .capa-album {
@@ -404,47 +409,68 @@ textarea {
     text-transform: uppercase;
     white-space: nowrap;
   }
+}
 
-  > i {
-    position: absolute;
-    right: 0.8rem;
-    bottom: 0.8rem;
-    display: grid;
-    width: 2.5rem;
-    height: 2.5rem;
-    place-items: center;
-    background: var(--primary);
-    color: #ffffff;
-    border-radius: 999rem;
-    box-shadow: 0 0.6rem 1.4rem rgb(0 0 0 / 30%);
-    font-size: 0.72rem;
-    font-style: normal;
-    opacity: 0;
-    transform: translateY(0.35rem);
-    transition:
-      opacity 150ms ease,
-      transform 150ms ease;
+.estado-cartao,
+.indicador-aberto {
+  position: absolute;
+  top: 0.7rem;
+  display: inline-flex;
+  min-height: 1.55rem;
+  align-items: center;
+  padding: 0.28rem 0.5rem;
+  border: 0.0625rem solid rgb(255 255 255 / 24%);
+  border-radius: var(--radius-round);
+  background: rgb(8 10 8 / 72%);
+  color: #f8faf6;
+  box-shadow: 0 0.25rem 0.8rem rgb(0 0 0 / 18%);
+  backdrop-filter: blur(0.45rem);
+  font-size: 0.55rem;
+  font-weight: 760;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.estado-cartao {
+  left: 0.7rem;
+
+  &.estado-publicado {
+    background: color-mix(
+      in srgb,
+      var(--primary) 84%,
+      #101210
+    );
+    color: var(--studio-on-brand, #ffffff);
   }
 }
 
-.capa-album:has(img) > i {
-  opacity: 0;
+.indicador-aberto {
+  right: 0.7rem;
+  background: var(--surface);
+  color: var(--primary);
+  border-color: color-mix(
+    in srgb,
+    var(--primary) 34%,
+    var(--border)
+  );
 }
 
-.cartao-album:hover .capa-album > i,
-.album-selecionado .capa-album > i {
-  opacity: 1;
-  transform: translateY(0);
+.corpo-cartao {
+  display: grid;
+  align-content: space-between;
+  gap: 0.9rem;
+  padding: 1rem;
 }
 
 .dados-album {
   display: grid;
-  gap: 0.25rem;
-  padding: 0.9rem;
+  min-width: 0;
+  gap: 0.28rem;
 
   > strong {
     overflow: hidden;
-    font-size: 0.88rem;
+    font-size: 0.94rem;
+    letter-spacing: -0.015em;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -457,23 +483,94 @@ textarea {
     white-space: nowrap;
   }
 
-  > em {
-    margin-top: 0.35rem;
+}
+
+.metadados-cartao {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+
+  em {
+    display: inline-flex;
+    min-height: 1.45rem;
+    align-items: center;
+    overflow: hidden;
+    padding: 0.25rem 0.45rem;
+    background: var(--surface-muted);
     color: var(--text-muted);
-    font-size: 0.62rem;
+    border: 0.0625rem solid var(--border);
+    border-radius: var(--radius-round);
+    font-size: 0.57rem;
     font-style: normal;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.botao-abrir-album {
+  display: flex;
+  width: 100%;
+  min-height: 2.6rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.62rem 0.75rem;
+  background: var(--text);
+  color: var(--surface);
+  border: 0.0625rem solid var(--text);
+  border-radius: var(--radius);
+  font-size: 0.66rem;
+  font-weight: 740;
+  text-align: left;
+
+  &:hover:not(:disabled) {
+    background: var(--primary);
+    color: var(--studio-on-brand, #ffffff);
+    border-color: var(--primary);
+  }
+
+  &[aria-pressed='true'] {
+    background: color-mix(
+      in srgb,
+      var(--primary) 12%,
+      var(--surface)
+    );
+    color: var(--primary);
+    border-color: color-mix(
+      in srgb,
+      var(--primary) 42%,
+      var(--border)
+    );
+  }
+
+  > span:last-child {
+    font-size: 0.95rem;
+    transition: transform 140ms ease;
+  }
+
+  &:hover:not(:disabled) > span:last-child {
+    transform: translateX(0.15rem);
   }
 }
 
 .acoes-cartao {
   display: flex;
-  justify-content: flex-end;
-  gap: 0.2rem;
-  padding: 0 0.65rem 0.65rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding: 0.65rem 1rem;
+  border-top: 0.0625rem solid var(--border);
+  background: color-mix(
+    in srgb,
+    var(--surface-muted) 64%,
+    var(--surface)
+  );
 
   button {
     min-height: 2rem;
-    padding: 0.35rem 0.5rem;
+    padding: 0.35rem 0.42rem;
     background: transparent;
     color: var(--text-soft);
     border: 0.0625rem solid transparent;
@@ -481,14 +578,25 @@ textarea {
     font-size: 0.62rem;
     font-weight: 720;
 
+    span {
+      margin-right: 0.25rem;
+      font-size: 0.72rem;
+    }
+
     &:hover:not(:disabled) {
-      background: var(--surface-muted);
+      background: var(--surface);
       color: var(--text);
+      border-color: var(--border);
     }
   }
 
   .acao-perigo:hover:not(:disabled) {
     color: var(--danger);
+    border-color: color-mix(
+      in srgb,
+      var(--danger) 30%,
+      var(--border)
+    );
   }
 }
 
@@ -523,7 +631,7 @@ textarea {
   place-items: center;
   overflow: hidden;
   background: var(--primary);
-  color: #ffffff;
+  color: var(--studio-on-brand, #ffffff);
   font-size: 1.2rem;
   font-weight: 780;
 
@@ -844,7 +952,7 @@ textarea {
   overflow: hidden;
   isolation: isolate;
   background: var(--primary);
-  color: #ffffff;
+  color: var(--studio-on-brand, #ffffff);
   box-shadow: 1.6rem 1.6rem 0
     color-mix(in srgb, var(--primary) 14%, var(--surface-muted));
 
@@ -889,7 +997,7 @@ textarea {
   > i {
     width: 0.7rem;
     height: 0.7rem;
-    background: #ffffff;
+    background: var(--studio-on-brand, #ffffff);
     border-radius: 999rem;
   }
 }
@@ -921,6 +1029,392 @@ textarea {
   border-top-color: var(--primary);
   border-radius: 999rem;
   animation: girar 650ms linear infinite;
+}
+
+.painel-publicacao {
+  margin-top: 1rem;
+  overflow: hidden;
+  background: var(--surface);
+  border: 0.0625rem solid var(--border);
+  border-radius: var(--radius-grande);
+
+  &.publicado {
+    border-color: color-mix(
+      in srgb,
+      var(--primary) 38%,
+      var(--border)
+    );
+    box-shadow: inset 0.2rem 0
+      var(--primary);
+  }
+}
+
+.cabecalho-publicacao {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--surface-muted);
+  border-bottom: 0.0625rem solid var(--border);
+
+  h3 {
+    margin: 0.25rem 0 0;
+    font-size: 1rem;
+  }
+}
+
+.situacao-publicacao {
+  padding: 0.3rem 0.55rem;
+  background: var(--surface);
+  color: var(--text-muted);
+  border: 0.0625rem solid var(--border);
+  border-radius: 999rem;
+  font-size: 0.62rem;
+  font-weight: 740;
+
+  &.publicada {
+    background: color-mix(
+      in srgb,
+      var(--primary) 9%,
+      var(--surface)
+    );
+    color: var(--primary);
+    border-color: color-mix(
+      in srgb,
+      var(--primary) 30%,
+      var(--border)
+    );
+  }
+}
+
+.resumo-publicacao {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 1rem;
+  border-bottom: 0.0625rem solid var(--border);
+
+  > div:last-child {
+    display: grid;
+    min-width: 0;
+    gap: 0.2rem;
+
+    > strong,
+    > span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    > span,
+    > small {
+      color: var(--text-muted);
+    }
+
+    > small {
+      font-size: 0.65rem;
+    }
+  }
+}
+
+.capa-publicacao {
+  display: grid;
+  width: 4.5rem;
+  height: 4.5rem;
+  flex: 0 0 auto;
+  place-items: center;
+  overflow: hidden;
+  background: var(--primary);
+  color: var(--studio-on-brand, #ffffff);
+  border-radius: 0.3rem;
+  font-size: 1.4rem;
+  font-weight: 780;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.aviso-publicacao,
+.alerta-exposicao,
+.alerta-download {
+  margin: 1rem;
+  padding: 0.8rem;
+  border-radius: var(--radius);
+  font-size: 0.68rem;
+
+  p {
+    margin: 0.25rem 0 0;
+  }
+}
+
+.aviso-publicacao {
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+  border: 0.0625rem solid
+    var(--color-warning-border);
+}
+
+.alerta-exposicao {
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+  border: 0.0625rem solid
+    var(--color-warning-border);
+}
+
+.alerta-download {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  border: 0.0625rem solid
+    var(--color-danger-border);
+}
+
+.revisao-publicacao {
+  padding: 1rem;
+  border-bottom: 0.0625rem solid var(--border);
+
+  > header {
+    display: grid;
+    gap: 0.2rem;
+    margin-bottom: 0.75rem;
+
+    strong {
+      font-size: 0.78rem;
+    }
+
+    span {
+      color: var(--text-muted);
+      font-size: 0.65rem;
+    }
+  }
+
+  ol {
+    display: grid;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    display: grid;
+    grid-template-columns: 1.5rem minmax(0, 1fr);
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.65rem;
+    background: var(--surface-muted);
+    border-radius: var(--radius);
+
+    > span {
+      color: var(--primary);
+      font-size: 0.62rem;
+      font-weight: 740;
+    }
+
+    > div {
+      display: grid;
+      min-width: 0;
+      gap: 0.15rem;
+    }
+
+    strong,
+    small {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    strong {
+      font-size: 0.72rem;
+    }
+
+    small {
+      color: var(--text-muted);
+      font-size: 0.6rem;
+    }
+  }
+}
+
+.formulario-publicacao {
+  padding: 1rem;
+}
+
+.campos-publicacao {
+  display: grid;
+  grid-template-columns: minmax(12rem, 0.8fr) minmax(16rem, 1.2fr);
+  gap: 0.8rem;
+  padding-bottom: 1rem;
+  border-bottom: 0.0625rem solid var(--border);
+
+  label {
+    display: grid;
+    gap: 0.42rem;
+
+    > span {
+      color: var(--text);
+      font-size: 0.7rem;
+      font-weight: 740;
+    }
+
+    > small {
+      color: var(--text-muted);
+      font-size: 0.6rem;
+      line-height: 1.45;
+    }
+  }
+
+  input,
+  textarea {
+    background: var(--surface);
+  }
+
+  textarea {
+    min-height: 6.4rem;
+  }
+}
+
+.titulo-permissoes {
+  display: grid;
+  gap: 0.2rem;
+  margin: 1rem 0 0.65rem;
+
+  strong {
+    font-size: 0.76rem;
+  }
+
+  span {
+    color: var(--text-muted);
+    font-size: 0.63rem;
+    line-height: 1.45;
+  }
+}
+
+.opcoes-publicacao {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+
+  label {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    padding: 0.8rem;
+    background: var(--surface-muted);
+    border: 0.0625rem solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+
+    &:has(input:checked) {
+      border-color: color-mix(
+        in srgb,
+        var(--primary) 35%,
+        var(--border)
+      );
+      background: color-mix(
+        in srgb,
+        var(--primary) 7%,
+        var(--surface)
+      );
+    }
+  }
+
+  input {
+    width: 1rem;
+    height: 1rem;
+    flex: 0 0 auto;
+    margin-top: 0.12rem;
+    accent-color: var(--primary);
+  }
+
+  label > span {
+    display: grid;
+    gap: 0.2rem;
+  }
+
+  strong {
+    font-size: 0.72rem;
+  }
+
+  small {
+    color: var(--text-muted);
+    font-size: 0.61rem;
+    line-height: 1.4;
+  }
+}
+
+.confirmacao-publicacao {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  color: var(--text-soft);
+  font-size: 0.67rem;
+  cursor: pointer;
+
+  input {
+    width: 1rem;
+    height: 1rem;
+    flex: 0 0 auto;
+    accent-color: var(--primary);
+  }
+}
+
+.acoes-publicacao {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 0.0625rem solid var(--border);
+}
+
+.botao-publicar,
+.botao-despublicar {
+  min-height: 2.5rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: var(--radius);
+  font-size: 0.68rem;
+  font-weight: 740;
+}
+
+.botao-publicar {
+  background: var(--primary);
+  color: var(--studio-on-brand, #ffffff);
+  border: 0.0625rem solid var(--primary);
+}
+
+.botao-despublicar {
+  background: transparent;
+  color: var(--danger);
+  border: 0.0625rem solid
+    color-mix(
+      in srgb,
+      var(--danger) 35%,
+      var(--border)
+    );
+}
+
+@media (max-width: 44rem) {
+  .campos-publicacao,
+  .opcoes-publicacao {
+    grid-template-columns: 1fr;
+  }
+
+  .acoes-publicacao {
+    flex-direction: column-reverse;
+
+    button {
+      width: 100%;
+    }
+  }
+
+  .revisao-publicacao li {
+    align-items: flex-start;
+  }
 }
 
 @keyframes girar {

@@ -2,6 +2,7 @@ import {
   Component,
   OnInit,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -18,6 +19,7 @@ import {
   type AlbumFaixaCompleta,
   type CadastroAlbum,
   type FaixaDisponivelAlbum,
+  type ConfiguracaoPublicacaoAlbum,
 } from '@fleiva-studios/shared-data-access';
 
 @Component({
@@ -50,6 +52,10 @@ export class Albuns implements OnInit {
   readonly removendoCapaId = signal<string | null>(null);
   readonly erroOperacao = signal<string | null>(null);
   readonly mensagemOperacao = signal<string | null>(null);
+  readonly publicandoAlbumId = signal<string | null>(null);
+
+readonly despublicandoAlbumId =
+  signal<string | null>(null);
 
   readonly albumAberto = computed(() => {
     const albumId = this.albumAbertoId();
@@ -84,6 +90,40 @@ export class Albuns implements OnInit {
           Validators.required,
         ]),
     });
+  readonly formularioPublicacao =
+  this.construtorFormulario.nonNullable.group({
+    tipo_publico: '',
+    descricao_publica: '',
+    reproducao_publica: false,
+    download_publico: false,
+    confirmacao: [
+      false,
+      Validators.requiredTrue,
+    ],
+  });
+  constructor() {
+  effect(() => {
+    const album = this.albumAberto();
+
+    this.formularioPublicacao.reset(
+      {
+        tipo_publico:
+          album?.tipo_publico ?? '',
+        descricao_publica:
+          album?.descricao_publica ?? '',
+        reproducao_publica:
+          album?.reproducao_publica ?? false,
+        download_publico:
+          album?.download_publico ?? false,
+        confirmacao: false,
+      },
+      {
+        emitEvent: false,
+      },
+    );
+  });
+}
+
 
   ngOnInit(): void {
     void this.carregarDados();
@@ -520,12 +560,95 @@ export class Albuns implements OnInit {
         .toLocaleUpperCase('pt-BR') || 'FL'
     );
   }
+async publicarAlbum(
+  album: AlbumCompleto,
+): Promise<void> {
+  if (
+    this.formularioPublicacao.invalid ||
+    this.publicandoAlbumId() ||
+    this.despublicandoAlbumId()
+  ) {
+    this.formularioPublicacao.markAllAsTouched();
+    return;
+  }
 
+  this.publicandoAlbumId.set(album.id);
+  this.limparRetorno();
+
+  try {
+    const valor =
+      this.formularioPublicacao.getRawValue();
+
+    const configuracao:
+      ConfiguracaoPublicacaoAlbum = {
+        tipo_publico:
+          this.normalizarTextoOpcional(
+            valor.tipo_publico,
+          ),
+        descricao_publica:
+          this.normalizarTextoOpcional(
+            valor.descricao_publica,
+          ),
+        reproducao_publica:
+          valor.reproducao_publica,
+        download_publico:
+          valor.download_publico,
+      };
+
+    await this.dadosAlbuns.publicar(
+      album.id,
+      configuracao,
+    );
+
+    this.mensagemOperacao.set(
+      album.publico_na_landing
+        ? 'Publicação do álbum atualizada.'
+        : 'Álbum publicado na página do estúdio.',
+    );
+  } catch (erro) {
+    this.erroOperacao.set(
+      this.obterMensagemErro(erro),
+    );
+  } finally {
+    this.publicandoAlbumId.set(null);
+  }
+}
+
+async despublicarAlbum(
+  album: AlbumCompleto,
+): Promise<void> {
+  if (
+    this.publicandoAlbumId() ||
+    this.despublicandoAlbumId()
+  ) {
+    return;
+  }
+
+  this.despublicandoAlbumId.set(album.id);
+  this.limparRetorno();
+
+  try {
+    await this.dadosAlbuns.despublicar(
+      album.id,
+    );
+
+    this.mensagemOperacao.set(
+      'Álbum removido da página pública.',
+    );
+  } catch (erro) {
+    this.erroOperacao.set(
+      this.obterMensagemErro(erro),
+    );
+  } finally {
+    this.despublicandoAlbumId.set(null);
+  }
+}
   rotuloQuantidadeFaixas(quantidade: number): string {
     return quantidade === 1
       ? '1 faixa'
       : `${quantidade} faixas`;
   }
+
 
   private normalizarTextoOpcional(
     valor: string | null,

@@ -231,51 +231,92 @@
               albumAbertoId() === album.id
             "
           >
-            <button
-              type="button"
-              class="abertura-album"
-              (click)="abrirAlbum(album.id)"
-            >
-              <span class="capa-album">
-                @if (capaAlbum(album); as capa) {
-                  <img
-                    [src]="capa"
-                    [alt]="'Capa de ' + album.projeto.nome"
-                  />
-                } @else {
-                  <strong>{{ iniciaisProjeto(album) }}</strong>
-                  <small>{{ album.projeto.nome }}</small>
-                }
+            <div class="capa-album">
+              @if (capaAlbum(album); as capa) {
+                <img
+                  [src]="capa"
+                  [alt]="'Capa de ' + album.nome"
+                />
+              } @else {
+                <strong>{{ iniciaisProjeto(album) }}</strong>
+                <small>{{ album.projeto.nome }}</small>
+              }
 
-                <i aria-hidden="true">▶</i>
+              <span
+                class="estado-cartao"
+                [class.estado-publicado]="
+                  album.publico_na_landing
+                "
+              >
+                @if (album.publico_na_landing) {
+                  Público
+                } @else {
+                  Privado
+                }
               </span>
 
-              <span class="dados-album">
+              @if (albumAbertoId() === album.id) {
+                <span class="indicador-aberto">Aberto</span>
+              }
+            </div>
+
+            <div class="corpo-cartao">
+              <div class="dados-album">
                 <strong>{{ album.nome }}</strong>
                 <small>{{ album.projeto.nome }}</small>
-                <em>
-                  {{ rotuloQuantidadeFaixas(album.faixas.length) }}
-                </em>
-              </span>
-            </button>
+
+                <span class="metadados-cartao">
+                  <em>
+                    {{ rotuloQuantidadeFaixas(album.faixas.length) }}
+                  </em>
+
+                  @if (album.tipo_publico) {
+                    <em>{{ album.tipo_publico }}</em>
+                  }
+                </span>
+              </div>
+
+              <button
+                type="button"
+                class="botao-abrir-album"
+                [attr.aria-pressed]="
+                  albumAbertoId() === album.id
+                "
+                (click)="abrirAlbum(album.id)"
+              >
+                <span>
+                  @if (albumAbertoId() === album.id) {
+                    Continuar organizando
+                  } @else {
+                    Abrir e organizar
+                  }
+                </span>
+
+                <span aria-hidden="true">→</span>
+              </button>
+            </div>
 
             <div class="acoes-cartao">
               <button
                 type="button"
+                class="acao-editar"
                 (click)="editarAlbum(album)"
               >
-                Editar
+                <span aria-hidden="true">✎</span>
+                Editar informações
               </button>
 
               <button
                 type="button"
                 class="acao-perigo"
+                aria-label="Excluir álbum"
                 [disabled]="excluindoAlbumId() === album.id"
                 (click)="excluirAlbum(album)"
               >
                 @if (excluindoAlbumId() === album.id) {
                   Excluindo...
                 } @else {
+                  <span aria-hidden="true">×</span>
                   Excluir
                 }
               </button>
@@ -416,6 +457,294 @@
           }
         </div>
       </div>
+      <section
+  class="painel-publicacao"
+  [class.publicado]="
+    album.publico_na_landing
+  "
+>
+  <header class="cabecalho-publicacao">
+    <div>
+      <p class="rotulo-menor">
+        PÁGINA PÚBLICA
+      </p>
+
+      <h3>Publicação do trabalho</h3>
+    </div>
+
+    <span
+      class="situacao-publicacao"
+      [class.publicada]="
+        album.publico_na_landing
+      "
+    >
+      @if (album.publico_na_landing) {
+        Publicado
+      } @else {
+        Privado
+      }
+    </span>
+  </header>
+
+  <div class="resumo-publicacao">
+    <div class="capa-publicacao">
+      @if (capaAlbum(album); as capa) {
+        <img
+          [src]="capa"
+          [alt]="'Capa de ' + album.nome"
+        />
+      } @else {
+        <span>
+          {{ iniciaisProjeto(album) }}
+        </span>
+      }
+    </div>
+
+    <div>
+      <strong>{{ album.nome }}</strong>
+      <span>{{ album.projeto.nome }}</span>
+      <small>
+        {{ rotuloQuantidadeFaixas(album.faixas.length) }}
+      </small>
+    </div>
+  </div>
+
+  @if (album.faixas.length === 0) {
+    <div class="aviso-publicacao">
+      <strong>
+        O álbum ainda não pode ser publicado.
+      </strong>
+
+      <p>
+        Adicione pelo menos uma faixa para revisar o conteúdo
+        público.
+      </p>
+    </div>
+  } @else {
+    <div class="revisao-publicacao">
+      <header>
+        <strong>Conteúdo que será exposto</strong>
+
+        <span>
+          Revise as faixas e versões escolhidas.
+        </span>
+      </header>
+
+      <ol>
+        @for (
+          item of album.faixas;
+          track item.id
+        ) {
+          <li>
+            <span>{{ item.ordem }}</span>
+
+            <div>
+              <strong>
+                {{ item.versao.faixa.titulo }}
+              </strong>
+
+              <small>
+                Versão {{ item.versao.versao }}
+                · {{ item.versao.nome_arquivo }}
+              </small>
+            </div>
+          </li>
+        }
+      </ol>
+    </div>
+  }
+
+  <form
+    class="formulario-publicacao"
+    [formGroup]="formularioPublicacao"
+    (ngSubmit)="publicarAlbum(album)"
+  >
+    <div class="campos-publicacao">
+      <label>
+        <span>Tipo de trabalho</span>
+
+        <input
+          type="text"
+          formControlName="tipo_publico"
+          list="tipos-trabalho"
+          placeholder="Ex.: Álbum, beat tape, sample pack"
+          [disabled]="
+            album.faixas.length === 0 ||
+            publicandoAlbumId() !== null ||
+            despublicandoAlbumId() !== null
+          "
+        />
+
+        <small>
+          Opcional. Use o nome que faz sentido para este material.
+        </small>
+
+        <datalist id="tipos-trabalho">
+          <option value="Álbum"></option>
+          <option value="EP"></option>
+          <option value="Mixtape"></option>
+          <option value="Beat tape"></option>
+          <option value="Catálogo de beats"></option>
+          <option value="Sample pack"></option>
+          <option value="Demo"></option>
+        </datalist>
+      </label>
+
+      <label>
+        <span>Descrição pública</span>
+
+        <textarea
+          formControlName="descricao_publica"
+          rows="4"
+          placeholder="Apresente o trabalho para quem visitar a página"
+          [disabled]="
+            album.faixas.length === 0 ||
+            publicandoAlbumId() !== null ||
+            despublicandoAlbumId() !== null
+          "
+        ></textarea>
+
+        <small>
+          As observações internas do álbum nunca aparecem no site.
+        </small>
+      </label>
+    </div>
+
+    <div class="titulo-permissoes">
+      <strong>Permissões dos arquivos</strong>
+      <span>
+        A capa, os nomes e a ordem podem ser publicados sem liberar
+        áudio ou download.
+      </span>
+    </div>
+
+    <div class="opcoes-publicacao">
+      <label>
+        <input
+          type="checkbox"
+          formControlName="reproducao_publica"
+          [disabled]="
+            album.faixas.length === 0 ||
+            publicandoAlbumId() !== null ||
+            despublicandoAlbumId() !== null
+          "
+        />
+
+        <span>
+          <strong>Permitir reprodução</strong>
+
+          <small>
+            Visitantes poderão ouvir os arquivos escolhidos
+            para este álbum.
+          </small>
+        </span>
+      </label>
+
+      <label>
+        <input
+          type="checkbox"
+          formControlName="download_publico"
+          [disabled]="
+            album.faixas.length === 0 ||
+            publicandoAlbumId() !== null ||
+            despublicandoAlbumId() !== null
+          "
+        />
+
+        <span>
+          <strong>Permitir download</strong>
+
+          <small>
+            Visitantes poderão baixar os arquivos originais
+            selecionados.
+          </small>
+        </span>
+      </label>
+    </div>
+
+    @if (
+      formularioPublicacao.controls
+        .reproducao_publica.value
+    ) {
+      <p class="alerta-exposicao">
+        Áudio reproduzido publicamente pode ser capturado por
+        ferramentas externas. Para catálogos protegidos, use uma
+        versão com tag ou uma prévia.
+      </p>
+    }
+
+    @if (
+      formularioPublicacao.controls
+        .download_publico.value
+    ) {
+      <p class="alerta-download">
+        O download permitirá acesso ao arquivo selecionado em
+        cada faixa.
+      </p>
+    }
+
+    <label class="confirmacao-publicacao">
+      <input
+        type="checkbox"
+        formControlName="confirmacao"
+        [disabled]="
+          album.faixas.length === 0 ||
+          publicandoAlbumId() !== null ||
+          despublicandoAlbumId() !== null
+        "
+      />
+
+      <span>
+        Revisei as faixas, versões e permissões acima.
+      </span>
+    </label>
+
+    <footer class="acoes-publicacao">
+      @if (album.publico_na_landing) {
+        <button
+          type="button"
+          class="botao-despublicar"
+          [disabled]="
+            publicandoAlbumId() !== null ||
+            despublicandoAlbumId() !== null
+          "
+          (click)="despublicarAlbum(album)"
+        >
+          @if (
+            despublicandoAlbumId() === album.id
+          ) {
+            Despublicando...
+          } @else {
+            Despublicar
+          }
+        </button>
+      }
+
+      <button
+        type="submit"
+        class="botao-publicar"
+        [disabled]="
+          album.faixas.length === 0 ||
+          formularioPublicacao.invalid ||
+          publicandoAlbumId() !== null ||
+          despublicandoAlbumId() !== null
+        "
+      >
+        @if (
+          publicandoAlbumId() === album.id
+        ) {
+          Publicando...
+        } @else if (
+          album.publico_na_landing
+        ) {
+          Atualizar publicação
+        } @else {
+          Publicar no site
+        }
+      </button>
+    </footer>
+  </form>
+</section>
 
       @if (album.observacoes) {
         <p class="observacoes-album">

@@ -46,6 +46,12 @@ export interface CadastroAlbum {
   nome: string;
   observacoes: string | null;
 }
+export interface ConfiguracaoPublicacaoAlbum {
+  tipo_publico: string | null;
+  descricao_publica: string | null;
+  reproducao_publica: boolean;
+  download_publico: boolean;
+}
 
 export type ProjetoAlbum = Pick<
   ProjetoBanco,
@@ -117,63 +123,47 @@ export class DadosAlbuns {
   );
 
   async listar(): Promise<void> {
-    this.carregandoInterno.set(true);
-    this.erroInterno.set(null);
+  this.carregandoInterno.set(true);
+  this.erroInterno.set(null);
 
-    try {
-      const estudioId = await this.obterEstudioId();
+  try {
+    const estudioId =
+      await this.obterEstudioId();
 
-      const [resultadoAlbuns, resultadoVersoes] =
-        await Promise.all([
-          this.clienteSupabase.cliente
-            .from('albuns')
-            .select(`
-              id,
-              estudio_id,
-              projeto_id,
-              nome,
-              observacoes,
-              capa_caminho,
-              token_compartilhamento,
-              criado_em,
-              atualizado_em,
-              projeto:projetos_artisticos!albuns_projeto_id_fkey (
-                id,
-                nome,
-                tipo,
-                capa_caminho
-              ),
-              faixas:album_faixas!album_faixas_album_id_fkey (
-                id,
-                album_id,
-                versao_id,
-                ordem,
-                criado_em,
-                versao:versoes_faixa!album_faixas_versao_id_fkey (
-                  id,
-                  faixa_id,
-                  versao,
-                  nome_arquivo,
-                  tamanho_bytes,
-                  tipo_mime,
-                  confirmado_em,
-                  criado_em,
-                  faixa:faixas!versoes_faixa_faixa_estudio_fkey (
-                    id,
-                    projeto_id,
-                    titulo
-                  )
-                )
-              )
-            `)
-            .eq('estudio_id', estudioId)
-            .order('criado_em', {
-              ascending: false,
-            }),
-
-          this.clienteSupabase.cliente
-            .from('versoes_faixa')
-            .select(`
+    const [
+      resultadoAlbuns,
+      resultadoVersoes,
+    ] = await Promise.all([
+      this.clienteSupabase.cliente
+        .from('albuns')
+        .select(`
+          id,
+          estudio_id,
+          projeto_id,
+          nome,
+          observacoes,
+          capa_caminho,
+          token_compartilhamento,
+          tipo_publico,
+          descricao_publica,
+          publico_na_landing,
+          reproducao_publica,
+          download_publico,
+          criado_em,
+          atualizado_em,
+          projeto:projetos_artisticos!albuns_projeto_id_fkey (
+            id,
+            nome,
+            tipo,
+            capa_caminho
+          ),
+          faixas:album_faixas!album_faixas_album_id_fkey (
+            id,
+            album_id,
+            versao_id,
+            ordem,
+            criado_em,
+            versao:versoes_faixa!album_faixas_versao_id_fkey (
               id,
               faixa_id,
               versao,
@@ -187,50 +177,76 @@ export class DadosAlbuns {
                 projeto_id,
                 titulo
               )
-            `)
-            .eq('estudio_id', estudioId)
-            .not('confirmado_em', 'is', null)
-            .order('criado_em', {
-              ascending: false,
-            }),
-        ]);
+            )
+          )
+        `)
+        .eq('estudio_id', estudioId)
+        .order('criado_em', {
+          ascending: false,
+        }),
 
-      if (resultadoAlbuns.error) {
-        throw resultadoAlbuns.error;
-      }
+      this.clienteSupabase.cliente
+        .from('versoes_faixa')
+        .select(`
+          id,
+          faixa_id,
+          versao,
+          nome_arquivo,
+          tamanho_bytes,
+          tipo_mime,
+          confirmado_em,
+          criado_em,
+          faixa:faixas!versoes_faixa_faixa_estudio_fkey (
+            id,
+            projeto_id,
+            titulo
+          )
+        `)
+        .eq('estudio_id', estudioId)
+        .not('confirmado_em', 'is', null)
+        .order('criado_em', {
+          ascending: false,
+        }),
+    ]);
 
-      if (resultadoVersoes.error) {
-        throw resultadoVersoes.error;
-      }
+    if (resultadoAlbuns.error) {
+      throw resultadoAlbuns.error;
+    }
 
-      const albuns = resultadoAlbuns.data as unknown as
+    if (resultadoVersoes.error) {
+      throw resultadoVersoes.error;
+    }
+
+    const albuns =
+      resultadoAlbuns.data as unknown as
         AlbumCompleto[];
 
-      this.listaInterna.set(
-        albuns.map((album) => ({
-          ...album,
-          faixas: [...album.faixas].sort(
-            (primeira, segunda) =>
-              primeira.ordem - segunda.ordem,
-          ),
-        })),
-      );
-
-      this.versoesInternas.set(
-        resultadoVersoes.data as unknown as VersaoAlbum[],
-      );
-    } catch (erro) {
-      this.erroInterno.set(
-        this.obterMensagemErro(
-          erro,
-          'Não foi possível carregar os álbuns.',
+    this.listaInterna.set(
+      albuns.map((album) => ({
+        ...album,
+        faixas: [...album.faixas].sort(
+          (primeira, segunda) =>
+            primeira.ordem -
+            segunda.ordem,
         ),
-      );
-    } finally {
-      this.carregandoInterno.set(false);
-    }
-  }
+      })),
+    );
 
+    this.versoesInternas.set(
+      resultadoVersoes.data as unknown as
+        VersaoAlbum[],
+    );
+  } catch (erro) {
+    this.erroInterno.set(
+      this.obterMensagemErro(
+        erro,
+        'Não foi possível carregar os álbuns.',
+      ),
+    );
+  } finally {
+    this.carregandoInterno.set(false);
+  }
+}
   async cadastrar(
     dados: CadastroAlbum,
   ): Promise<AlbumBanco> {
@@ -300,7 +316,89 @@ export class DadosAlbuns {
 
     return data;
   }
+async publicar(
+  albumId: string,
+  configuracao: ConfiguracaoPublicacaoAlbum,
+): Promise<AlbumBanco> {
+  const estudioId = await this.obterEstudioId();
+  const album = this.obterAlbum(albumId);
 
+  if (album.faixas.length === 0) {
+    throw new Error(
+      'Adicione pelo menos uma faixa antes de publicar.',
+    );
+  }
+
+  const possuiVersaoInvalida =
+    album.faixas.some(
+      (item) =>
+        !item.versao.confirmado_em,
+    );
+
+  if (possuiVersaoInvalida) {
+    throw new Error(
+      'O álbum possui uma versão que ainda não foi confirmada.',
+    );
+  }
+
+  const { data, error } =
+    await this.clienteSupabase.cliente
+      .from('albuns')
+      .update({
+        tipo_publico:
+          configuracao.tipo_publico?.trim() || null,
+        descricao_publica:
+          configuracao.descricao_publica?.trim() || null,
+        publico_na_landing: true,
+        reproducao_publica:
+          configuracao.reproducao_publica,
+        download_publico:
+          configuracao.download_publico,
+        atualizado_em:
+          new Date().toISOString(),
+      })
+      .eq('id', albumId)
+      .eq('estudio_id', estudioId)
+      .select()
+      .single();
+
+  if (error) {
+    throw error;
+  }
+
+  await this.listar();
+
+  return data;
+}
+
+async despublicar(
+  albumId: string,
+): Promise<AlbumBanco> {
+  const estudioId = await this.obterEstudioId();
+
+  const { data, error } =
+    await this.clienteSupabase.cliente
+      .from('albuns')
+      .update({
+        publico_na_landing: false,
+        reproducao_publica: false,
+        download_publico: false,
+        atualizado_em:
+          new Date().toISOString(),
+      })
+      .eq('id', albumId)
+      .eq('estudio_id', estudioId)
+      .select()
+      .single();
+
+  if (error) {
+    throw error;
+  }
+
+  await this.listar();
+
+  return data;
+}
   async excluir(albumId: string): Promise<void> {
     const { data, error } =
       await this.clienteSupabase.cliente.functions.invoke(
