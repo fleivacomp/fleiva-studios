@@ -1,6 +1,13 @@
-import { Component, OnInit, inject, signal } from "@angular/core";
+import {
+  Component,
+  DestroyRef,
+  OnInit,
+  inject,
+  signal,
+} from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
-import { RouterLink } from "@angular/router";
+import { ActivatedRoute, RouterLink, type ParamMap } from "@angular/router";
 import {
   DadosContatos,
   DadosProjetosArtisticos,
@@ -22,6 +29,8 @@ export class ProjetosArtisticos implements OnInit {
   readonly dadosContatos = inject(DadosContatos);
 
   private readonly construtorFormulario = inject(FormBuilder);
+  private readonly rota = inject(ActivatedRoute);
+  private readonly destruirRef = inject(DestroyRef);
 
   readonly projetoEditandoId = signal<string | null>(null);
   readonly projetoMembroId = signal<string | null>(null);
@@ -54,7 +63,39 @@ export class ProjetosArtisticos implements OnInit {
   });
 
   ngOnInit(): void {
-    void this.carregarDados();
+    void this.inicializar();
+  }
+
+  private async inicializar(): Promise<void> {
+    await this.carregarDados();
+
+    this.rota.queryParamMap
+      .pipe(takeUntilDestroyed(this.destruirRef))
+      .subscribe((parametros) => {
+        this.aplicarContextoDaRota(parametros);
+      });
+  }
+
+  private aplicarContextoDaRota(parametros: ParamMap): void {
+    const projetoId = parametros.get("projeto")?.trim();
+    const projeto = this.dadosProjetos
+      .projetos()
+      .find((item) => item.id === projetoId);
+
+    if (!projeto) {
+      return;
+    }
+
+    if (parametros.get("novoMembro") === "1") {
+      this.abrirNovoMembro(projeto.id);
+    }
+
+    window.setTimeout(() => {
+      document.getElementById(`projeto-${projeto.id}`)?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
   }
 
   async carregarDados(): Promise<void> {

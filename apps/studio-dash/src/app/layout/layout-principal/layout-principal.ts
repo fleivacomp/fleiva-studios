@@ -95,6 +95,18 @@ readonly destinoInicial = computed(() => {
     this.menuAberto.set(false);
   }
 
+  fecharMenusFlutuantes(): void {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    document
+      .querySelectorAll<HTMLDetailsElement>(
+        'details.menu-desdobravel[open]',
+      )
+      .forEach((menu) => menu.removeAttribute('open'));
+  }
+
   alternarTemaEscuro(): void {
     const ativo = !this.temaEscuro();
 

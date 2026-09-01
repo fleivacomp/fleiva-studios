@@ -6,308 +6,265 @@
   [style.--studio-brand]="dadosEstudio.corPrincipal()"
   [style.--studio-on-brand]="dadosEstudio.corTextoPrincipal()"
 >
-  <aside class="barra-lateral">
-    <a
-      class="marca"
-      [routerLink]="destinoInicial()"
-      (click)="fecharMenu()"
-    >
-      <span
-        class="marca-simbolo"
-        [class.tem-logo]="dadosEstudio.logoUrl()"
+  <header class="barra-superior">
+    <div class="barra-conteudo">
+      <a
+        class="marca"
+        [routerLink]="destinoInicial()"
+        aria-label="Ir para o início"
+        (click)="fecharMenusFlutuantes()"
       >
-        @if (dadosEstudio.logoUrl()) {
+        <span class="marca-simbolo" [class.tem-logo]="dadosEstudio.logoUrl()">
+          @if (dadosEstudio.logoUrl()) {
           <img
             [src]="dadosEstudio.logoUrl()"
             [alt]="'Logo de ' + nomeEstudio()"
           />
-        } @else {
+          } @else {
           {{ inicialEstudio() }}
-        }
-      </span>
+          }
+        </span>
 
-      <span class="marca-texto">
-        <strong>{{ nomeEstudio() }}</strong>
-        <small>FLÊIVA / CONTROL</small>
-      </span>
-    </a>
+        <span class="marca-texto">
+          <strong>{{ nomeEstudio() }}</strong>
+          <small>FLÊIVA</small>
+        </span>
+      </a>
 
-    <nav
-      class="navegacao"
-      aria-label="Navegação principal"
-    >
-      @if (dadosEstudio.possuiModulo('agenda')) {
-        <p class="titulo-menu">Estúdio</p>
-
-        <a
-          routerLink="/agendamentos"
-          routerLinkActive="ativo"
-          [routerLinkActiveOptions]="{ exact: true }"
-          (click)="fecharMenu()"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M6 3v3M18 3v3M4 9h16" />
-            <rect
-              x="4"
-              y="5"
-              width="16"
-              height="16"
-              rx="2"
-            />
-            <path d="M8 13h3M8 17h5" />
-          </svg>
-
-          <span>Agenda</span>
-        </a>
-
-        <a
-          routerLink="/contatos"
-          routerLinkActive="ativo"
-          (click)="fecharMenu()"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="9" cy="8" r="3" />
-            <path
-              d="M3.5 19c.4-4 2.4-6 5.5-6s5.1 2 5.5 6"
-            />
-            <path
-              d="M16 6.5a3 3 0 0 1 0 5.5M16 14c2.6.3 4.1 2 4.5 5"
-            />
-          </svg>
-
-          <span>Contatos</span>
-        </a>
-      }
-
-      @if (
-        dadosEstudio.possuiModulo('artistas') ||
-        dadosEstudio.possuiModulo('faixas')
-      ) {
-        <p class="titulo-menu titulo-menu-secundario">
-          Catálogo
-        </p>
-
+      <nav class="navegacao-principal" aria-label="Navegação principal">
         @if (dadosEstudio.possuiModulo('artistas')) {
-          <a
-            routerLink="/projetos"
-            routerLinkActive="ativo"
-            (click)="fecharMenu()"
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M3 7.5h7l2-2h9v14H3z" />
-              <path d="M3 10h18" />
-            </svg>
-
-            <span>Projetos</span>
-          </a>
+        <a
+          routerLink="/projetos"
+          routerLinkActive="ativo"
+          (click)="fecharMenusFlutuantes()"
+        >Projetos</a>
         }
 
         @if (dadosEstudio.possuiModulo('faixas')) {
-          <a
-            routerLink="/faixas"
-            routerLinkActive="ativo"
-            (click)="fecharMenu()"
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M9 18V5l10-2v13" />
-              <ellipse cx="6" cy="18" rx="3" ry="2" />
-              <ellipse cx="16" cy="16" rx="3" ry="2" />
-            </svg>
-
-            <span>Faixas</span>
-          </a>
-
-          <a
-            routerLink="/albuns"
-            routerLinkActive="ativo"
-            (click)="fecharMenu()"
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <rect
-                x="3"
-                y="3"
-                width="18"
-                height="18"
-                rx="2"
-              />
-              <circle cx="12" cy="12" r="5" />
-              <circle cx="12" cy="12" r="1" />
-              <path d="M17.5 6.5h.01" />
-            </svg>
-
-            <span>Álbuns</span>
-          </a>
-        }
-      }
-
-      @if (
-        dadosEstudio.possuiModulo('agenda') ||
-        dadosEstudio.possuiModulo('financeiro')
-      ) {
-        <p class="titulo-menu titulo-menu-secundario">
-          Operação
-        </p>
-
-        @if (dadosEstudio.possuiModulo('agenda')) {
-          <a
-            routerLink="/servicos"
-            routerLinkActive="ativo"
-            (click)="fecharMenu()"
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                d="M4 7h10M18 7h2M4 17h2M10 17h10"
-              />
-              <circle cx="16" cy="7" r="2" />
-              <circle cx="8" cy="17" r="2" />
-            </svg>
-
-            <span>Serviços</span>
-          </a>
+        <a
+          routerLink="/faixas"
+          routerLinkActive="ativo"
+          (click)="fecharMenusFlutuantes()"
+        >Faixas</a>
+        <a
+          routerLink="/albuns"
+          routerLinkActive="ativo"
+          (click)="fecharMenusFlutuantes()"
+        >Álbuns</a>
         }
 
         @if (
+          dadosEstudio.possuiModulo('agenda') ||
           dadosEstudio.possuiModulo('financeiro')
         ) {
-          <a
-            routerLink="/acertos"
-            routerLinkActive="ativo"
-            (click)="fecharMenu()"
-          >
+        <details class="menu-desdobravel" name="menus-topo">
+          <summary>
+            Estúdio
             <svg viewBox="0 0 24 24" aria-hidden="true">
-              <rect
-                x="3"
-                y="5"
-                width="18"
-                height="14"
-                rx="2"
-              />
-              <path d="M3 9h18M16 14h2" />
+              <path d="m7 10 5 5 5-5" />
             </svg>
+          </summary>
 
-            <span>Acertos</span>
-          </a>
+          <div class="menu-flutuante menu-estudio">
+            @if (dadosEstudio.possuiModulo('agenda')) {
+            <a
+              routerLink="/agendamentos"
+              routerLinkActive="ativo"
+              (click)="fecharMenusFlutuantes()"
+            >
+              <span>Agenda</span>
+              <small>Sessões e compromissos</small>
+            </a>
+            <a
+              routerLink="/contatos"
+              routerLinkActive="ativo"
+              (click)="fecharMenusFlutuantes()"
+            >
+              <span>Contatos</span>
+              <small>Pessoas e vínculos</small>
+            </a>
+            <a
+              routerLink="/servicos"
+              routerLinkActive="ativo"
+              (click)="fecharMenusFlutuantes()"
+            >
+              <span>Serviços</span>
+              <small>Configuração do estúdio</small>
+            </a>
+            }
+
+            @if (dadosEstudio.possuiModulo('financeiro')) {
+            <a
+              routerLink="/acertos"
+              routerLinkActive="ativo"
+              (click)="fecharMenusFlutuantes()"
+            >
+              <span>Acertos</span>
+              <small>Financeiro</small>
+            </a>
+            }
+          </div>
+        </details>
         }
-      }
+      </nav>
 
-      @if (
-        !dadosEstudio.carregando() &&
-        !dadosEstudio.possuiModulos()
-      ) {
-        <p class="titulo-menu">Plano gratuito</p>
-
+      <div class="acoes-barra">
+        @if (
+          !dadosEstudio.carregando() &&
+          !dadosEstudio.possuiModulos()
+        ) {
         <a
+          class="conhecer-fleiva"
           href="https://fleiva.com.br"
           target="_blank"
           rel="noopener noreferrer"
-          (click)="fecharMenu()"
         >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M5 12h14M13 6l6 6-6 6" />
-          </svg>
-
-          <span>Conhecer o Flêiva completo</span>
+          Conhecer o Flêiva
         </a>
+        }
+
+        <details class="menu-desdobravel menu-conta" name="menus-topo">
+          <summary aria-label="Abrir menu da conta">
+            <span class="avatar-conta">{{ inicialEstudio() }}</span>
+            <span class="nome-conta">{{ nomeEstudio() }}</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m7 10 5 5 5-5" />
+            </svg>
+          </summary>
+
+          <div class="menu-flutuante painel-conta">
+            <div class="identidade-conta">
+              <strong>{{ nomeEstudio() }}</strong>
+              <span>{{ autenticacao.usuario()?.email }}</span>
+            </div>
+
+            <a
+              class="item-conta"
+              routerLink="/perfil"
+              (click)="fecharMenusFlutuantes()"
+            >
+              @if (dadosEstudio.possuiModulos()) {
+              Perfil do estúdio
+              } @else {
+              Minha página pública
+              }
+            </a>
+
+            <div class="aparencia-conta">
+              <button
+                type="button"
+                [class.ativo]="temaEscuro()"
+                [attr.aria-pressed]="temaEscuro()"
+                (click)="alternarTemaEscuro()"
+              >
+                @if (temaEscuro()) { Tema claro } @else { Tema escuro }
+              </button>
+
+              <button
+                type="button"
+                [class.ativo]="luzBaixa()"
+                [attr.aria-pressed]="luzBaixa()"
+                (click)="alternarLuzBaixa()"
+              >
+                @if (luzBaixa()) { Restaurar luz } @else { Luz baixa }
+              </button>
+            </div>
+
+            @if (erroSaida()) {
+            <p class="erro-saida">{{ erroSaida() }}</p>
+            }
+
+            <button
+              type="button"
+              class="botao-sair"
+              [disabled]="saindo()"
+              (click)="sair()"
+            >
+              @if (saindo()) { Saindo... } @else { Sair }
+            </button>
+          </div>
+        </details>
+
+        <button
+          type="button"
+          class="botao-menu-movel"
+          [attr.aria-label]="menuAberto() ? 'Fechar menu' : 'Abrir menu'"
+          [attr.aria-expanded]="menuAberto()"
+          (click)="alternarMenu()"
+        >
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  @if (menuAberto()) {
+  <button
+    type="button"
+    class="fundo-menu"
+    aria-label="Fechar menu"
+    (click)="fecharMenu()"
+  ></button>
+  }
+
+  <aside class="painel-movel" aria-label="Menu móvel">
+    <header>
+      <span>Navegação</span>
+      <button type="button" aria-label="Fechar menu" (click)="fecharMenu()">
+        ×
+      </button>
+    </header>
+
+    <nav>
+      @if (dadosEstudio.possuiModulo('artistas')) {
+      <a routerLink="/projetos" routerLinkActive="ativo" (click)="fecharMenu()">
+        Projetos
+      </a>
+      }
+
+      @if (dadosEstudio.possuiModulo('faixas')) {
+      <a routerLink="/faixas" routerLinkActive="ativo" (click)="fecharMenu()">
+        Faixas
+      </a>
+      <a routerLink="/albuns" routerLinkActive="ativo" (click)="fecharMenu()">
+        Álbuns
+      </a>
+      }
+
+      @if (dadosEstudio.possuiModulo('agenda')) {
+      <p>Estúdio</p>
+      <a
+        routerLink="/agendamentos"
+        routerLinkActive="ativo"
+        (click)="fecharMenu()"
+      >
+        Agenda
+      </a>
+      <a routerLink="/contatos" routerLinkActive="ativo" (click)="fecharMenu()">
+        Contatos
+      </a>
+      <a routerLink="/servicos" routerLinkActive="ativo" (click)="fecharMenu()">
+        Serviços
+      </a>
+      }
+
+      @if (dadosEstudio.possuiModulo('financeiro')) {
+      <a routerLink="/acertos" routerLinkActive="ativo" (click)="fecharMenu()">
+        Acertos
+      </a>
       }
     </nav>
 
-    <footer class="rodape-menu">
-      <a
-        class="usuario"
-        routerLink="/perfil"
-        routerLinkActive="ativo-perfil"
-        (click)="fecharMenu()"
-      >
-        <span class="usuario-icone">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="12" cy="8" r="3.5" />
-            <path
-              d="M5 20c.5-4.5 2.9-6.8 7-6.8s6.5 2.3 7 6.8"
-            />
-          </svg>
-        </span>
+    <footer>
+      <a routerLink="/perfil" (click)="fecharMenu()">Perfil do estúdio</a>
 
-        <span class="usuario-texto">
-          <small>
-            @if (dadosEstudio.possuiModulos()) {
-              Perfil do estúdio
-            } @else {
-              Minha página pública
-            }
-          </small>
-
-          <strong>
-            {{ autenticacao.usuario()?.email }}
-          </strong>
-        </span>
-
-        <svg
-          class="usuario-seta"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <path d="m9 5 7 7-7 7" />
-        </svg>
-      </a>
-
-      @if (erroSaida()) {
-        <p class="erro-saida">{{ erroSaida() }}</p>
-      }
-
-      <div class="controles-aparencia">
-        <button
-          type="button"
-          class="botao-tema"
-          [class.ativo]="temaEscuro()"
-          [attr.aria-pressed]="temaEscuro()"
-          (click)="alternarTemaEscuro()"
-        >
-          @if (temaEscuro()) {
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="12" cy="12" r="4" />
-              <path
-                d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
-              />
-            </svg>
-
-            <span>Tema claro</span>
-          } @else {
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                d="M20 15.5A8.5 8.5 0 0 1 8.5 4 8.5 8.5 0 1 0 20 15.5Z"
-              />
-            </svg>
-
-            <span>Tema escuro</span>
-          }
+      <div>
+        <button type="button" (click)="alternarTemaEscuro()">
+          @if (temaEscuro()) { Tema claro } @else { Tema escuro }
         </button>
-
-        <button
-          type="button"
-          class="botao-luz"
-          [class.ativo]="luzBaixa()"
-          [attr.aria-pressed]="luzBaixa()"
-          (click)="alternarLuzBaixa()"
-        >
-          @if (luzBaixa()) {
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="12" cy="12" r="4" />
-              <path
-                d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
-              />
-            </svg>
-
-            <span>Restaurar luz</span>
-          } @else {
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="12" cy="12" r="4" />
-              <path
-                d="M12 2v2M4.9 4.9l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
-              />
-            </svg>
-
-            <span>Luz baixa</span>
-          }
+        <button type="button" (click)="alternarLuzBaixa()">
+          @if (luzBaixa()) { Restaurar luz } @else { Luz baixa }
         </button>
       </div>
 
@@ -317,71 +274,14 @@
         [disabled]="saindo()"
         (click)="sair()"
       >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="M10 5H5v14h5M14 8l4 4-4 4M8 12h10"
-          />
-        </svg>
-
-        @if (saindo()) {
-          <span>Saindo...</span>
-        } @else {
-          <span>Sair</span>
-        }
+        @if (saindo()) { Saindo... } @else { Sair }
       </button>
     </footer>
   </aside>
 
-  @if (menuAberto()) {
-    <button
-      type="button"
-      class="fundo-menu"
-      aria-label="Fechar menu"
-      (click)="fecharMenu()"
-    ></button>
-  }
-
-  <section class="area-principal">
-    <header class="cabecalho-movel">
-      <a
-        class="marca-movel"
-        [routerLink]="destinoInicial()"
-      >
-        <span
-          class="marca-simbolo-movel"
-          [class.tem-logo]="dadosEstudio.logoUrl()"
-        >
-          @if (dadosEstudio.logoUrl()) {
-            <img
-              [src]="dadosEstudio.logoUrl()"
-              [alt]="'Logo de ' + nomeEstudio()"
-            />
-          } @else {
-            {{ inicialEstudio() }}
-          }
-        </span>
-
-        <span>{{ nomeEstudio() }}</span>
-      </a>
-
-      <button
-        type="button"
-        class="botao-menu"
-        [attr.aria-label]="
-          menuAberto() ? 'Fechar menu' : 'Abrir menu'
-        "
-        [attr.aria-expanded]="menuAberto()"
-        (click)="alternarMenu()"
-      >
-        <span aria-hidden="true"></span>
-        <span aria-hidden="true"></span>
-        <span aria-hidden="true"></span>
-        <strong>Menu</strong>
-      </button>
-    </header>
-
+  <main class="area-principal">
     <div class="conteudo">
       <router-outlet />
     </div>
-  </section>
+  </main>
 </div>

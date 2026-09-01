@@ -52,7 +52,7 @@
     } @else {
     <div class="lista-projetos">
       @for ( projeto of dadosProjetos.projetos(); track projeto.id ) {
-      <article class="projeto">
+      <article class="projeto" [attr.id]="'projeto-' + projeto.id">
         <header class="cabecalho-projeto">
           <div class="area-capa">
             <div
@@ -133,7 +133,7 @@
               class="botao primario abrir-projeto"
               [routerLink]="['/projetos', projeto.id]"
             >
-              Abrir projeto
+              Abrir central
             </a>
 
             <button

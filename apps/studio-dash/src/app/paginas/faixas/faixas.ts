@@ -317,12 +317,29 @@ export class Faixas implements OnInit {
   private aplicarContextoDaRota(parametros: ParamMap): void {
     const projetoId = parametros.get("projeto")?.trim();
     const faixaId = parametros.get("faixa")?.trim();
+    const envioId = parametros.get("envio")?.trim();
 
     const projeto = this.dadosFaixas
       .projetos()
       .find((item) => item.id === projetoId);
 
     this.projetoFiltradoId.set(projeto?.id ?? null);
+
+    const envioSolicitado = this.envios().find(
+      (envio) =>
+        envio.id === envioId &&
+        (!projeto || envio.projeto_id === projeto.id),
+    );
+
+    if (envioSolicitado) {
+      this.abrirMontadorEnvio(envioSolicitado);
+      return;
+    }
+
+    if (projeto && parametros.get("novoEnvio") === "1") {
+      this.abrirMontadorEnvio();
+      return;
+    }
 
     if (projeto && parametros.get("novo") === "1") {
       this.abrirNovaFaixa(projeto.id);

@@ -155,7 +155,7 @@
         type="button"
         class="botao-principal"
         [disabled]="dadosProjetos.projetos().length === 0"
-        (click)="abrirNovoAlbum()"
+        (click)="abrirNovoAlbum(projetoFiltradoId() ?? '')"
       >
         Criar primeiro álbum
       </button>

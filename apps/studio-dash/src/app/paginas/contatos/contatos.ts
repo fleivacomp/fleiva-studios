@@ -1,31 +1,66 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FormBuilder,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+import { ActivatedRoute, RouterLink, type ParamMap } from '@angular/router';
 import {
   DadosContatos,
+  DadosProjetosArtisticos,
   type CadastroContato,
   type Contato,
+  type MembroProjetoCompleto,
+  type ProjetoArtisticoCompleto,
 } from '@fleiva-studios/shared-data-access';
+
+interface VinculoContatoProjeto {
+  projeto: ProjetoArtisticoCompleto;
+  membro: MembroProjetoCompleto;
+}
 
 @Component({
   selector: 'app-contatos',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './contatos.html',
   styleUrl: './contatos.scss',
 })
 export class Contatos implements OnInit {
   readonly dadosContatos = inject(DadosContatos);
+  readonly dadosProjetos = inject(DadosProjetosArtisticos);
 
   private readonly construtorFormulario = inject(FormBuilder);
+  private readonly rota = inject(ActivatedRoute);
+  private readonly destruirRef = inject(DestroyRef);
 
   readonly salvando = signal(false);
   readonly excluindoId = signal<string | null>(null);
   readonly contatoEditandoId = signal<string | null>(null);
   readonly erroFormulario = signal<string | null>(null);
+
+  readonly vinculosPorContato = computed(() => {
+    const vinculos = new Map<string, VinculoContatoProjeto[]>();
+
+    for (const projeto of this.dadosProjetos.projetos()) {
+      for (const membro of projeto.membros) {
+        const lista = vinculos.get(membro.contato_id) ?? [];
+
+        lista.push({ projeto, membro });
+        vinculos.set(membro.contato_id, lista);
+      }
+    }
+
+    return vinculos;
+  });
 
   readonly formulario = this.construtorFormulario.group({
     nome: this.construtorFormulario.nonNullable.control('', [
@@ -41,7 +76,42 @@ export class Contatos implements OnInit {
   });
 
   ngOnInit(): void {
-    void this.dadosContatos.listar();
+    void this.inicializar();
+  }
+
+  private async inicializar(): Promise<void> {
+    await Promise.all([
+      this.dadosContatos.listar(),
+      this.dadosProjetos.listar(),
+    ]);
+
+    this.rota.queryParamMap
+      .pipe(takeUntilDestroyed(this.destruirRef))
+      .subscribe((parametros) => {
+        this.aplicarContextoDaRota(parametros);
+      });
+  }
+
+  private aplicarContextoDaRota(parametros: ParamMap): void {
+    const contatoId = parametros.get('contato')?.trim();
+    const contato = this.dadosContatos
+      .contatos()
+      .find((item) => item.id === contatoId);
+
+    if (!contato) {
+      return;
+    }
+
+    window.setTimeout(() => {
+      document.getElementById(`contato-${contato.id}`)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    });
+  }
+
+  vinculosDoContato(contatoId: string): VinculoContatoProjeto[] {
+    return this.vinculosPorContato().get(contatoId) ?? [];
   }
 
   async salvar(): Promise<void> {

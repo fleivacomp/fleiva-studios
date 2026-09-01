@@ -183,7 +183,7 @@
           contato of dadosContatos.contatos();
           track contato.id
         ) {
-          <article class="contato">
+          <article class="contato" [attr.id]="'contato-' + contato.id">
             <div class="identidade-contato">
               <span class="avatar-contato" aria-hidden="true">
                 {{ contato.nome.charAt(0) }}
@@ -227,6 +227,21 @@
                     Não informado
                   </strong>
                 </div>
+              }
+
+              @for (
+                vinculo of vinculosDoContato(contato.id);
+                track vinculo.membro.id
+              ) {
+                <a [routerLink]="['/projetos', vinculo.projeto.id]">
+                  <span>
+                    PROJETO · {{ vinculo.membro.papel }}
+                    @if (!vinculo.membro.ativo) {
+                      · INATIVO
+                    }
+                  </span>
+                  <strong>{{ vinculo.projeto.nome }}</strong>
+                </a>
               }
             </div>
 
