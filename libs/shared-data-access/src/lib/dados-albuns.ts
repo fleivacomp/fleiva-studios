@@ -33,6 +33,8 @@ const TIPOS_CAPA_PERMITIDOS = new Set([
   'image/webp',
 ]);
 
+export const TIPO_PUBLICO_ENVIO = 'Envio';
+
 interface RespostaAlbum {
   album: AlbumBanco;
 }
@@ -46,6 +48,11 @@ export interface CadastroAlbum {
   nome: string;
   observacoes: string | null;
 }
+
+export interface CadastroEnvio extends CadastroAlbum {
+  versoes_ids: readonly string[];
+}
+
 export interface ConfiguracaoPublicacaoAlbum {
   tipo_publico: string | null;
   descricao_publica: string | null;
@@ -306,6 +313,225 @@ export class DadosAlbuns {
     await this.listar();
 
     return data;
+  }
+
+  async cadastrarEnvio(
+    dados: CadastroEnvio,
+  ): Promise<AlbumBanco> {
+    const estudioId = await this.obterEstudioId();
+    const dadosNormalizados =
+      this.normalizarCadastro(dados);
+    const versoesIds = [
+      ...new Set(
+        dados.versoes_ids
+          .map((versaoId) => versaoId.trim())
+          .filter(Boolean),
+      ),
+    ];
+
+    if (versoesIds.length === 0) {
+      throw new Error(
+        'Selecione pelo menos um arquivo para montar o envio.',
+      );
+    }
+
+    const versoes = versoesIds.map((versaoId) =>
+      this.obterVersao(versaoId),
+    );
+
+    const { data: album, error: erroAlbum } =
+      await this.clienteSupabase.cliente
+        .from('albuns')
+        .insert({
+          estudio_id: estudioId,
+          projeto_id: dadosNormalizados.projeto_id,
+          nome: dadosNormalizados.nome,
+          observacoes: dadosNormalizados.observacoes,
+          tipo_publico: TIPO_PUBLICO_ENVIO,
+        })
+        .select()
+        .single();
+
+    if (erroAlbum || !album) {
+      throw (
+        erroAlbum ??
+        new Error('O envio criado não foi retornado.')
+      );
+    }
+
+    const itens = versoes.map((versao, indice) => ({
+      album_id: album.id,
+      versao_id: versao.id,
+      ordem: indice + 1,
+    }));
+
+    const { error: erroItens } =
+      await this.clienteSupabase.cliente
+        .from('album_faixas')
+        .insert(itens);
+
+    if (erroItens) {
+      await this.clienteSupabase.cliente
+        .from('albuns')
+        .delete()
+        .eq('id', album.id)
+        .eq('estudio_id', estudioId);
+
+      throw erroItens;
+    }
+
+    await this.listar();
+
+    return album;
+  }
+
+  async atualizarEnvio(
+    albumId: string,
+    dados: CadastroEnvio,
+  ): Promise<AlbumBanco> {
+    const estudioId = await this.obterEstudioId();
+    const album = this.obterAlbum(albumId);
+    const dadosNormalizados =
+      this.normalizarCadastro(dados);
+    const versoesIds = [
+      ...new Set(
+        dados.versoes_ids
+          .map((versaoId) => versaoId.trim())
+          .filter(Boolean),
+      ),
+    ];
+
+    if (album.tipo_publico !== TIPO_PUBLICO_ENVIO) {
+      throw new Error('O trabalho selecionado não é um envio.');
+    }
+
+    if (versoesIds.length === 0) {
+      throw new Error(
+        'Selecione pelo menos um arquivo para montar o envio.',
+      );
+    }
+
+    const versoes = versoesIds.map((versaoId) =>
+      this.obterVersao(versaoId),
+    );
+    const itensAtuaisPorVersao = new Map(
+      album.faixas.map((item) => [item.versao_id, item]),
+    );
+    const versoesNovas = versoes.filter(
+      (versao) => !itensAtuaisPorVersao.has(versao.id),
+    );
+    let itensNovos: AlbumFaixaBanco[] = [];
+
+    if (versoesNovas.length > 0) {
+      const { data, error } =
+        await this.clienteSupabase.cliente
+          .from('album_faixas')
+          .insert(
+            versoesNovas.map((versao, indice) => ({
+              album_id: albumId,
+              versao_id: versao.id,
+              ordem: album.faixas.length + indice + 1,
+            })),
+          )
+          .select();
+
+      if (error) {
+        throw error;
+      }
+
+      itensNovos = data ?? [];
+
+      if (itensNovos.length !== versoesNovas.length) {
+        throw new Error(
+          'Nem todos os arquivos novos foram adicionados ao envio.',
+        );
+      }
+    }
+
+    const itensNovosPorVersao = new Map(
+      itensNovos.map((item) => [item.versao_id, item]),
+    );
+    const itensOrdenados = versoes.map((versao, indice) => {
+      const item =
+        itensAtuaisPorVersao.get(versao.id) ??
+        itensNovosPorVersao.get(versao.id);
+
+      if (!item) {
+        throw new Error(
+          'Não foi possível organizar um dos arquivos do envio.',
+        );
+      }
+
+      return {
+        id: item.id,
+        album_id: item.album_id,
+        versao_id: item.versao_id,
+        ordem: indice + 1,
+        criado_em: item.criado_em,
+      };
+    });
+    const { error: erroOrdem } =
+      await this.clienteSupabase.cliente
+        .from('album_faixas')
+        .upsert(itensOrdenados, {
+          onConflict: 'id',
+        });
+
+    if (erroOrdem) {
+      if (itensNovos.length > 0) {
+        await this.clienteSupabase.cliente
+          .from('album_faixas')
+          .delete()
+          .in(
+            'id',
+            itensNovos.map((item) => item.id),
+          );
+      }
+
+      throw erroOrdem;
+    }
+
+    const versoesMantidas = new Set(versoesIds);
+    const itensRemovidosIds = album.faixas
+      .filter((item) => !versoesMantidas.has(item.versao_id))
+      .map((item) => item.id);
+
+    if (itensRemovidosIds.length > 0) {
+      const { error } =
+        await this.clienteSupabase.cliente
+          .from('album_faixas')
+          .delete()
+          .in('id', itensRemovidosIds);
+
+      if (error) {
+        throw error;
+      }
+    }
+
+    const { data: envioAtualizado, error: erroEnvio } =
+      await this.clienteSupabase.cliente
+        .from('albuns')
+        .update({
+          projeto_id: dadosNormalizados.projeto_id,
+          nome: dadosNormalizados.nome,
+          observacoes: dadosNormalizados.observacoes,
+          atualizado_em: new Date().toISOString(),
+        })
+        .eq('id', albumId)
+        .eq('estudio_id', estudioId)
+        .select()
+        .single();
+
+    if (erroEnvio || !envioAtualizado) {
+      throw (
+        erroEnvio ??
+        new Error('O envio atualizado não foi retornado.')
+      );
+    }
+
+    await this.listar();
+
+    return envioAtualizado;
   }
 
   async atualizar(
@@ -661,12 +887,6 @@ async definirExibicaoNaCasa(
     if (versao.faixa_id !== faixaId) {
       throw new Error(
         'A versão selecionada não pertence à faixa.',
-      );
-    }
-
-    if (versao.faixa.projeto_id !== album.projeto_id) {
-      throw new Error(
-        'A faixa pertence a outro projeto artístico.',
       );
     }
 

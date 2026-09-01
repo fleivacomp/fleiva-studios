@@ -82,9 +82,9 @@
             <span>
               {{ album.faixas.length }}
               @if (album.faixas.length === 1) {
-                faixa
+                @if (ehEnvio()) { arquivo } @else { faixa }
               } @else {
-                faixas
+                @if (ehEnvio()) { arquivos } @else { faixas }
               }
             </span>
           </div>
@@ -130,8 +130,12 @@
       <section class="sequencia">
         <header class="cabecalho-sequencia">
           <div>
-            <p>SEQUÊNCIA OFICIAL</p>
-            <h2>Faixas</h2>
+            <p>
+              @if (ehEnvio()) { PROCESSO PUBLICADO } @else { SEQUÊNCIA OFICIAL }
+            </p>
+            <h2>
+              @if (ehEnvio()) { Versões e arquivos } @else { Faixas }
+            </h2>
           </div>
 
           <span>{{ album.faixas.length }}</span>
@@ -139,7 +143,9 @@
 
         @if (album.faixas.length === 0) {
           <p class="sequencia-vazia">
-            Este trabalho ainda não possui faixas disponíveis.
+            Este trabalho ainda não possui
+            @if (ehEnvio()) { arquivos } @else { faixas }
+            disponíveis.
           </p>
         } @else {
           <ol class="lista-faixas">
@@ -159,8 +165,8 @@
                       [attr.aria-label]="
                         faixaAtivaId() === faixa.id &&
                         reproduzindo()
-                          ? 'Pausar ' + faixa.faixa
-                          : 'Ouvir ' + faixa.faixa
+                          ? 'Pausar ' + nomePrincipalFaixa(faixa)
+                          : 'Ouvir ' + nomePrincipalFaixa(faixa)
                       "
                       [disabled]="
                         carregandoAudioId() !== null
@@ -192,9 +198,9 @@
                 </span>
 
                 <div class="identificacao-faixa">
-                  <strong>{{ faixa.faixa }}</strong>
+                  <strong>{{ nomePrincipalFaixa(faixa) }}</strong>
                   <span>
-                    Versão {{ faixa.versao }}
+                    {{ nomeSecundarioFaixa(faixa) }}
                     · {{ faixa.nome_arquivo }}
                   </span>
                 </div>
@@ -241,8 +247,10 @@
           </button>
 
           <div class="faixa-player">
-            <strong>{{ faixa.faixa }}</strong>
-            <span>{{ album.projeto }}</span>
+            <strong>{{ nomePrincipalFaixa(faixa) }}</strong>
+            <span>
+              {{ nomeSecundarioFaixa(faixa) }} · {{ album.projeto }}
+            </span>
           </div>
 
           <div class="progresso-player">

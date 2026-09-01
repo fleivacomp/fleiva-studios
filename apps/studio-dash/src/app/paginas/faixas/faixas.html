@@ -29,6 +29,15 @@
 
       <button
         type="button"
+        class="botao-fantasma"
+        [disabled]="dadosAlbuns.versoesDisponiveis().length === 0"
+        (click)="abrirMontadorEnvio()"
+      >
+        Montar envio
+      </button>
+
+      <button
+        type="button"
         class="botao-destaque"
         (click)="abrirNovaFaixa(projetoFiltradoId() ?? '')"
       >
@@ -735,7 +744,338 @@
       </div>
     </section>
   </div>
-  } @if ( urlReproducao(); as url ) { @if (versaoReproduzindo(); as versao) {
+  }
+
+  @if (montadorEnvioAberto()) {
+  <div class="camada-editor">
+    <button
+      type="button"
+      class="fundo-editor"
+      aria-label="Fechar montagem do envio"
+      (click)="fecharMontadorEnvio()"
+    ></button>
+
+    <section
+      class="editor-faixa"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="titulo-montador-envio"
+    >
+      <header>
+        <div>
+          <p>Compartilhamento</p>
+          <h2 id="titulo-montador-envio">
+            @if (envioEditandoId()) { Editar envio } @else { Montar envio }
+          </h2>
+        </div>
+
+        <button
+          type="button"
+          class="fechar-editor"
+          aria-label="Fechar montagem do envio"
+          [disabled]="criandoEnvio()"
+          (click)="fecharMontadorEnvio()"
+        >
+          ×
+        </button>
+      </header>
+
+      <div class="corpo-editor">
+        @if (linkEnvioCriado(); as link) {
+        <div class="aviso-pagina aviso-sucesso">
+          <strong>
+            @if (envioEditandoId()) { Envio atualizado. } @else { Envio criado.
+            }
+          </strong>
+          <p>Este link continuará o mesmo quando o conteúdo for editado.</p>
+        </div>
+
+        <div class="campos-editor">
+          <label>
+            <span>Link não listado</span>
+            <input type="text" readonly [value]="link" />
+          </label>
+        </div>
+
+        <div class="acoes-formulario">
+          <button
+            type="button"
+            class="botao-secundario"
+            (click)="fecharMontadorEnvio()"
+          >
+            Fechar
+          </button>
+
+          <button
+            type="button"
+            class="botao-destaque"
+            (click)="copiarLinkEnvioCriado()"
+          >
+            Copiar link
+          </button>
+        </div>
+        } @else {
+        @if (!envioEditandoId() && envios().length > 0) {
+        <section class="secao-detalhe historico">
+          <header>
+            <div>
+              <p>Compartilhamentos</p>
+              <h3>Envios existentes</h3>
+            </div>
+
+            <span>{{ envios().length }}</span>
+          </header>
+
+          <div class="lista-versoes">
+            @for (envio of envios(); track envio.id) {
+            <article class="linha-versao">
+              <div class="identidade-versao">
+                <span>
+                  <strong>{{ envio.nome }}</strong>
+                  <small>
+                    {{ envio.faixas.length }} @if (envio.faixas.length === 1) {
+                    arquivo } @else { arquivos } · {{ envio.projeto.nome }}
+                  </small>
+                </span>
+              </div>
+
+              <div class="acoes-versao">
+                <button type="button" (click)="abrirMontadorEnvio(envio)">
+                  Editar
+                </button>
+              </div>
+            </article>
+            }
+          </div>
+        </section>
+        }
+
+        <form [formGroup]="formularioEnvio" (ngSubmit)="criarEnvio()">
+          <div class="campos-editor">
+            <label>
+              <span>Nome do envio</span>
+              <input
+                type="text"
+                formControlName="nome"
+                placeholder="Ex.: Beats para testar com a voz"
+              />
+
+              @if ( formularioEnvio.controls.nome.touched &&
+              formularioEnvio.controls.nome.invalid ) {
+              <small>Informe um nome para identificar o envio.</small>
+              }
+            </label>
+
+            <label>
+              <span>Projeto principal</span>
+              <select formControlName="projeto_id">
+                <option value="">Selecione um projeto</option>
+
+                @for ( projeto of dadosFaixas.projetos(); track projeto.id ) {
+                <option [value]="projeto.id">{{ projeto.nome }}</option>
+                }
+              </select>
+
+              <small>
+                Serve como contexto e capa. Não limita os arquivos escolhidos.
+              </small>
+            </label>
+
+            <label>
+              <span>Observações internas</span>
+              <textarea
+                formControlName="observacoes"
+                rows="3"
+                placeholder="Opcional"
+              ></textarea>
+            </label>
+
+            <label class="linha-versao">
+              <input type="checkbox" formControlName="publicar" />
+
+              <span class="identidade-versao">
+                <span>
+                  <strong>Publicar este envio</strong>
+                  <small>
+                    Torna o envio visível como trabalho público. Desmarcado, o
+                    acesso continua somente pelo link não listado.
+                  </small>
+                </span>
+              </span>
+            </label>
+
+            @if (formularioEnvio.controls.publicar.value) {
+            <label>
+              <span>Texto público</span>
+              <textarea
+                formControlName="descricao_publica"
+                rows="3"
+                placeholder="Ex.: A trajetória desta faixa, da primeira ideia à versão final"
+              ></textarea>
+            </label>
+
+            <label class="linha-versao">
+              <input type="checkbox" formControlName="download_publico" />
+
+              <span class="identidade-versao">
+                <span>
+                  <strong>Permitir download</strong>
+                  <small>A reprodução permanece disponível na página.</small>
+                </span>
+              </span>
+            </label>
+            }
+          </div>
+
+          <section class="secao-detalhe historico">
+            <header>
+              <div>
+                <p>Acervo</p>
+                <h3>Escolher arquivos</h3>
+              </div>
+
+              <span>{{ versoesEnvioIds().length }} selecionados</span>
+            </header>
+
+            <label class="busca">
+              <span class="icone-busca" aria-hidden="true">⌕</span>
+              <span class="sr-only">Buscar arquivos para o envio</span>
+              <input
+                type="search"
+                placeholder="Buscar projeto, faixa, versão ou arquivo"
+                [value]="termoBuscaEnvio()"
+                (input)="atualizarBuscaEnvio($event)"
+              />
+            </label>
+
+            @if (gruposEnvio().length === 0) {
+            <div class="vazio-detalhe">
+              <strong>Nenhum arquivo encontrado.</strong>
+              <p>Tente buscar por outro termo.</p>
+            </div>
+            } @else {
+            <div class="lista-versoes">
+              @for ( projeto of gruposEnvio(); track projeto.id ) {
+              <div class="contexto-producao">
+                <strong>{{ projeto.nome }}</strong>
+              </div>
+
+              @for ( faixa of projeto.faixas; track faixa.id ) { @for ( versao
+              of faixa.versoes; track versao.id ) {
+              <label class="linha-versao">
+                <input
+                  type="checkbox"
+                  [checked]="versaoEstaNoEnvio(versao.id)"
+                  (change)="alternarVersaoEnvio(versao.id)"
+                />
+
+                <span class="identidade-versao">
+                  <span>
+                    <strong>{{ faixa.titulo }}.{{ versao.versao }}</strong>
+                    <small>{{ versao.nome_arquivo }}</small>
+                  </span>
+                </span>
+
+                <span>{{ formatarBytes(versao.tamanho_bytes) }}</span>
+              </label>
+              } } }
+            </div>
+            }
+          </section>
+
+          @if (versoesEscolhidasEnvio().length > 0) {
+          <section class="secao-detalhe historico">
+            <header>
+              <div>
+                <p>Sequência</p>
+                <h3>Ordem do envio</h3>
+              </div>
+            </header>
+
+            <div class="lista-versoes">
+              @for ( versao of versoesEscolhidasEnvio(); track versao.id; let
+              primeiro = $first; let ultimo = $last; let indice = $index ) {
+              <article class="linha-versao">
+                <span>{{ indice + 1 }}</span>
+
+                <div class="identidade-versao">
+                  <span>
+                    <strong>
+                      {{ versao.faixa.titulo }}.{{ versao.versao }}
+                    </strong>
+                    <small>{{ versao.nome_arquivo }}</small>
+                  </span>
+                </div>
+
+                <div class="acoes-versao">
+                  <button
+                    type="button"
+                    aria-label="Mover arquivo para cima"
+                    [disabled]="primeiro"
+                    (click)="moverVersaoEnvio(versao.id, -1)"
+                  >
+                    ↑
+                  </button>
+
+                  <button
+                    type="button"
+                    aria-label="Mover arquivo para baixo"
+                    [disabled]="ultimo"
+                    (click)="moverVersaoEnvio(versao.id, 1)"
+                  >
+                    ↓
+                  </button>
+
+                  <button
+                    type="button"
+                    class="botao-perigo"
+                    (click)="alternarVersaoEnvio(versao.id)"
+                  >
+                    Remover
+                  </button>
+                </div>
+              </article>
+              }
+            </div>
+          </section>
+          }
+
+          @if (erroEnvio()) {
+          <p class="erro-formulario">{{ erroEnvio() }}</p>
+          }
+
+          <div class="acoes-formulario">
+            <button
+              type="button"
+              class="botao-secundario"
+              [disabled]="criandoEnvio()"
+              (click)="fecharMontadorEnvio()"
+            >
+              Cancelar
+            </button>
+
+            <button
+              type="submit"
+              class="botao-destaque"
+              [disabled]="
+                criandoEnvio() ||
+                formularioEnvio.invalid ||
+                versoesEnvioIds().length === 0
+              "
+            >
+              @if (criandoEnvio()) { Salvando envio... } @else if
+              (envioEditandoId()) { Salvar envio e copiar link } @else { Criar
+              envio e copiar link }
+            </button>
+          </div>
+        </form>
+        }
+      </div>
+    </section>
+  </div>
+  }
+
+  @if ( urlReproducao(); as url ) { @if (versaoReproduzindo(); as versao) {
   <footer class="reprodutor-global">
     <div class="musica-reprodutor">
       @if (faixaReproduzindo(); as faixa) {

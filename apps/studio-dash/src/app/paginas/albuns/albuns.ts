@@ -14,6 +14,7 @@ import {
   DadosAlbuns,
   DadosEstudio,
   DadosProjetosArtisticos,
+  TIPO_PUBLICO_ENVIO,
   type AlbumCompleto,
   type AlbumFaixaCompleta,
   type CadastroAlbum,
@@ -80,12 +81,13 @@ export class Albuns implements OnInit {
 
   readonly albunsVisiveis = computed(() => {
     const projetoId = this.projetoFiltradoId();
+    const albuns = this.dadosAlbuns
+      .albuns()
+      .filter((album) => album.tipo_publico !== TIPO_PUBLICO_ENVIO);
 
     return projetoId
-      ? this.dadosAlbuns
-          .albuns()
-          .filter((album) => album.projeto_id === projetoId)
-      : this.dadosAlbuns.albuns();
+      ? albuns.filter((album) => album.projeto_id === projetoId)
+      : albuns;
   });
 
   readonly formularioAlbum = this.construtorFormulario.group({

@@ -9,6 +9,7 @@ import {
 import { ActivatedRoute } from '@angular/router';
 import {
   DadosAlbumPublico,
+  TIPO_PUBLICO_ENVIO,
   type FaixaAlbumPublico,
 }
 from '@fleiva-studios/shared-data-access';
@@ -64,6 +65,11 @@ constructor() {
       null
     );
   });
+
+  readonly ehEnvio = computed(
+    () =>
+      this.dados.album()?.tipo === TIPO_PUBLICO_ENVIO,
+  );
 
   readonly inicialEstudio = computed(() => {
     const nome = this.dados.estudio()?.nome.trim();
@@ -256,6 +262,22 @@ constructor() {
 
   formatarOrdem(ordem: number): string {
     return String(ordem).padStart(2, '0');
+  }
+
+  nomePrincipalFaixa(
+    faixa: FaixaAlbumPublico,
+  ): string {
+    return this.ehEnvio()
+      ? faixa.versao
+      : faixa.faixa;
+  }
+
+  nomeSecundarioFaixa(
+    faixa: FaixaAlbumPublico,
+  ): string {
+    return this.ehEnvio()
+      ? faixa.faixa
+      : `Versão ${faixa.versao}`;
   }
 
   formatarBytes(bytes: number): string {

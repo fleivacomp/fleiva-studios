@@ -12,17 +12,35 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 import { ActivatedRoute, RouterLink, type ParamMap } from "@angular/router";
 import {
+  DadosAlbuns,
   DadosFaixas,
   DadosVersoesFaixa,
+  TIPO_PUBLICO_ENVIO,
+  type AlbumCompleto,
+  type CadastroEnvio,
+  type ConfiguracaoPublicacaoAlbum,
   type CadastroFaixa,
   type FaixaCompleta,
   type StatusProducaoFaixa,
+  type VersaoAlbum,
   type VersaoFaixa,
 } from "@fleiva-studios/shared-data-access";
 
 interface OpcaoStatus {
   valor: StatusProducaoFaixa;
   rotulo: string;
+}
+
+interface GrupoFaixaEnvio {
+  id: string;
+  titulo: string;
+  versoes: VersaoAlbum[];
+}
+
+interface GrupoProjetoEnvio {
+  id: string;
+  nome: string;
+  faixas: GrupoFaixaEnvio[];
 }
 
 @Component({
@@ -33,6 +51,7 @@ interface OpcaoStatus {
   styleUrl: "./faixas.scss",
 })
 export class Faixas implements OnInit {
+  readonly dadosAlbuns = inject(DadosAlbuns);
   readonly dadosFaixas = inject(DadosFaixas);
   readonly dadosVersoes = inject(DadosVersoesFaixa);
 
@@ -67,6 +86,13 @@ export class Faixas implements OnInit {
   readonly tempoAtualAudio = signal(0);
   readonly duracaoAudio = signal(0);
   readonly volumeAudio = signal(1);
+  readonly montadorEnvioAberto = signal(false);
+  readonly termoBuscaEnvio = signal("");
+  readonly versoesEnvioIds = signal<string[]>([]);
+  readonly criandoEnvio = signal(false);
+  readonly erroEnvio = signal<string | null>(null);
+  readonly linkEnvioCriado = signal<string | null>(null);
+  readonly envioEditandoId = signal<string | null>(null);
 
   readonly faixasVisiveis = computed(() => {
     const termo = this.termoBusca().trim().toLocaleLowerCase("pt-BR");
@@ -127,6 +153,82 @@ export class Faixas implements OnInit {
           .find((faixa) => faixa.id === versao.faixa_id) ?? null)
       : null;
   });
+
+  readonly versoesEscolhidasEnvio = computed(() => {
+    const versoes = this.dadosAlbuns.versoesDisponiveis();
+
+    return this.versoesEnvioIds()
+      .map((versaoId) => versoes.find((versao) => versao.id === versaoId))
+      .filter((versao): versao is VersaoAlbum => versao !== undefined);
+  });
+
+  readonly envios = computed(() =>
+    this.dadosAlbuns
+      .albuns()
+      .filter((album) => album.tipo_publico === TIPO_PUBLICO_ENVIO),
+  );
+
+  readonly gruposEnvio = computed<GrupoProjetoEnvio[]>(() => {
+    const termo = this.termoBuscaEnvio().trim().toLocaleLowerCase("pt-BR");
+    const projetos = new Map<string, GrupoProjetoEnvio>();
+
+    for (const versao of this.dadosAlbuns.versoesDisponiveis()) {
+      const projeto = this.dadosFaixas
+        .projetos()
+        .find((item) => item.id === versao.faixa.projeto_id);
+      const nomeProjeto = projeto?.nome ?? "Projeto não encontrado";
+      const valoresBusca = [
+        nomeProjeto,
+        versao.faixa.titulo,
+        versao.versao,
+        versao.nome_arquivo,
+      ];
+
+      if (
+        termo &&
+        !valoresBusca.some((valor) =>
+          valor.toLocaleLowerCase("pt-BR").includes(termo),
+        )
+      ) {
+        continue;
+      }
+
+      let grupoProjeto = projetos.get(versao.faixa.projeto_id);
+
+      if (!grupoProjeto) {
+        grupoProjeto = {
+          id: versao.faixa.projeto_id,
+          nome: nomeProjeto,
+          faixas: [],
+        };
+        projetos.set(versao.faixa.projeto_id, grupoProjeto);
+      }
+
+      let grupoFaixa = grupoProjeto.faixas.find(
+        (item) => item.id === versao.faixa_id,
+      );
+
+      if (!grupoFaixa) {
+        grupoFaixa = {
+          id: versao.faixa_id,
+          titulo: versao.faixa.titulo,
+          versoes: [],
+        };
+        grupoProjeto.faixas.push(grupoFaixa);
+      }
+
+      grupoFaixa.versoes.push(versao);
+    }
+
+    return [...projetos.values()]
+      .map((projeto) => ({
+        ...projeto,
+        faixas: projeto.faixas.sort((a, b) =>
+          a.titulo.localeCompare(b.titulo, "pt-BR"),
+        ),
+      }))
+      .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+  });
   readonly opcoesStatus: readonly OpcaoStatus[] = [
     {
       valor: "composicao",
@@ -183,6 +285,19 @@ export class Faixas implements OnInit {
     arquivo: this.construtorFormulario.control<File | null>(null, [
       Validators.required,
     ]),
+  });
+
+  readonly formularioEnvio = this.construtorFormulario.group({
+    projeto_id: this.construtorFormulario.nonNullable.control("", [
+      Validators.required,
+    ]),
+    nome: this.construtorFormulario.nonNullable.control("", [
+      Validators.required,
+    ]),
+    observacoes: this.construtorFormulario.control<string | null>(null),
+    publicar: this.construtorFormulario.nonNullable.control(false),
+    descricao_publica: this.construtorFormulario.control<string | null>(null),
+    download_publico: this.construtorFormulario.nonNullable.control(false),
   });
 
   ngOnInit(): void {
@@ -243,7 +358,193 @@ export class Faixas implements OnInit {
   }
 
   async carregarDados(): Promise<void> {
-    await Promise.all([this.dadosFaixas.listar(), this.dadosVersoes.listar()]);
+    await Promise.all([
+      this.dadosFaixas.listar(),
+      this.dadosVersoes.listar(),
+      this.dadosAlbuns.listar(),
+    ]);
+  }
+
+  abrirMontadorEnvio(envio?: AlbumCompleto): void {
+    const faixa = this.faixaSelecionada();
+
+    this.formularioEnvio.reset({
+      projeto_id:
+        envio?.projeto_id ??
+        faixa?.projeto_id ??
+        this.projetoFiltradoId() ??
+        "",
+      nome: envio?.nome ?? (faixa ? `Envio — ${faixa.titulo}` : ""),
+      observacoes: envio?.observacoes ?? null,
+      publicar: envio?.publico_na_landing ?? false,
+      descricao_publica: envio?.descricao_publica ?? null,
+      download_publico: envio?.download_publico ?? false,
+    });
+    this.termoBuscaEnvio.set("");
+    this.versoesEnvioIds.set(
+      envio
+        ? [...envio.faixas]
+            .sort((a, b) => a.ordem - b.ordem)
+            .map((item) => item.versao_id)
+        : [],
+    );
+    this.erroEnvio.set(null);
+    this.linkEnvioCriado.set(null);
+    this.envioEditandoId.set(envio?.id ?? null);
+    this.montadorEnvioAberto.set(true);
+  }
+
+  fecharMontadorEnvio(): void {
+    if (this.criandoEnvio()) {
+      return;
+    }
+
+    this.montadorEnvioAberto.set(false);
+    this.termoBuscaEnvio.set("");
+    this.versoesEnvioIds.set([]);
+    this.erroEnvio.set(null);
+    this.linkEnvioCriado.set(null);
+    this.envioEditandoId.set(null);
+    this.formularioEnvio.reset({
+      projeto_id: "",
+      nome: "",
+      observacoes: null,
+      publicar: false,
+      descricao_publica: null,
+      download_publico: false,
+    });
+  }
+
+  atualizarBuscaEnvio(evento: Event): void {
+    const input = evento.target as HTMLInputElement;
+
+    this.termoBuscaEnvio.set(input.value);
+  }
+
+  versaoEstaNoEnvio(versaoId: string): boolean {
+    return this.versoesEnvioIds().includes(versaoId);
+  }
+
+  alternarVersaoEnvio(versaoId: string): void {
+    this.versoesEnvioIds.update((versoesIds) =>
+      versoesIds.includes(versaoId)
+        ? versoesIds.filter((id) => id !== versaoId)
+        : [...versoesIds, versaoId],
+    );
+    this.erroEnvio.set(null);
+  }
+
+  moverVersaoEnvio(versaoId: string, deslocamento: -1 | 1): void {
+    this.versoesEnvioIds.update((versoesIds) => {
+      const novaOrdem = [...versoesIds];
+      const indiceAtual = novaOrdem.indexOf(versaoId);
+      const novoIndice = indiceAtual + deslocamento;
+
+      if (
+        indiceAtual < 0 ||
+        novoIndice < 0 ||
+        novoIndice >= novaOrdem.length
+      ) {
+        return versoesIds;
+      }
+
+      [novaOrdem[indiceAtual], novaOrdem[novoIndice]] = [
+        novaOrdem[novoIndice],
+        novaOrdem[indiceAtual],
+      ];
+
+      return novaOrdem;
+    });
+  }
+
+  async criarEnvio(): Promise<void> {
+    if (this.formularioEnvio.invalid) {
+      this.formularioEnvio.markAllAsTouched();
+      return;
+    }
+
+    if (this.versoesEnvioIds().length === 0) {
+      this.erroEnvio.set("Selecione pelo menos um arquivo.");
+      return;
+    }
+
+    this.criandoEnvio.set(true);
+    this.erroEnvio.set(null);
+    this.linkEnvioCriado.set(null);
+
+    try {
+      const valor = this.formularioEnvio.getRawValue();
+      const dados: CadastroEnvio = {
+        projeto_id: valor.projeto_id,
+        nome: valor.nome,
+        observacoes: this.normalizarTextoOpcional(valor.observacoes),
+        versoes_ids: this.versoesEnvioIds(),
+      };
+      const envioId = this.envioEditandoId();
+      const envio = envioId
+        ? await this.dadosAlbuns.atualizarEnvio(envioId, dados)
+        : await this.dadosAlbuns.cadastrarEnvio(dados);
+
+      if (valor.publicar) {
+        const configuracaoPublicacao: ConfiguracaoPublicacaoAlbum = {
+          tipo_publico: TIPO_PUBLICO_ENVIO,
+          descricao_publica: this.normalizarTextoOpcional(
+            valor.descricao_publica,
+          ),
+          reproducao_publica: true,
+          download_publico: valor.download_publico,
+        };
+
+        await this.dadosAlbuns.publicar(envio.id, configuracaoPublicacao);
+      } else if (envioId) {
+        const envioAnterior = this.envios().find(
+          (item) => item.id === envioId,
+        );
+
+        if (envioAnterior?.publico_na_landing) {
+          await this.dadosAlbuns.despublicar(envio.id);
+        }
+      }
+
+      const token =
+        envio.token_compartilhamento ??
+        (await this.dadosAlbuns.renovarTokenCompartilhamento(envio.id));
+      const link = this.montarLinkEnvio(token);
+
+      this.linkEnvioCriado.set(link);
+
+      try {
+        await navigator.clipboard.writeText(link);
+        this.mensagemCompartilhamento.set(
+          envioId ? "Envio atualizado e link copiado." : "Envio criado e link copiado.",
+        );
+      } catch {
+        this.mensagemCompartilhamento.set(
+          envioId
+            ? "Envio atualizado. Copie o link exibido no painel."
+            : "Envio criado. Copie o link exibido no painel.",
+        );
+      }
+    } catch (erro) {
+      this.erroEnvio.set(this.obterMensagemErro(erro));
+    } finally {
+      this.criandoEnvio.set(false);
+    }
+  }
+
+  async copiarLinkEnvioCriado(): Promise<void> {
+    const link = this.linkEnvioCriado();
+
+    if (!link) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(link);
+      this.mensagemCompartilhamento.set("Link do envio copiado.");
+    } catch {
+      this.erroEnvio.set("Não foi possível copiar o link automaticamente.");
+    }
   }
 
   atualizarBusca(evento: Event): void {
@@ -734,6 +1035,21 @@ export class Faixas implements OnInit {
     const origem = window.location.origin.replace(/\/$/, "");
 
     return `${origem}/arquivo/${tokenSeguro}`;
+  }
+
+  private montarLinkEnvio(token: string): string {
+    const tokenSeguro = encodeURIComponent(token);
+    const hostname = window.location.hostname.trim().toLocaleLowerCase();
+    const dominioFleiva =
+      hostname === "fleiva.com.br" || hostname.endsWith(".fleiva.com.br");
+
+    if (dominioFleiva) {
+      return `https://play.fleiva.com.br/a/${tokenSeguro}`;
+    }
+
+    const origem = window.location.origin.replace(/\/$/, "");
+
+    return `${origem}/album/${tokenSeguro}`;
   }
 
   private limparRetornoCompartilhamento(): void {

@@ -6,7 +6,7 @@
   @if (dados.carregando()) {
     <section class="estado-pagina">
       <span class="carregador" aria-hidden="true"></span>
-      <p>Preparando álbum...</p>
+      <p>Preparando compartilhamento...</p>
     </section>
   } @else if (erroLocal() || dados.erro()) {
     <section class="estado-pagina estado-erro">
@@ -62,7 +62,7 @@
       </div>
 
       <div class="identificacao-album">
-        <p class="rotulo">ÁLBUM</p>
+        <p class="rotulo">RASCUNHO COMPARTILHADO</p>
         <h1>{{ album.nome }}</h1>
         <h2>{{ album.projeto }}</h2>
 
@@ -96,7 +96,7 @@
     <section class="conteudo-album">
       <header class="cabecalho-lista" aria-hidden="true">
         <span>#</span>
-        <span>Faixa</span>
+        <span>Versão</span>
         <span>Arquivo</span>
         <span></span>
       </header>
@@ -104,7 +104,7 @@
       @if (album.faixas.length === 0) {
         <div class="album-vazio">
           <span aria-hidden="true">♪</span>
-          <p>Este álbum ainda não possui faixas disponíveis.</p>
+          <p>Este compartilhamento ainda não possui arquivos disponíveis.</p>
         </div>
       } @else {
         <ol class="lista-faixas">
@@ -118,7 +118,9 @@
                 type="button"
                 class="botao-reproduzir"
                 [disabled]="!podeReproduzir(faixa)"
-                [attr.aria-label]="'Ouvir ' + faixa.faixa"
+                [attr.aria-label]="
+                  'Ouvir ' + faixa.versao + ' de ' + faixa.faixa
+                "
                 (click)="reproduzir(faixa)"
               >
                 <span class="numero-faixa">
@@ -130,8 +132,8 @@
               </button>
 
               <div class="identificacao-faixa">
-                <strong>{{ faixa.faixa }}</strong>
-                <span>{{ faixa.versao }}</span>
+                <strong>{{ faixa.versao }}</strong>
+                <span>{{ faixa.faixa }}</span>
 
                 @if (faixa.observacoes) {
                   <p>{{ faixa.observacoes }}</p>
@@ -149,7 +151,9 @@
                 type="button"
                 class="botao-download"
                 [disabled]="baixandoFaixaId() !== null"
-                [attr.aria-label]="'Baixar ' + faixa.faixa"
+                [attr.aria-label]="
+                  'Baixar ' + faixa.versao + ' de ' + faixa.faixa
+                "
                 (click)="baixar(faixa)"
               >
                 @if (baixandoFaixaId() === faixa.item_id) {
@@ -185,8 +189,8 @@
           </span>
 
           <span>
-            <strong>{{ faixa.faixa }}</strong>
-            <small>{{ faixa.versao }}</small>
+            <strong>{{ faixa.versao }}</strong>
+            <small>{{ faixa.faixa }}</small>
           </span>
         </div>
 
