@@ -82,12 +82,12 @@
   </header>
 
   <nav class="navegacao-projeto" aria-label="Áreas do projeto">
-    <a href="#faixas">Faixas</a>
-    <a href="#envios">Envios <span>{{ envios().length }}</span></a>
-    <a href="#trabalhos">Trabalhos <span>{{ trabalhos().length }}</span></a>
+    <a [routerLink]="[]" fragment="faixas">Faixas</a>
+    <a [routerLink]="[]" fragment="envios">Envios <span>{{ envios().length }}</span></a>
+    <a [routerLink]="[]" fragment="trabalhos">Trabalhos <span>{{ trabalhos().length }}</span></a>
     <a
       routerLink="/projetos"
-      [queryParams]="{ projeto: projetoAtual.id }"
+      [queryParams]="{ projeto: projetoAtual.id, editar: 1 }"
     >
       Identidade
     </a>

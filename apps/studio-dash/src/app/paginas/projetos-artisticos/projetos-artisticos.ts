@@ -2,6 +2,7 @@ import {
   Component,
   DestroyRef,
   OnInit,
+  computed,
   inject,
   signal,
 } from "@angular/core";
@@ -33,6 +34,8 @@ export class ProjetosArtisticos implements OnInit {
   private readonly destruirRef = inject(DestroyRef);
 
   readonly projetoEditandoId = signal<string | null>(null);
+  readonly formularioProjetoVisivel = signal(false);
+  readonly projetoSelecionadoId = signal<string | null>(null);
   readonly projetoMembroId = signal<string | null>(null);
   readonly membroEditandoId = signal<string | null>(null);
   readonly salvandoProjeto = signal(false);
@@ -62,12 +65,28 @@ export class ProjetosArtisticos implements OnInit {
     ativo: this.construtorFormulario.nonNullable.control(true),
   });
 
+  readonly projetoSelecionado = computed(() => {
+    const projetoId = this.projetoSelecionadoId();
+
+    return (
+      this.dadosProjetos
+        .projetos()
+        .find((projeto) => projeto.id === projetoId) ?? null
+    );
+  });
+
   ngOnInit(): void {
     void this.inicializar();
   }
 
   private async inicializar(): Promise<void> {
     await this.carregarDados();
+
+    if (!this.projetoSelecionadoId()) {
+      this.projetoSelecionadoId.set(
+        this.dadosProjetos.projetos()[0]?.id ?? null,
+      );
+    }
 
     this.rota.queryParamMap
       .pipe(takeUntilDestroyed(this.destruirRef))
@@ -86,12 +105,19 @@ export class ProjetosArtisticos implements OnInit {
       return;
     }
 
+    this.projetoSelecionadoId.set(projeto.id);
+
     if (parametros.get("novoMembro") === "1") {
       this.abrirNovoMembro(projeto.id);
     }
 
+    if (parametros.get("editar") === "1") {
+      this.editarProjeto(projeto);
+      return;
+    }
+
     window.setTimeout(() => {
-      document.getElementById(`projeto-${projeto.id}`)?.scrollIntoView({
+      document.getElementById("projeto-selecionado")?.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
@@ -138,8 +164,21 @@ export class ProjetosArtisticos implements OnInit {
     }
   }
 
+  abrirNovoProjeto(): void {
+    this.limparFormularioProjeto();
+    this.formularioProjetoVisivel.set(true);
+
+    window.setTimeout(() => {
+      document.getElementById("formulario-projeto")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  }
+
   editarProjeto(projeto: ProjetoArtisticoCompleto): void {
     this.projetoEditandoId.set(projeto.id);
+    this.formularioProjetoVisivel.set(true);
     this.erroOperacao.set(null);
 
     this.formularioProjeto.setValue({
@@ -147,14 +186,27 @@ export class ProjetosArtisticos implements OnInit {
       tipo: projeto.tipo,
     });
 
-    document.getElementById("formulario-projeto")?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
+    window.setTimeout(() => {
+      document.getElementById("formulario-projeto")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
     });
   }
 
   cancelarEdicaoProjeto(): void {
     this.limparFormularioProjeto();
+    this.formularioProjetoVisivel.set(false);
+  }
+
+  selecionarProjeto(projetoId: string): void {
+    if (this.projetoSelecionadoId() === projetoId) {
+      return;
+    }
+
+    this.projetoSelecionadoId.set(projetoId);
+    this.fecharFormularioMembro();
+    this.erroOperacao.set(null);
   }
 
   async excluirProjeto(projeto: ProjetoArtisticoCompleto): Promise<void> {
@@ -178,6 +230,12 @@ export class ProjetosArtisticos implements OnInit {
 
       if (this.projetoMembroId() === projeto.id) {
         this.fecharFormularioMembro();
+      }
+
+      if (this.projetoSelecionadoId() === projeto.id) {
+        this.projetoSelecionadoId.set(
+          this.dadosProjetos.projetos()[0]?.id ?? null,
+        );
       }
     } catch (erro) {
       this.erroOperacao.set(this.obterMensagemErro(erro));
@@ -234,6 +292,7 @@ export class ProjetosArtisticos implements OnInit {
   }
 
   abrirNovoMembro(projetoId: string): void {
+    this.projetoSelecionadoId.set(projetoId);
     this.projetoMembroId.set(projetoId);
     this.membroEditandoId.set(null);
     this.erroOperacao.set(null);
@@ -246,6 +305,7 @@ export class ProjetosArtisticos implements OnInit {
   }
 
   editarMembro(projetoId: string, membro: MembroProjetoCompleto): void {
+    this.projetoSelecionadoId.set(projetoId);
     this.projetoMembroId.set(projetoId);
     this.membroEditandoId.set(membro.id);
     this.erroOperacao.set(null);
@@ -329,6 +389,7 @@ export class ProjetosArtisticos implements OnInit {
 
   private limparFormularioProjeto(): void {
     this.projetoEditandoId.set(null);
+    this.formularioProjetoVisivel.set(false);
 
     this.formularioProjeto.reset({
       nome: "",

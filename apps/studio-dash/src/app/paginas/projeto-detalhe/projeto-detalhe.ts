@@ -68,9 +68,9 @@ export class ProjetoDetalhe implements OnInit {
       .albuns()
       .filter(
         (album) =>
-          album.projeto_id === this.projetoId() &&
-          album.tipo_publico !== TIPO_PUBLICO_ENVIO,
-      ),
+          album.projeto_id === this.projetoId()
+)
+
   );
 
   readonly envios = computed(() =>

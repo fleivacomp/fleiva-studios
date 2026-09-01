@@ -1,8 +1,55 @@
 <main class="pagina">
+  @if (albumAberto(); as album) {
+  <header class="topo-editor topo-editor-focado">
+    <button type="button" class="voltar-catalogo" (click)="fecharAlbum()">
+      <span aria-hidden="true">←</span>
+      Voltar aos álbuns
+    </button>
+
+    <div class="resumo-editor-focado">
+      <div class="miniatura-editor">
+        @if (capaAlbum(album); as capa) {
+        <img [src]="capa" [alt]="'Capa de ' + album.nome" />
+        } @else { {{ iniciaisProjeto(album) }} }
+      </div>
+
+      <div class="identificacao-editor">
+        <p class="rotulo-menor">EDITANDO TRABALHO</p>
+        <h1>{{ album.nome }}</h1>
+        <span>
+          {{ album.projeto.nome }} ·
+          {{ rotuloQuantidadeFaixas(album.faixas.length) }}
+        </span>
+      </div>
+    </div>
+
+    <div class="acoes-resumo-editor">
+      <div class="estados-editor" aria-label="Estado do trabalho">
+        <span
+          class="estado-editor"
+          [class.estado-publicado]="album.publico_na_landing"
+        >
+          @if (album.publico_na_landing) { Publicado } @else { Rascunho }
+        </span>
+
+        @if (album.publico_na_casa) {
+        <span class="estado-editor estado-casa">Na Casa</span>
+        }
+      </div>
+
+      <button
+        type="button"
+        class="botao-secundario"
+        (click)="editarAlbum(album)"
+      >
+        Editar informações
+      </button>
+    </div>
+  </header>
+  } @else {
   <header class="cabecalho-pagina">
     <div>
       <p class="secao">CATÁLOGO MUSICAL</p>
-
       <h1>Álbuns</h1>
       <p>Monte sequências com as versões que já estão no acervo.</p>
     </div>
@@ -17,24 +64,15 @@
       Novo álbum
     </button>
   </header>
+  }
 
-  @if ( !dadosProjetos.carregando() && dadosProjetos.projetos().length === 0 ) {
-  <section class="aviso-projetos">
-    <div>
-      <strong>Comece por um projeto artístico</strong>
-      <p>Todo álbum pertence a um artista, banda ou projeto.</p>
-    </div>
-
-    <a routerLink="/projetos">Ir para projetos</a>
-  </section>
-  } @if (formularioAberto()) {
+  @if (formularioAberto()) {
   <section id="formulario-album" class="painel formulario-album">
     <header class="titulo-formulario">
       <div>
         <p class="rotulo-menor">
           @if (albumEditandoId()) { EDITANDO ÁLBUM } @else { NOVA SEQUÊNCIA }
         </p>
-
         <h2>
           @if (albumEditandoId()) { Ajustar informações } @else { Criar álbum }
         </h2>
@@ -55,39 +93,37 @@
       <div class="campos-album">
         <label>
           <span>Projeto artístico</span>
-
           <select formControlName="projeto_id">
             <option value="">Selecione um projeto</option>
-
-            @for ( projeto of dadosProjetos.projetos(); track projeto.id ) {
+            @for (projeto of dadosProjetos.projetos(); track projeto.id) {
             <option [value]="projeto.id">{{ projeto.nome }}</option>
             }
           </select>
-
-          @if ( formularioAlbum.controls.projeto_id.touched &&
-          formularioAlbum.controls.projeto_id.invalid ) {
+          @if (
+            formularioAlbum.controls.projeto_id.touched &&
+            formularioAlbum.controls.projeto_id.invalid
+          ) {
           <small>Selecione o projeto artístico.</small>
           }
         </label>
 
         <label>
           <span>Nome do álbum</span>
-
           <input
             type="text"
             formControlName="nome"
             placeholder="Ex.: Depois da Meia-Noite"
           />
-
-          @if ( formularioAlbum.controls.nome.touched &&
-          formularioAlbum.controls.nome.invalid ) {
+          @if (
+            formularioAlbum.controls.nome.touched &&
+            formularioAlbum.controls.nome.invalid
+          ) {
           <small>Informe o nome do álbum.</small>
           }
         </label>
 
         <label class="campo-largo">
-          <span>Observações</span>
-
+          <span>Observações internas</span>
           <textarea
             formControlName="observacoes"
             rows="3"
@@ -105,7 +141,6 @@
         >
           Cancelar
         </button>
-
         <button
           type="submit"
           class="botao-principal"
@@ -117,427 +152,260 @@
       </div>
     </form>
   </section>
-  } @if (erroOperacao()) {
+  }
+
+  @if (erroOperacao()) {
   <p class="mensagem mensagem-erro">{{ erroOperacao() }}</p>
-  } @if (mensagemOperacao()) {
+  }
+  @if (mensagemOperacao()) {
   <p class="mensagem mensagem-sucesso">{{ mensagemOperacao() }}</p>
-  } @if (dadosAlbuns.carregando()) {
-  <section class="estado">
-    <span class="carregador" aria-hidden="true"></span>
-    <p>Organizando o catálogo...</p>
-  </section>
-  } @else if (dadosAlbuns.erro()) {
-  <section class="estado estado-erro">
-    <h2>Não foi possível abrir os álbuns</h2>
-    <p>{{ dadosAlbuns.erro() }}</p>
+  }
 
-    <button type="button" class="botao-secundario" (click)="carregarDados()">
-      Tentar novamente
-    </button>
-  </section>
-  } @else if (dadosAlbuns.albuns().length === 0) {
-  <section class="vazio-catalogo">
-    <div class="capa-vazia" aria-hidden="true">
-      <span>01</span>
-      <i></i>
-      <strong>FLEIVA</strong>
-    </div>
-
-    <div>
-      <p class="rotulo-menor">PRIMEIRA SEQUÊNCIA</p>
-      <h2>Transforme faixas soltas em um trabalho.</h2>
-      <p>
-        Use os arquivos que já estão no Fleiva para testar a ordem de um álbum,
-        EP, demo ou mixtape.
-      </p>
+  @if (albumAberto(); as album) {
+  <section id="editor-sequencia" class="editor-sequencia editor-focado">
+    <nav class="navegacao-editor" aria-label="Áreas da edição">
+      <button
+        type="button"
+        [class.ativa]="abaEditor() === 'conteudo'"
+        [attr.aria-current]="abaEditor() === 'conteudo' ? 'page' : null"
+        (click)="selecionarAba('conteudo')"
+      >
+        <span>1</span>
+        <strong>Conteúdo</strong>
+        <small>Faixas, versões e capa</small>
+      </button>
 
       <button
         type="button"
-        class="botao-principal"
-        [disabled]="dadosProjetos.projetos().length === 0"
-        (click)="abrirNovoAlbum(projetoFiltradoId() ?? '')"
+        [class.ativa]="abaEditor() === 'publicacao'"
+        [attr.aria-current]="abaEditor() === 'publicacao' ? 'page' : null"
+        (click)="selecionarAba('publicacao')"
       >
-        Criar primeiro álbum
+        <span>2</span>
+        <strong>Página pública</strong>
+        <small>Apresentação e permissões</small>
       </button>
-    </div>
-  </section>
-  } @else {
-  <section class="catalogo">
-    <header class="cabecalho-catalogo">
-      <div>
-        <p class="rotulo-menor">DISCOGRAFIA</p>
-        <h2>
-          @if (projetoFiltrado(); as projeto) { Trabalhos de {{ projeto.nome }}
-          } @else { Trabalhos em construção }
-        </h2>
 
-        @if (projetoFiltrado(); as projeto) {
-        <span class="acoes-filtro">
-          <a [routerLink]="['/projetos', projeto.id]">Voltar ao projeto</a>
-          <a routerLink="/albuns">Ver todos os trabalhos</a>
-        </span>
-        }
-      </div>
-
-      <span> {{ albunsVisiveis().length }} </span>
-    </header>
-
-    @if (albunsVisiveis().length === 0) {
-    <section class="filtro-vazio">
-      <strong>Nenhum trabalho montado para este projeto.</strong>
-      <p>
-        Crie um álbum, EP, mixtape ou coletânea mantendo o projeto selecionado.
-      </p>
       <button
         type="button"
-        class="botao-principal"
-        (click)="abrirNovoAlbum(projetoFiltradoId() ?? '')"
+        [class.ativa]="abaEditor() === 'compartilhar'"
+        [attr.aria-current]="abaEditor() === 'compartilhar' ? 'page' : null"
+        (click)="selecionarAba('compartilhar')"
       >
-        Montar primeiro trabalho
+        <span>3</span>
+        <strong>Compartilhar</strong>
+        <small>Links privados e públicos</small>
       </button>
-    </section>
-    } @else {
-    <div class="grade-albuns">
-      @for (album of albunsVisiveis(); track album.id) {
-      <article
-        class="cartao-album"
-        [class.album-selecionado]="
-              albumAbertoId() === album.id
-            "
-      >
-        <div class="capa-album">
-          @if (capaAlbum(album); as capa) {
-          <img [src]="capa" [alt]="'Capa de ' + album.nome" />
-          } @else {
-          <strong>{{ iniciaisProjeto(album) }}</strong>
-          <small>{{ album.projeto.nome }}</small>
-          }
+    </nav>
 
-          <span
-            class="estado-cartao"
-            [class.estado-publicado]="
-                  album.publico_na_landing
-                "
-          >
-            @if (album.publico_na_landing) { Público } @else { Privado }
-          </span>
+    @if (abaEditor() === 'conteudo') {
+    <section class="aba-editor painel-conteudo">
+      <header class="cabecalho-secao-editor">
+        <div>
+          <p class="rotulo-menor">CONTEÚDO DO TRABALHO</p>
+          <h2>Organize as faixas</h2>
+          <p>
+            Escolha a sequência e a versão que representa cada faixa neste
+            trabalho.
+          </p>
+        </div>
+        <span>{{ rotuloQuantidadeFaixas(album.faixas.length) }}</span>
+      </header>
 
-          @if (albumAbertoId() === album.id) {
-          <span class="indicador-aberto">Aberto</span>
-          }
+      <div class="gerenciador-capa">
+        <div class="estado-capa">
+          <span aria-hidden="true">▣</span>
+          <div>
+            <strong>{{ origemCapa(album) }}</strong>
+            <small>
+              Sem uma capa própria, o Fleiva usa a capa do projeto
+              automaticamente.
+            </small>
+          </div>
         </div>
 
-        <div class="corpo-cartao">
-          <div class="dados-album">
-            <strong>{{ album.nome }}</strong>
-            <small>{{ album.projeto.nome }}</small>
+        <div class="acoes-capa">
+          <label
+            class="seletor-capa"
+            [class.desativado]="
+              enviandoCapaId() !== null || removendoCapaId() !== null
+            "
+          >
+            <input
+              type="file"
+              accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+              [disabled]="
+                enviandoCapaId() !== null || removendoCapaId() !== null
+              "
+              (change)="selecionarCapa(album, $event)"
+            />
+            <span>
+              @if (enviandoCapaId() === album.id) { Enviando... } @else if
+              (album.capa_caminho) { Trocar capa } @else { Adicionar capa }
+            </span>
+          </label>
 
-            <span class="metadados-cartao">
-              <em> {{ rotuloQuantidadeFaixas(album.faixas.length) }} </em>
+          @if (album.capa_caminho) {
+          <button
+            type="button"
+            class="botao-herdar-capa"
+            [disabled]="
+              enviandoCapaId() !== null || removendoCapaId() !== null
+            "
+            (click)="usarCapaProjeto(album)"
+          >
+            @if (removendoCapaId() === album.id) { Removendo... } @else if
+            (album.projeto.capa_caminho) { Usar capa do projeto } @else { Usar
+            capa padrão }
+          </button>
+          }
+        </div>
+      </div>
 
-              @if (album.tipo_publico) {
-              <em>{{ album.tipo_publico }}</em>
-              } @if (album.publico_na_casa) {
-              <em class="marcador-casa">Na Casa</em>
-              }
+      @if (album.observacoes) {
+      <div class="observacoes-album">
+        <span>Observações internas</span>
+        <p>{{ album.observacoes }}</p>
+      </div>
+      }
+
+      @if (album.faixas.length === 0) {
+      <div class="sequencia-vazia">
+        <span aria-hidden="true">♪</span>
+        <strong>Este trabalho ainda não tem faixas.</strong>
+        <p>Adicione a primeira faixa do projeto para começar a sequência.</p>
+      </div>
+      } @else {
+      <div class="cabecalho-faixas" aria-hidden="true">
+        <span>#</span>
+        <span>Faixa</span>
+        <span>Versão usada</span>
+        <span>Ações</span>
+      </div>
+
+      <ol class="lista-faixas">
+        @for (
+          item of album.faixas;
+          track item.id;
+          let primeiro = $first;
+          let ultimo = $last
+        ) {
+        <li>
+          <span class="numero-faixa">{{ item.ordem }}</span>
+          <div class="identificacao-faixa">
+            <strong>{{ item.versao.faixa.titulo }}</strong>
+            <span>
+              {{ item.versao.versao }} · {{ item.versao.nome_arquivo }}
             </span>
           </div>
 
-          <button
-            type="button"
-            class="botao-abrir-album"
-            [attr.aria-pressed]="
-                  albumAbertoId() === album.id
-                "
-            (click)="abrirAlbum(album.id)"
-          >
-            <span>
-              @if (albumAbertoId() === album.id) { Continuar organizando } @else
-              { Abrir e organizar }
-            </span>
+          <label class="seletor-versao">
+            <span class="rotulo-acessivel">Versão usada</span>
+            <select
+              [disabled]="alterandoVersaoId() === item.id"
+              (change)="trocarVersao(item, $event)"
+            >
+              @for (
+                versao of dadosAlbuns.versoesDaFaixa(item.versao.faixa_id);
+                track versao.id
+              ) {
+              <option
+                [value]="versao.id"
+                [selected]="versao.id === item.versao_id"
+              >
+                {{ versao.versao }}
+                @if (versao.id === item.versao.faixa.versao_principal_id) {
+                · Principal }
+              </option>
+              }
+            </select>
+          </label>
 
-            <span aria-hidden="true">→</span>
-          </button>
-        </div>
-
-        <div class="acoes-cartao">
-          <button
-            type="button"
-            class="acao-editar"
-            [disabled]="
-                  album.faixas.length === 0 ||
-                  copiandoLinkNaoListadoId() !== null ||
-                  renovandoLinkNaoListadoId() !== null ||
-                  desativandoLinkNaoListadoId() !== null
-                "
-            (click)="enviarParaCliente(album)"
-          >
-            <span aria-hidden="true">↗</span>
-
-            @if ( copiandoLinkNaoListadoId() === album.id ) { Preparando... }
-            @else { Enviar ao cliente }
-          </button>
-
-          <button
-            type="button"
-            class="acao-editar"
-            (click)="editarAlbum(album)"
-          >
-            <span aria-hidden="true">✎</span>
-            Editar informações
-          </button>
-
-          <button
-            type="button"
-            class="acao-perigo"
-            aria-label="Excluir álbum"
-            [disabled]="excluindoAlbumId() === album.id"
-            (click)="excluirAlbum(album)"
-          >
-            @if (excluindoAlbumId() === album.id) { Excluindo... } @else {
-            <span aria-hidden="true">×</span>
-            Excluir }
-          </button>
-        </div>
-      </article>
-      }
-    </div>
-    }
-  </section>
-  } @if (albumAberto(); as album) {
-  <section id="editor-sequencia" class="editor-sequencia">
-    <header class="topo-editor">
-      <div class="miniatura-editor">
-        @if (capaAlbum(album); as capa) {
-        <img [src]="capa" [alt]="'Capa de ' + album.projeto.nome" />
-        } @else { {{ iniciaisProjeto(album) }} }
-      </div>
-
-      <div class="identificacao-editor">
-        <p class="rotulo-menor">ORDEM DO ÁLBUM</p>
-        <h2>{{ album.nome }}</h2>
-        <span>
-          {{ album.projeto.nome }} · {{
-          rotuloQuantidadeFaixas(album.faixas.length) }}
-        </span>
-      </div>
-
-      <div class="acoes-topo-editor">
-        @if (album.publico_na_landing) {
-        <div class="acoes-compartilhamento">
-          <button
-            type="button"
-            class="botao-copiar-link"
-            [disabled]="album.faixas.length === 0"
-            (click)="abrirPaginaPublica(album)"
-          >
-            <span aria-hidden="true">↗</span>
-            Abrir página
-          </button>
-
-          <button
-            type="button"
-            class="botao-copiar-link"
-            [disabled]="
-                  album.faixas.length === 0 ||
-                  copiandoLinkId() !== null
-                "
-            (click)="copiarLink(album)"
-          >
-            <span aria-hidden="true">⧉</span>
-
-            @if (copiandoLinkId() === album.id) { Copiando... } @else { Copiar
-            link }
-          </button>
-
-          <button
-            type="button"
-            class="botao-whatsapp"
-            [disabled]="album.faixas.length === 0"
-            (click)="enviarWhatsAppPublico(album)"
-          >
-            WhatsApp
-          </button>
-        </div>
+          <div class="acoes-faixa">
+            <button
+              type="button"
+              aria-label="Mover faixa para cima"
+              [disabled]="primeiro || ordenandoAlbumId() === album.id"
+              (click)="moverFaixa(album, item.id, -1)"
+            >↑</button>
+            <button
+              type="button"
+              aria-label="Mover faixa para baixo"
+              [disabled]="ultimo || ordenandoAlbumId() === album.id"
+              (click)="moverFaixa(album, item.id, 1)"
+            >↓</button>
+            <button
+              type="button"
+              class="remover-faixa"
+              [disabled]="removendoFaixaId() === item.id"
+              (click)="removerFaixa(item)"
+            >
+              @if (removendoFaixaId() === item.id) { ... } @else { Remover }
+            </button>
+          </div>
+        </li>
         }
+      </ol>
+      }
 
-        <button
-          type="button"
-          class="botao-fechar-editor"
-          aria-label="Fechar álbum"
-          (click)="fecharAlbum()"
-        >
-          ×
-        </button>
-      </div>
-    </header>
-
-    <div class="gerenciador-capa">
-      <div class="estado-capa">
-        <span aria-hidden="true">▣</span>
-
+      <form
+        class="adicionar-faixa"
+        [formGroup]="formularioFaixa"
+        (ngSubmit)="adicionarFaixa(album)"
+      >
         <div>
-          <strong>{{ origemCapa(album) }}</strong>
+          <label>
+            <span>Adicionar versão do projeto</span>
+            <select formControlName="versao_id">
+              <option value="">Selecione uma versão</option>
+              @for (versao of versoesDisponiveis(album); track versao.id) {
+              <option [value]="versao.id">
+                {{ versao.faixa.titulo }} · {{ versao.versao }}
+              </option>
+              }
+            </select>
+          </label>
           <small>
-            A capa própria é opcional. Sem ela, o Fleiva usa a capa do projeto
-            automaticamente.
+            A mesma faixa pode aparecer mais de uma vez com versões diferentes.
           </small>
         </div>
-      </div>
 
-      <div class="acoes-capa">
-        <label
-          class="seletor-capa"
-          [class.desativado]="
-              enviandoCapaId() !== null ||
-              removendoCapaId() !== null
-            "
-        >
-          <input
-            type="file"
-            accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-            [disabled]="
-                enviandoCapaId() !== null ||
-                removendoCapaId() !== null
-              "
-            (change)="selecionarCapa(album, $event)"
-          />
-
-          <span>
-            @if (enviandoCapaId() === album.id) { Enviando... } @else if
-            (album.capa_caminho) { Trocar capa } @else { Adicionar capa }
-          </span>
-        </label>
-
-        @if (album.capa_caminho) {
+        @if (versoesDisponiveis(album).length > 0) {
         <button
-          type="button"
-          class="botao-herdar-capa"
-          [disabled]="
-                enviandoCapaId() !== null ||
-                removendoCapaId() !== null
-              "
-          (click)="usarCapaProjeto(album)"
+          type="submit"
+          class="botao-claro"
+          [disabled]="adicionandoFaixa()"
         >
-          @if (removendoCapaId() === album.id) { Removendo... } @else if
-          (album.projeto.capa_caminho) { Usar capa do projeto } @else { Usar
-          capa padrão }
+          @if (adicionandoFaixa()) { Adicionando... } @else { Adicionar à
+          sequência }
         </button>
+        } @else if (album.faixas.length > 0) {
+        <span class="todas-faixas-adicionadas">
+          Todas as versões disponíveis já estão neste trabalho.
+        </span>
+        } @else {
+        <a routerLink="/faixas">Enviar primeira versão</a>
         }
-      </div>
-    </div>
-
-    <section class="painel-cliente">
-      <div class="identificacao-envio-cliente">
-        <span class="icone-envio-cliente" aria-hidden="true"> ↗ </span>
-
-        <div>
-          <p class="rotulo-menor">ENVIO PRIVADO</p>
-          <h3>Compartilhar com cliente</h3>
-          <p>
-            Envie este álbum sem colocá-lo na página pública do estúdio. Somente
-            quem receber o link poderá acessá-lo.
-          </p>
-        </div>
-      </div>
-
-      <span
-        class="situacao-link-cliente"
-        [class.link-ativo]="album.token_compartilhamento"
-      >
-        @if (album.token_compartilhamento) { Link privado ativo } @else { Link
-        ainda não gerado }
-      </span>
-
-      <div class="acoes-cliente">
-        <button
-          type="button"
-          class="botao-enviar-cliente"
-          [disabled]="
-              album.faixas.length === 0 ||
-              copiandoLinkNaoListadoId() !== null ||
-              renovandoLinkNaoListadoId() !== null ||
-              desativandoLinkNaoListadoId() !== null
-            "
-          (click)="enviarParaCliente(album)"
-        >
-          @if ( copiandoLinkNaoListadoId() === album.id ) { Preparando... }
-          @else { Enviar pelo WhatsApp }
-        </button>
-
-        <button
-          type="button"
-          class="botao-link-cliente"
-          [disabled]="
-              album.faixas.length === 0 ||
-              copiandoLinkNaoListadoId() !== null ||
-              renovandoLinkNaoListadoId() !== null ||
-              desativandoLinkNaoListadoId() !== null
-            "
-          (click)="copiarLinkNaoListado(album)"
-        >
-          <span aria-hidden="true">⧉</span>
-          Copiar link privado
-        </button>
-
-        @if (album.token_compartilhamento) {
-        <button
-          type="button"
-          class="botao-renovar-link"
-          [disabled]="
-                copiandoLinkNaoListadoId() !== null ||
-                renovandoLinkNaoListadoId() !== null ||
-                desativandoLinkNaoListadoId() !== null
-              "
-          (click)="renovarLinkNaoListado(album)"
-        >
-          @if ( renovandoLinkNaoListadoId() === album.id ) { Renovando... }
-          @else { Renovar link }
-        </button>
-
-        <button
-          type="button"
-          class="botao-link-cliente"
-          [disabled]="
-                copiandoLinkNaoListadoId() !== null ||
-                renovandoLinkNaoListadoId() !== null ||
-                desativandoLinkNaoListadoId() !== null
-              "
-          (click)="desativarLinkNaoListado(album)"
-        >
-          @if ( desativandoLinkNaoListadoId() === album.id ) { Desativando... }
-          @else { Desativar link }
-        </button>
-        }
-      </div>
-
-      @if (album.faixas.length === 0) {
-      <small class="aviso-envio-cliente">
-        Adicione pelo menos uma faixa antes de enviar o álbum.
-      </small>
-      }
+      </form>
     </section>
+    }
 
+    @if (abaEditor() === 'publicacao') {
     <section
-      class="painel-publicacao"
-      [class.publicado]="
-    album.publico_na_landing
-  "
+      class="aba-editor painel-publicacao"
+      [class.publicado]="album.publico_na_landing"
     >
       <header class="cabecalho-publicacao">
         <div>
           <p class="rotulo-menor">PÁGINA PÚBLICA</p>
-
-          <h3>Publicação do trabalho</h3>
+          <h2>Apresente este trabalho</h2>
+          <p>Defina o que aparece e quais ações serão permitidas.</p>
         </div>
-
         <span
           class="situacao-publicacao"
-          [class.publicada]="
-        album.publico_na_landing
-      "
+          [class.publicada]="album.publico_na_landing"
         >
-          @if (album.publico_na_landing) { Publicado } @else { Privado }
+          @if (album.publico_na_landing) { Publicado } @else { Rascunho }
         </span>
       </header>
 
@@ -545,15 +413,12 @@
         <div class="capa-publicacao">
           @if (capaAlbum(album); as capa) {
           <img [src]="capa" [alt]="'Capa de ' + album.nome" />
-          } @else {
-          <span> {{ iniciaisProjeto(album) }} </span>
-          }
+          } @else { <span>{{ iniciaisProjeto(album) }}</span> }
         </div>
-
         <div>
           <strong>{{ album.nome }}</strong>
           <span>{{ album.projeto.nome }}</span>
-          <small> {{ rotuloQuantidadeFaixas(album.faixas.length) }} </small>
+          <small>{{ rotuloQuantidadeFaixas(album.faixas.length) }}</small>
         </div>
       </div>
 
@@ -561,70 +426,43 @@
       <div class="controle-casa" [class.na-casa]="album.publico_na_casa">
         <div>
           <p class="rotulo-menor">CASA FLÊIVA</p>
-
           <strong>
             @if (album.publico_na_casa) { Este trabalho está na Casa } @else {
             Exibir este trabalho na Casa }
           </strong>
-
           <span>
-            {{ dadosAlbuns.totalTrabalhosNaCasa() }} de {{
-            dadosAlbuns.limiteTrabalhosCasa() }} trabalhos selecionados.
+            {{ dadosAlbuns.totalTrabalhosNaCasa() }} de
+            {{ dadosAlbuns.limiteTrabalhosCasa() }} trabalhos selecionados.
           </span>
         </div>
-
         <button
           type="button"
           [class.remover-da-casa]="album.publico_na_casa"
           [disabled]="
-          alterandoCasaAlbumId() !== null ||
-          publicandoAlbumId() !== null ||
-          despublicandoAlbumId() !== null ||
-          (
-            !album.publico_na_casa &&
-            !dadosAlbuns.podeAdicionarTrabalhoNaCasa()
-          )
-        "
+            alterandoCasaAlbumId() !== null ||
+            publicandoAlbumId() !== null ||
+            despublicandoAlbumId() !== null ||
+            (!album.publico_na_casa &&
+              !dadosAlbuns.podeAdicionarTrabalhoNaCasa())
+          "
           (click)="alternarExibicaoNaCasa(album)"
         >
           @if (alterandoCasaAlbumId() === album.id) { Salvando... } @else if
           (album.publico_na_casa) { Remover da Casa } @else { Exibir na Casa }
         </button>
-
-        @if ( !album.publico_na_casa &&
-        !dadosAlbuns.podeAdicionarTrabalhoNaCasa() ) {
-        <small> Remova outro trabalho da Casa para selecionar este. </small>
+        @if (
+          !album.publico_na_casa &&
+          !dadosAlbuns.podeAdicionarTrabalhoNaCasa()
+        ) {
+        <small>Remova outro trabalho da Casa para selecionar este.</small>
         }
       </div>
-      } @if (album.faixas.length === 0) {
+      }
+
+      @if (album.faixas.length === 0) {
       <div class="aviso-publicacao">
-        <strong> O álbum ainda não pode ser publicado. </strong>
-
-        <p>Adicione pelo menos uma faixa para revisar o conteúdo público.</p>
-      </div>
-      } @else {
-      <div class="revisao-publicacao">
-        <header>
-          <strong>Conteúdo que será exposto</strong>
-
-          <span> Revise as faixas e versões escolhidas. </span>
-        </header>
-
-        <ol>
-          @for ( item of album.faixas; track item.id ) {
-          <li>
-            <span>{{ item.ordem }}</span>
-
-            <div>
-              <strong> {{ item.versao.faixa.titulo }} </strong>
-
-              <small>
-                Versão {{ item.versao.versao }} · {{ item.versao.nome_arquivo }}
-              </small>
-            </div>
-          </li>
-          }
-        </ol>
+        <strong>O trabalho ainda não pode ser publicado.</strong>
+        <p>Adicione pelo menos uma faixa na área Conteúdo.</p>
       </div>
       }
 
@@ -636,59 +474,54 @@
         <div class="campos-publicacao">
           <label>
             <span>Tipo de trabalho</span>
-
             <input
               type="text"
               formControlName="tipo_publico"
               list="tipos-trabalho"
               placeholder="Ex.: Álbum, beat tape, sample pack"
               [disabled]="
-            album.faixas.length === 0 ||
-            publicandoAlbumId() !== null ||
-            despublicandoAlbumId() !== null
-          "
+                album.faixas.length === 0 ||
+                publicandoAlbumId() !== null ||
+                despublicandoAlbumId() !== null
+              "
             />
-
-            <small>
-              Opcional. Use o nome que faz sentido para este material.
-            </small>
-
+            <small>Use o nome que faz sentido para este material.</small>
             <datalist id="tipos-trabalho">
               <option value="Álbum"></option>
               <option value="EP"></option>
+              <option value="Single"></option>
               <option value="Mixtape"></option>
               <option value="Beat tape"></option>
               <option value="Catálogo de beats"></option>
               <option value="Sample pack"></option>
+              <option value="Loop pack"></option>
+              <option value="Stem pack"></option>
+              <option value="Acapella pack"></option>
               <option value="Demo"></option>
             </datalist>
           </label>
 
           <label>
             <span>Descrição pública</span>
-
             <textarea
               formControlName="descricao_publica"
               rows="4"
               placeholder="Apresente o trabalho para quem visitar a página"
               [disabled]="
-            album.faixas.length === 0 ||
-            publicandoAlbumId() !== null ||
-            despublicandoAlbumId() !== null
-          "
+                album.faixas.length === 0 ||
+                publicandoAlbumId() !== null ||
+                despublicandoAlbumId() !== null
+              "
             ></textarea>
-
-            <small>
-              As observações internas do álbum nunca aparecem no site.
-            </small>
+            <small>As observações internas nunca aparecem no site.</small>
           </label>
         </div>
 
         <div class="titulo-permissoes">
           <strong>Permissões dos arquivos</strong>
           <span>
-            A capa, os nomes e a ordem podem ser publicados sem liberar áudio ou
-            download.
+            A capa, os nomes e a ordem podem ser publicados sem liberar áudio
+            ou download.
           </span>
         </div>
 
@@ -698,49 +531,40 @@
               type="checkbox"
               formControlName="reproducao_publica"
               [disabled]="
-            album.faixas.length === 0 ||
-            publicandoAlbumId() !== null ||
-            despublicandoAlbumId() !== null
-          "
+                album.faixas.length === 0 ||
+                publicandoAlbumId() !== null ||
+                despublicandoAlbumId() !== null
+              "
             />
-
             <span>
               <strong>Permitir reprodução</strong>
-
-              <small>
-                Visitantes poderão ouvir os arquivos escolhidos para este álbum.
-              </small>
+              <small>Visitantes poderão ouvir os arquivos escolhidos.</small>
             </span>
           </label>
-
           <label>
             <input
               type="checkbox"
               formControlName="download_publico"
               [disabled]="
-            album.faixas.length === 0 ||
-            publicandoAlbumId() !== null ||
-            despublicandoAlbumId() !== null
-          "
+                album.faixas.length === 0 ||
+                publicandoAlbumId() !== null ||
+                despublicandoAlbumId() !== null
+              "
             />
-
             <span>
               <strong>Permitir download</strong>
-
-              <small>
-                Visitantes poderão baixar os arquivos originais selecionados.
-              </small>
+              <small>Visitantes poderão baixar os arquivos selecionados.</small>
             </span>
           </label>
         </div>
 
-        @if ( formularioPublicacao.controls .reproducao_publica.value ) {
+        @if (formularioPublicacao.controls.reproducao_publica.value) {
         <p class="alerta-exposicao">
           Áudio reproduzido publicamente pode ser capturado por ferramentas
-          externas. Para catálogos protegidos, use uma versão com tag ou uma
-          prévia.
+          externas. Para materiais protegidos, use uma prévia ou versão com tag.
         </p>
-        } @if ( formularioPublicacao.controls .download_publico.value ) {
+        }
+        @if (formularioPublicacao.controls.download_publico.value) {
         <p class="alerta-download">
           O download permitirá acesso ao arquivo selecionado em cada faixa.
         </p>
@@ -751,13 +575,12 @@
             type="checkbox"
             formControlName="confirmacao"
             [disabled]="
-          album.faixas.length === 0 ||
-          publicandoAlbumId() !== null ||
-          despublicandoAlbumId() !== null
-        "
+              album.faixas.length === 0 ||
+              publicandoAlbumId() !== null ||
+              despublicandoAlbumId() !== null
+            "
           />
-
-          <span> Revisei as faixas, versões e permissões acima. </span>
+          <span>Revisei o conteúdo e as permissões deste trabalho.</span>
         </label>
 
         <footer class="acoes-publicacao">
@@ -766,154 +589,324 @@
             type="button"
             class="botao-despublicar"
             [disabled]="
-            publicandoAlbumId() !== null ||
-            despublicandoAlbumId() !== null
-          "
+              publicandoAlbumId() !== null || despublicandoAlbumId() !== null
+            "
             (click)="despublicarAlbum(album)"
           >
-            @if ( despublicandoAlbumId() === album.id ) { Despublicando... }
+            @if (despublicandoAlbumId() === album.id) { Despublicando... }
             @else { Despublicar }
           </button>
           }
-
           <button
             type="submit"
             class="botao-publicar"
             [disabled]="
-          album.faixas.length === 0 ||
-          formularioPublicacao.invalid ||
-          publicandoAlbumId() !== null ||
-          despublicandoAlbumId() !== null
-        "
+              album.faixas.length === 0 ||
+              formularioPublicacao.invalid ||
+              publicandoAlbumId() !== null ||
+              despublicandoAlbumId() !== null
+            "
           >
-            @if ( publicandoAlbumId() === album.id ) { Publicando... } @else if
-            ( album.publico_na_landing ) { Atualizar publicação } @else {
-            Publicar no site }
+            @if (publicandoAlbumId() === album.id) { Publicando... } @else if
+            (album.publico_na_landing) { Atualizar publicação } @else { Publicar
+            no site }
           </button>
         </footer>
       </form>
     </section>
-
-    @if (album.observacoes) {
-    <p class="observacoes-album">{{ album.observacoes }}</p>
-    } @if (album.faixas.length === 0) {
-    <div class="sequencia-vazia">
-      <span aria-hidden="true">♪</span>
-      <p>Este álbum ainda não tem faixas.</p>
-    </div>
-    } @else {
-    <div class="cabecalho-faixas" aria-hidden="true">
-      <span>#</span>
-      <span>Faixa</span>
-      <span>Versão usada</span>
-      <span>Ações</span>
-    </div>
-
-    <ol class="lista-faixas">
-      @for ( item of album.faixas; track item.id; let primeiro = $first; let
-      ultimo = $last ) {
-      <li>
-        <span class="numero-faixa"> {{ item.ordem }} </span>
-
-        <div class="identificacao-faixa">
-          <strong>{{ item.versao.faixa.titulo }}</strong>
-          <span>{{ item.versao.nome_arquivo }}</span>
-        </div>
-
-        <label class="seletor-versao">
-          <span class="rotulo-acessivel">Versão usada</span>
-
-          <select
-            [disabled]="alterandoVersaoId() === item.id"
-            (change)="trocarVersao(item, $event)"
-          >
-            @for ( versao of dadosAlbuns.versoesDaFaixa( item.versao.faixa_id );
-            track versao.id ) {
-            <option
-              [value]="versao.id"
-              [selected]="versao.id === item.versao_id"
-            >
-              {{ versao.versao }}
-              @if (
-                versao.id === item.versao.faixa.versao_principal_id
-              ) {
-              · Principal
-              }
-            </option>
-            }
-          </select>
-        </label>
-
-        <div class="acoes-faixa">
-          <button
-            type="button"
-            aria-label="Mover faixa para cima"
-            [disabled]="
-                    primeiro || ordenandoAlbumId() === album.id
-                  "
-            (click)="moverFaixa(album, item.id, -1)"
-          >
-            ↑
-          </button>
-
-          <button
-            type="button"
-            aria-label="Mover faixa para baixo"
-            [disabled]="
-                    ultimo || ordenandoAlbumId() === album.id
-                  "
-            (click)="moverFaixa(album, item.id, 1)"
-          >
-            ↓
-          </button>
-
-          <button
-            type="button"
-            class="remover-faixa"
-            [disabled]="removendoFaixaId() === item.id"
-            (click)="removerFaixa(item)"
-          >
-            @if (removendoFaixaId() === item.id) { ... } @else { Remover }
-          </button>
-        </div>
-      </li>
-      }
-    </ol>
     }
 
-    <form
-      class="adicionar-faixa"
-      [formGroup]="formularioFaixa"
-      (ngSubmit)="adicionarFaixa(album)"
-    >
-      <div>
-        <label>
-          <span>Adicionar faixa</span>
+    @if (abaEditor() === 'compartilhar') {
+    <section class="aba-editor area-compartilhamento">
+      <header class="cabecalho-secao-editor">
+        <div>
+          <p class="rotulo-menor">DISTRIBUIÇÃO</p>
+          <h2>Compartilhe o trabalho</h2>
+          <p>Escolha entre um envio reservado e a página pública.</p>
+        </div>
+      </header>
 
-          <select formControlName="faixa_id">
-            <option value="">Selecione no acervo</option>
+      <div class="grade-compartilhamento">
+        <section class="painel-cliente">
+          <div class="identificacao-envio-cliente">
+            <span class="icone-envio-cliente" aria-hidden="true">↗</span>
+            <div>
+              <p class="rotulo-menor">LINK PRIVADO</p>
+              <h3>Enviar para cliente</h3>
+              <p>Somente quem receber o endereço poderá acessar o trabalho.</p>
+            </div>
+          </div>
+          <span
+            class="situacao-link-cliente"
+            [class.link-ativo]="album.token_compartilhamento"
+          >
+            @if (album.token_compartilhamento) { Link ativo } @else { Não gerado }
+          </span>
 
-            @for ( item of faixasDisponiveis(album); track item.faixa.id ) {
-            <option [value]="item.faixa.id">{{ item.faixa.titulo }}</option>
+          <div class="acoes-cliente">
+            <button
+              type="button"
+              class="botao-enviar-cliente"
+              [disabled]="
+                album.faixas.length === 0 ||
+                copiandoLinkNaoListadoId() !== null ||
+                renovandoLinkNaoListadoId() !== null ||
+                desativandoLinkNaoListadoId() !== null
+              "
+              (click)="enviarParaCliente(album)"
+            >
+              @if (copiandoLinkNaoListadoId() === album.id) { Preparando... }
+              @else { Enviar pelo WhatsApp }
+            </button>
+            <button
+              type="button"
+              class="botao-link-cliente"
+              [disabled]="
+                album.faixas.length === 0 ||
+                copiandoLinkNaoListadoId() !== null ||
+                renovandoLinkNaoListadoId() !== null ||
+                desativandoLinkNaoListadoId() !== null
+              "
+              (click)="copiarLinkNaoListado(album)"
+            >
+              <span aria-hidden="true">⧉</span>
+              Copiar link privado
+            </button>
+
+            @if (album.token_compartilhamento) {
+            <button
+              type="button"
+              class="botao-renovar-link"
+              [disabled]="
+                copiandoLinkNaoListadoId() !== null ||
+                renovandoLinkNaoListadoId() !== null ||
+                desativandoLinkNaoListadoId() !== null
+              "
+              (click)="renovarLinkNaoListado(album)"
+            >
+              @if (renovandoLinkNaoListadoId() === album.id) { Renovando... }
+              @else { Renovar link }
+            </button>
+            <button
+              type="button"
+              class="botao-link-cliente"
+              [disabled]="
+                copiandoLinkNaoListadoId() !== null ||
+                renovandoLinkNaoListadoId() !== null ||
+                desativandoLinkNaoListadoId() !== null
+              "
+              (click)="desativarLinkNaoListado(album)"
+            >
+              @if (desativandoLinkNaoListadoId() === album.id) { Desativando...
+              } @else { Desativar link }
+            </button>
             }
-          </select>
-        </label>
+          </div>
 
-        <small>
-          O Fleiva sugere a versão principal. Se ela não estiver definida, usa
-          a mais recente. Você pode trocar depois.
-        </small>
+          @if (album.faixas.length === 0) {
+          <small class="aviso-envio-cliente">
+            Adicione pelo menos uma faixa antes de compartilhar.
+          </small>
+          }
+        </section>
+
+        <section class="painel-compartilhamento-publico">
+          <div class="identificacao-envio-cliente">
+            <span class="icone-envio-publico" aria-hidden="true">◎</span>
+            <div>
+              <p class="rotulo-menor">PÁGINA PÚBLICA</p>
+              <h3>Compartilhar publicação</h3>
+              <p>Use o endereço público do trabalho no Fleiva e na Casa.</p>
+            </div>
+          </div>
+          <span
+            class="situacao-publicacao"
+            [class.publicada]="album.publico_na_landing"
+          >
+            @if (album.publico_na_landing) { Publicado } @else { Indisponível }
+          </span>
+
+          @if (album.publico_na_landing) {
+          <div class="acoes-compartilhamento-publico">
+            <button
+              type="button"
+              class="botao-copiar-link"
+              (click)="abrirPaginaPublica(album)"
+            >
+              <span aria-hidden="true">↗</span>
+              Abrir página
+            </button>
+            <button
+              type="button"
+              class="botao-copiar-link"
+              [disabled]="copiandoLinkId() !== null"
+              (click)="copiarLink(album)"
+            >
+              <span aria-hidden="true">⧉</span>
+              @if (copiandoLinkId() === album.id) { Copiando... } @else { Copiar
+              link }
+            </button>
+            <button
+              type="button"
+              class="botao-whatsapp"
+              (click)="enviarWhatsAppPublico(album)"
+            >WhatsApp</button>
+          </div>
+          } @else {
+          <div class="publicacao-indisponivel">
+            <p>Publique o trabalho antes de compartilhar o endereço público.</p>
+            <button
+              type="button"
+              class="botao-secundario"
+              (click)="selecionarAba('publicacao')"
+            >
+              Configurar página pública
+            </button>
+          </div>
+          }
+        </section>
       </div>
-
-      @if (faixasDisponiveis(album).length > 0) {
-      <button type="submit" class="botao-claro" [disabled]="adicionandoFaixa()">
-        @if (adicionandoFaixa()) { Adicionando... } @else { Adicionar à
-        sequência }
-      </button>
-      } @else {
-      <a routerLink="/faixas">Enviar primeira versão</a>
-      }
-    </form>
+    </section>
+    }
   </section>
+  } @else {
+  @if (!dadosProjetos.carregando() && dadosProjetos.projetos().length === 0) {
+  <section class="aviso-projetos">
+    <div>
+      <strong>Comece por um projeto artístico</strong>
+      <p>Todo álbum pertence a um artista, banda ou projeto.</p>
+    </div>
+    <a routerLink="/projetos">Ir para projetos</a>
+  </section>
+  }
+
+  @if (dadosAlbuns.carregando()) {
+  <section class="estado">
+    <span class="carregador" aria-hidden="true"></span>
+    <p>Organizando o catálogo...</p>
+  </section>
+  } @else if (dadosAlbuns.erro()) {
+  <section class="estado estado-erro">
+    <h2>Não foi possível abrir os álbuns</h2>
+    <p>{{ dadosAlbuns.erro() }}</p>
+    <button type="button" class="botao-secundario" (click)="carregarDados()">
+      Tentar novamente
+    </button>
+  </section>
+  } @else if (dadosAlbuns.albuns().length === 0) {
+  <section class="vazio-catalogo">
+    <div class="capa-vazia" aria-hidden="true">
+      <span>01</span><i></i><strong>FLEIVA</strong>
+    </div>
+    <div>
+      <p class="rotulo-menor">PRIMEIRA SEQUÊNCIA</p>
+      <h2>Transforme faixas soltas em um trabalho.</h2>
+      <p>
+        Use os arquivos que já estão no Fleiva para testar a ordem de um álbum,
+        EP, demo ou mixtape.
+      </p>
+      <button
+        type="button"
+        class="botao-principal"
+        [disabled]="dadosProjetos.projetos().length === 0"
+        (click)="abrirNovoAlbum(projetoFiltradoId() ?? '')"
+      >Criar primeiro álbum</button>
+    </div>
+  </section>
+  } @else {
+  <section class="catalogo">
+    <header class="cabecalho-catalogo">
+      <div>
+        <p class="rotulo-menor">DISCOGRAFIA</p>
+        <h2>
+          @if (projetoFiltrado(); as projeto) { Trabalhos de {{ projeto.nome }}
+          } @else { Trabalhos em construção }
+        </h2>
+        @if (projetoFiltrado(); as projeto) {
+        <span class="acoes-filtro">
+          <a [routerLink]="['/projetos', projeto.id]">Voltar ao projeto</a>
+          <a routerLink="/albuns">Ver todos os trabalhos</a>
+        </span>
+        }
+      </div>
+      <span>{{ albunsVisiveis().length }}</span>
+    </header>
+
+    @if (albunsVisiveis().length === 0) {
+    <section class="filtro-vazio">
+      <strong>Nenhum trabalho montado para este projeto.</strong>
+      <p>Crie um álbum, EP, mixtape ou coletânea para este projeto.</p>
+      <button
+        type="button"
+        class="botao-principal"
+        (click)="abrirNovoAlbum(projetoFiltradoId() ?? '')"
+      >Montar primeiro trabalho</button>
+    </section>
+    } @else {
+    <div class="grade-albuns">
+      @for (album of albunsVisiveis(); track album.id) {
+      <article class="cartao-album">
+        <div class="capa-album">
+          @if (capaAlbum(album); as capa) {
+          <img [src]="capa" [alt]="'Capa de ' + album.nome" />
+          } @else {
+          <strong>{{ iniciaisProjeto(album) }}</strong>
+          <small>{{ album.projeto.nome }}</small>
+          }
+          <span
+            class="estado-cartao"
+            [class.estado-publicado]="album.publico_na_landing"
+          >
+            @if (album.publico_na_landing) { Público } @else { Rascunho }
+          </span>
+        </div>
+
+        <div class="corpo-cartao">
+          <div class="dados-album">
+            <strong>{{ album.nome }}</strong>
+            <small>{{ album.projeto.nome }}</small>
+            <span class="metadados-cartao">
+              <em>{{ rotuloQuantidadeFaixas(album.faixas.length) }}</em>
+              @if (album.tipo_publico) { <em>{{ album.tipo_publico }}</em> }
+              @if (album.publico_na_casa) {
+              <em class="marcador-casa">Na Casa</em>
+              }
+            </span>
+          </div>
+          <button
+            type="button"
+            class="botao-abrir-album"
+            (click)="abrirAlbum(album.id)"
+          >
+            <span>Abrir edição</span><span aria-hidden="true">→</span>
+          </button>
+        </div>
+
+        <div class="acoes-cartao">
+          <button
+            type="button"
+            class="acao-editar"
+            (click)="editarAlbum(album)"
+          >
+            <span aria-hidden="true">✎</span>
+            Editar informações
+          </button>
+          <button
+            type="button"
+            class="acao-perigo"
+            aria-label="Excluir álbum"
+            [disabled]="excluindoAlbumId() === album.id"
+            (click)="excluirAlbum(album)"
+          >
+            @if (excluindoAlbumId() === album.id) { Excluindo... } @else {
+            <span aria-hidden="true">×</span> Excluir }
+          </button>
+        </div>
+      </article>
+      }
+    </div>
+    }
+  </section>
+  }
   }
 </main>

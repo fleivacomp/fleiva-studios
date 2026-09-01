@@ -18,9 +18,11 @@ import {
   type AlbumCompleto,
   type AlbumFaixaCompleta,
   type CadastroAlbum,
-  type FaixaDisponivelAlbum,
   type ConfiguracaoPublicacaoAlbum,
+  type VersaoAlbum,
 } from "@fleiva-studios/shared-data-access";
+
+type AbaEditorAlbum = "conteudo" | "publicacao" | "compartilhar";
 
 @Component({
   selector: "app-albuns",
@@ -60,6 +62,7 @@ export class Albuns implements OnInit {
   readonly despublicandoAlbumId = signal<string | null>(null);
   readonly alterandoCasaAlbumId = signal<string | null>(null);
   readonly projetoFiltradoId = signal<string | null>(null);
+  readonly abaEditor = signal<AbaEditorAlbum>("conteudo");
 
   readonly albumAberto = computed(() => {
     const albumId = this.albumAbertoId();
@@ -83,7 +86,11 @@ export class Albuns implements OnInit {
     const projetoId = this.projetoFiltradoId();
     const albuns = this.dadosAlbuns
       .albuns()
-      .filter((album) => album.tipo_publico !== TIPO_PUBLICO_ENVIO);
+      .filter(
+  (album) =>
+    album.tipo_publico !== TIPO_PUBLICO_ENVIO ||
+    album.publico_na_landing,
+);
 
     return projetoId
       ? albuns.filter((album) => album.projeto_id === projetoId)
@@ -101,7 +108,7 @@ export class Albuns implements OnInit {
   });
 
   readonly formularioFaixa = this.construtorFormulario.group({
-    faixa_id: this.construtorFormulario.nonNullable.control("", [
+    versao_id: this.construtorFormulario.nonNullable.control("", [
       Validators.required,
     ]),
   });
@@ -271,8 +278,9 @@ export class Albuns implements OnInit {
 
   abrirAlbum(albumId: string): void {
     this.albumAbertoId.set(albumId);
+    this.abaEditor.set("conteudo");
     this.formularioFaixa.reset({
-      faixa_id: "",
+      versao_id: "",
     });
     this.limparRetorno();
 
@@ -283,8 +291,9 @@ export class Albuns implements OnInit {
 
   fecharAlbum(): void {
     this.albumAbertoId.set(null);
+    this.abaEditor.set("conteudo");
     this.formularioFaixa.reset({
-      faixa_id: "",
+      versao_id: "",
     });
   }
 
@@ -638,16 +647,25 @@ export class Albuns implements OnInit {
 
     try {
       const valor = this.formularioFaixa.getRawValue();
+      const versao = this.dadosAlbuns
+        .versoesDisponiveis()
+        .find((item) => item.id === valor.versao_id);
 
-      await this.dadosAlbuns.adicionarFaixa(album.id, valor.faixa_id);
+      if (!versao || versao.faixa.projeto_id !== album.projeto_id) {
+        throw new Error("Selecione uma versão válida deste projeto.");
+      }
+
+      await this.dadosAlbuns.adicionarFaixa(
+        album.id,
+        versao.faixa_id,
+        versao.id,
+      );
 
       this.formularioFaixa.reset({
-        faixa_id: "",
+        versao_id: "",
       });
 
-      this.mensagemOperacao.set(
-        "Faixa adicionada com a versão principal ou, na ausência dela, com a mais recente.",
-      );
+      this.mensagemOperacao.set("Versão adicionada ao trabalho.");
     } catch (erro) {
       this.erroOperacao.set(this.obterMensagemErro(erro));
     } finally {
@@ -721,8 +739,19 @@ export class Albuns implements OnInit {
     }
   }
 
-  faixasDisponiveis(album: AlbumCompleto): FaixaDisponivelAlbum[] {
-    return this.dadosAlbuns.faixasDisponiveisDoProjeto(album.projeto_id);
+  versoesDisponiveis(album: AlbumCompleto): VersaoAlbum[] {
+    const versoesJaAdicionadas = new Set(
+      album.faixas.map((item) => item.versao_id),
+    );
+
+    return this.dadosAlbuns
+      .faixasDisponiveisDoProjeto(album.projeto_id)
+      .flatMap((item) => item.versoes)
+      .filter((versao) => !versoesJaAdicionadas.has(versao.id));
+  }
+
+  selecionarAba(aba: AbaEditorAlbum): void {
+    this.abaEditor.set(aba);
   }
 
   capaAlbum(album: AlbumCompleto): string | null {
