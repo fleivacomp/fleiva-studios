@@ -1030,7 +1030,7 @@ export class Faixas implements OnInit {
       const link = await this.obterLinkCompartilhamento(versao);
 
       const linhas = [
-        `Olá! Segue a versão ${versao.versao} da faixa "${faixa.titulo}".`,
+        `Salve! Segue a versão ${versao.versao} da faixa "${faixa.titulo}".`,
         `Projeto: ${faixa.projeto.nome}.`,
         versao.observacoes ? `Observações: ${versao.observacoes}` : null,
         `Acesse ou baixe o arquivo: ${link}`,
