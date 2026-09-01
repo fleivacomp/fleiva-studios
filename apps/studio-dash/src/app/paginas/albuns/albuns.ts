@@ -645,7 +645,9 @@ export class Albuns implements OnInit {
         faixa_id: "",
       });
 
-      this.mensagemOperacao.set("Faixa adicionada com a versão mais recente.");
+      this.mensagemOperacao.set(
+        "Faixa adicionada com a versão principal ou, na ausência dela, com a mais recente.",
+      );
     } catch (erro) {
       this.erroOperacao.set(this.obterMensagemErro(erro));
     } finally {

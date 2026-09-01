@@ -5,6 +5,9 @@ import type { Database } from './tipos-banco';
 type FaixaBanco =
   Database['public']['Tables']['faixas']['Row'];
 
+type AtualizacaoFaixaBanco =
+  Database['public']['Tables']['faixas']['Update'];
+
 type ProjetoBanco =
   Database['public']['Tables']['projetos_artisticos']['Row'];
 
@@ -17,6 +20,7 @@ export type ProjetoFaixa = Pick<
 >;
 
 export type FaixaCompleta = FaixaBanco & {
+  versao_principal_id: string | null;
   projeto: ProjetoFaixa;
 };
 
@@ -69,6 +73,7 @@ export class DadosFaixas {
             link_externo_audio,
             observacoes,
             status_producao,
+            versao_principal_id,
             criado_em,
             atualizado_em,
             projeto:projetos_artisticos (
@@ -188,6 +193,30 @@ export class DadosFaixas {
     this.listaInterna.update((faixas) =>
       faixas.filter((faixa) => faixa.id !== faixaId),
     );
+  }
+
+  async definirVersaoPrincipal(
+    faixaId: string,
+    versaoId: string,
+  ): Promise<void> {
+    const estudioId = await this.obterEstudioId();
+    const atualizacao: AtualizacaoFaixaBanco & {
+      versao_principal_id: string;
+    } = {
+      versao_principal_id: versaoId,
+    };
+
+    const { error } = await this.clienteSupabase.cliente
+      .from('faixas')
+      .update(atualizacao)
+      .eq('id', faixaId)
+      .eq('estudio_id', estudioId);
+
+    if (error) {
+      throw error;
+    }
+
+    await this.listar();
   }
 
   capaUrl(projeto: Pick<ProjetoBanco, 'capa_caminho'>): string | null {

@@ -82,6 +82,8 @@ export class Faixas implements OnInit {
   readonly urlReproducao = signal<string | null>(null);
   readonly carregandoReproducaoId = signal<string | null>(null);
   readonly erroReproducao = signal<string | null>(null);
+  readonly definindoVersaoPrincipalId = signal<string | null>(null);
+  readonly erroVersaoPrincipal = signal<string | null>(null);
   readonly audioTocando = signal(false);
   readonly tempoAtualAudio = signal(0);
   readonly duracaoAudio = signal(0);
@@ -140,9 +142,20 @@ export class Faixas implements OnInit {
     return faixa ? this.dadosVersoes.versoesDaFaixa(faixa.id) : [];
   });
 
-  readonly versaoAtualSelecionada = computed(
-    () => this.versoesSelecionadas()[0] ?? null,
-  );
+  readonly versaoPrincipalSelecionada = computed(() => {
+    const faixa = this.faixaSelecionada();
+    const versoes = this.versoesSelecionadas();
+
+    if (!faixa) {
+      return null;
+    }
+
+    return (
+      versoes.find((versao) => versao.id === faixa.versao_principal_id) ??
+      versoes[0] ??
+      null
+    );
+  });
 
   readonly faixaReproduzindo = computed(() => {
     const versao = this.versaoReproduzindo();
@@ -574,6 +587,7 @@ export class Faixas implements OnInit {
     this.faixaSelecionadaId.set(faixaId);
     this.erroUpload.set(null);
     this.erroFormulario.set(null);
+    this.erroVersaoPrincipal.set(null);
     this.limparRetornoCompartilhamento();
   }
 
@@ -786,6 +800,39 @@ export class Faixas implements OnInit {
     } finally {
       this.baixandoVersaoId.set(null);
     }
+  }
+
+  async definirVersaoPrincipal(
+    faixa: FaixaCompleta,
+    versao: VersaoFaixa,
+  ): Promise<void> {
+    if (
+      this.definindoVersaoPrincipalId() !== null ||
+      faixa.versao_principal_id === versao.id
+    ) {
+      return;
+    }
+
+    this.definindoVersaoPrincipalId.set(versao.id);
+    this.erroVersaoPrincipal.set(null);
+
+    try {
+      await this.dadosFaixas.definirVersaoPrincipal(faixa.id, versao.id);
+    } catch (erro) {
+      this.erroVersaoPrincipal.set(this.obterMensagemErro(erro));
+    } finally {
+      this.definindoVersaoPrincipalId.set(null);
+    }
+  }
+
+  versaoPrincipalDaFaixa(faixa: FaixaCompleta): VersaoFaixa | null {
+    const versoes = this.dadosVersoes.versoesDaFaixa(faixa.id);
+
+    return (
+      versoes.find((versao) => versao.id === faixa.versao_principal_id) ??
+      versoes[0] ??
+      null
+    );
   }
 
   async reproduzirVersao(versao: VersaoFaixa): Promise<void> {

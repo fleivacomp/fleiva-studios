@@ -68,7 +68,9 @@ export type ProjetoAlbum = Pick<
 export type FaixaAlbum = Pick<
   FaixaBanco,
   'id' | 'projeto_id' | 'titulo'
->;
+> & {
+  versao_principal_id: string | null;
+};
 
 export type VersaoAlbum = Pick<
   VersaoFaixaBanco,
@@ -203,7 +205,8 @@ export class DadosAlbuns {
               faixa:faixas!versoes_faixa_faixa_estudio_fkey (
                 id,
                 projeto_id,
-                titulo
+                titulo,
+                versao_principal_id
               )
             )
           )
@@ -227,7 +230,8 @@ export class DadosAlbuns {
           faixa:faixas!versoes_faixa_faixa_estudio_fkey (
             id,
             projeto_id,
-            titulo
+            titulo,
+            versao_principal_id
           )
         `)
         .eq('estudio_id', estudioId)
@@ -876,7 +880,7 @@ async definirExibicaoNaCasa(
     const album = this.obterAlbum(albumId);
     const versao = versaoId
       ? this.obterVersao(versaoId)
-      : this.versaoMaisRecenteDaFaixa(faixaId);
+      : this.versaoPrincipalOuMaisRecenteDaFaixa(faixaId);
 
     if (!versao) {
       throw new Error(
@@ -1064,10 +1068,15 @@ async definirExibicaoNaCasa(
     );
   }
 
-  versaoMaisRecenteDaFaixa(
+  versaoPrincipalOuMaisRecenteDaFaixa(
     faixaId: string,
   ): VersaoAlbum | undefined {
-    return this.versoesDaFaixa(faixaId)[0];
+    const versoes = this.versoesDaFaixa(faixaId);
+    const versaoPrincipalId = versoes[0]?.faixa.versao_principal_id;
+
+    return (
+      versoes.find((versao) => versao.id === versaoPrincipalId) ?? versoes[0]
+    );
   }
 
   private obterAlbum(albumId: string): AlbumCompleto {

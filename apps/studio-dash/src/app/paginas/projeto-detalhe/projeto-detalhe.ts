@@ -180,8 +180,14 @@ export class ProjetoDetalhe implements OnInit {
     return this.dadosVersoes.versoesDaFaixa(faixaId);
   }
 
-  ultimaVersao(faixaId: string): VersaoFaixa | null {
-    return this.versoesDaFaixa(faixaId)[0] ?? null;
+  versaoPrincipal(faixa: FaixaCompleta): VersaoFaixa | null {
+    const versoes = this.versoesDaFaixa(faixa.id);
+
+    return (
+      versoes.find((versao) => versao.id === faixa.versao_principal_id) ??
+      versoes[0] ??
+      null
+    );
   }
 
   async reproduzirVersao(versao: VersaoFaixa): Promise<void> {

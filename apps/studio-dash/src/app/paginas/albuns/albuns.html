@@ -834,6 +834,11 @@
               [selected]="versao.id === item.versao_id"
             >
               {{ versao.versao }}
+              @if (
+                versao.id === item.versao.faixa.versao_principal_id
+              ) {
+              · Principal
+              }
             </option>
             }
           </select>
@@ -895,7 +900,8 @@
         </label>
 
         <small>
-          O Fleiva usa a versão mais recente. Você pode trocá-la depois.
+          O Fleiva sugere a versão principal. Se ela não estiver definida, usa
+          a mais recente. Você pode trocar depois.
         </small>
       </div>
 

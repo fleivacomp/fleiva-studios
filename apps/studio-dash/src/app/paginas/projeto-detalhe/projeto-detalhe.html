@@ -124,7 +124,7 @@
     } @else {
     <div class="tracklist" role="list">
       @for (faixa of faixas(); track faixa.id; let indice = $index) {
-      @let versaoAtual = ultimaVersao(faixa.id);
+      @let versaoAtual = versaoPrincipal(faixa);
       <article
         class="linha-faixa"
         role="listitem"
@@ -171,7 +171,13 @@
 
         <div class="versao-faixa">
           @if (versaoAtual) {
-          <span>VERSÃO ATUAL</span>
+          <span>
+            @if (faixa.versao_principal_id === versaoAtual.id) {
+            VERSÃO PRINCIPAL
+            } @else {
+            MAIS RECENTE · PROVISÓRIA
+            }
+          </span>
           <strong>{{ versaoAtual.versao }}</strong>
           <small>{{ versaoAtual.nome_arquivo }}</small>
           } @else {

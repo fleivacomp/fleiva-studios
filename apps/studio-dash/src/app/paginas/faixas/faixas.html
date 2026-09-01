@@ -129,7 +129,8 @@
       } @else {
       <div class="lista-faixas" role="listbox" aria-label="Faixas">
         @for ( faixa of faixasVisiveis(); track faixa.id; let indice = $index )
-        { @let versoes = versoesDaFaixa(faixa.id);
+        { @let versoes = versoesDaFaixa(faixa.id); @let versaoPrincipal =
+        versaoPrincipalDaFaixa(faixa);
 
         <button
           type="button"
@@ -149,7 +150,7 @@
             <img [src]="capaUrl" [alt]="'Capa de ' + faixa.projeto.nome" />
             } @else {
             <span>{{ iniciaisFaixa(faixa) }}</span>
-            } @if (versoes[0] && podeReproduzir(versoes[0])) {
+            } @if (versaoPrincipal && podeReproduzir(versaoPrincipal)) {
             <span class="sinal-audio" aria-hidden="true">▶</span>
             }
           </span>
@@ -158,8 +159,8 @@
             <strong>{{ faixa.titulo }}</strong>
             <span>{{ faixa.projeto.nome }}</span>
 
-            @if (versoes[0]; as versaoAtual) {
-            <small>{{ versaoAtual.versao }}</small>
+            @if (versaoPrincipal) {
+            <small>{{ versaoPrincipal.versao }}</small>
             } @else {
             <small>Sem arquivo</small>
             }
@@ -176,7 +177,7 @@
 
     <section class="painel-faixa">
       @if (faixaSelecionada(); as faixa) { @let versoes = versoesSelecionadas();
-      @let versaoAtual = versaoAtualSelecionada();
+      @let versaoPrincipal = versaoPrincipalSelecionada();
 
       <header class="hero-faixa">
         <div
@@ -214,15 +215,15 @@
       </header>
 
       <div class="barra-acoes-faixa">
-        @if (versaoAtual && podeReproduzir(versaoAtual)) {
+        @if (versaoPrincipal && podeReproduzir(versaoPrincipal)) {
         <button
           type="button"
           class="botao-reproduzir"
           [disabled]="carregandoReproducaoId() !== null"
-          (click)="reproduzirVersao(versaoAtual)"
+          (click)="reproduzirVersao(versaoPrincipal)"
           [attr.aria-label]="'Reproduzir ' + faixa.titulo"
         >
-          @if (carregandoReproducaoId() === versaoAtual.id) {
+          @if (carregandoReproducaoId() === versaoPrincipal.id) {
           <span class="carregador-claro"></span>
           } @else {
           <span aria-hidden="true">▶</span>
@@ -353,58 +354,79 @@
           <header>
             <div>
               <p>Em circulação</p>
-              <h3>Versão atual</h3>
+              <h3>Versão principal</h3>
             </div>
 
-            @if (versaoAtual) {
-            <span class="selo-atual">Atual</span>
+            @if (versaoPrincipal) {
+            <span class="selo-atual">
+              @if (faixa.versao_principal_id === versaoPrincipal.id) {
+              Principal
+              } @else {
+              Mais recente · escolha provisória
+              }
+            </span>
             }
           </header>
 
-          @if (versaoAtual) {
+          @if (versaoPrincipal) {
           <article class="arquivo-destaque">
             <button
               type="button"
               class="mini-reproduzir"
               [disabled]="
-                    !podeReproduzir(versaoAtual) ||
+                    !podeReproduzir(versaoPrincipal) ||
                     carregandoReproducaoId() !== null
                   "
-              (click)="reproduzirVersao(versaoAtual)"
-              [attr.aria-label]="'Reproduzir ' + versaoAtual.versao"
+              (click)="reproduzirVersao(versaoPrincipal)"
+              [attr.aria-label]="'Reproduzir ' + versaoPrincipal.versao"
             >
-              @if (carregandoReproducaoId() === versaoAtual.id) {
+              @if (carregandoReproducaoId() === versaoPrincipal.id) {
               <span class="carregador"></span>
               } @else { ▶ }
             </button>
 
             <div class="nome-arquivo">
-              <strong>{{ versaoAtual.versao }}</strong>
-              <span>{{ versaoAtual.nome_arquivo }}</span>
+              <strong>{{ versaoPrincipal.versao }}</strong>
+              <span>{{ versaoPrincipal.nome_arquivo }}</span>
             </div>
 
             <div class="dados-arquivo">
-              <span>{{ formatarBytes(versaoAtual.tamanho_bytes) }}</span>
+              <span>{{ formatarBytes(versaoPrincipal.tamanho_bytes) }}</span>
               <time
                 [attr.datetime]="
-                      versaoAtual.confirmado_em ?? versaoAtual.criado_em
+                      versaoPrincipal.confirmado_em ?? versaoPrincipal.criado_em
                     "
               >
-                {{ formatarData( versaoAtual.confirmado_em ??
-                versaoAtual.criado_em ) }}
+                {{ formatarData( versaoPrincipal.confirmado_em ??
+                versaoPrincipal.criado_em ) }}
               </time>
             </div>
 
             <div class="acoes-arquivo">
+              @if (faixa.versao_principal_id !== versaoPrincipal.id) {
+              <button
+                type="button"
+                class="botao-destaque"
+                [disabled]="definindoVersaoPrincipalId() !== null"
+                (click)="definirVersaoPrincipal(faixa, versaoPrincipal)"
+              >
+                @if (definindoVersaoPrincipalId() === versaoPrincipal.id) {
+                Definindo...
+                } @else {
+                Definir como principal
+                }
+              </button>
+              }
+
               <button
                 type="button"
                 [disabled]="
                       baixandoVersaoId() !== null ||
                       processandoLinkVersaoId() !== null
                     "
-                (click)="baixarVersao(versaoAtual)"
+                (click)="baixarVersao(versaoPrincipal)"
               >
-                @if (baixandoVersaoId() === versaoAtual.id) { Preparando... }
+                @if (baixandoVersaoId() === versaoPrincipal.id) { Preparando... }
                 @else { Baixar }
               </button>
 
@@ -415,7 +437,7 @@
                       baixandoVersaoId() !== null ||
                       processandoLinkVersaoId() !== null
                     "
-                (click)="compartilharWhatsApp(faixa, versaoAtual)"
+                (click)="compartilharWhatsApp(faixa, versaoPrincipal)"
               >
                 WhatsApp
               </button>
@@ -426,17 +448,17 @@
                       baixandoVersaoId() !== null ||
                       processandoLinkVersaoId() !== null
                     "
-                (click)="copiarLink(versaoAtual)"
+                (click)="copiarLink(versaoPrincipal)"
               >
                 Copiar link
               </button>
 
-              @if (versaoAtual.token_compartilhamento) {
+              @if (versaoPrincipal.token_compartilhamento) {
               <button
                 type="button"
                 class="botao-perigo"
                 [disabled]="processandoLinkVersaoId() !== null"
-                (click)="revogarLink(versaoAtual)"
+                (click)="revogarLink(versaoPrincipal)"
               >
                 Revogar
               </button>
@@ -444,9 +466,14 @@
             </div>
           </article>
 
-          @if (versaoAtual.observacoes) {
-          <p class="observacoes-arquivo">{{ versaoAtual.observacoes }}</p>
-          } } @else {
+          @if (versaoPrincipal.observacoes) {
+          <p class="observacoes-arquivo">{{ versaoPrincipal.observacoes }}</p>
+          }
+
+          @if (erroVersaoPrincipal()) {
+          <p class="erro-formulario">{{ erroVersaoPrincipal() }}</p>
+          }
+          } @else {
           <div class="vazio-detalhe">
             <strong>Nenhum arquivo enviado.</strong>
             <p>Envie uma versão para iniciar o histórico da faixa.</p>
@@ -482,7 +509,7 @@
           <header>
             <div>
               <p>Arquivos</p>
-              <h3>Versões anteriores</h3>
+              <h3>Outras versões</h3>
             </div>
 
             <span>{{ versoes.length - 1 }}</span>
@@ -496,8 +523,8 @@
           </div>
 
           <div class="lista-versoes">
-            @for ( versao of versoes; track versao.id; let primeira = $first ) {
-            @if (!primeira) {
+            @for (versao of versoes; track versao.id) {
+            @if (versao.id !== versaoPrincipal?.id) {
             <article class="linha-versao">
               <div class="identidade-versao">
                 <button
@@ -528,6 +555,18 @@
               </time>
 
               <div class="acoes-versao">
+                <button
+                  type="button"
+                  [disabled]="definindoVersaoPrincipalId() !== null"
+                  (click)="definirVersaoPrincipal(faixa, versao)"
+                >
+                  @if (definindoVersaoPrincipalId() === versao.id) {
+                  Definindo...
+                  } @else {
+                  Tornar principal
+                  }
+                </button>
+
                 <button
                   type="button"
                   [disabled]="
