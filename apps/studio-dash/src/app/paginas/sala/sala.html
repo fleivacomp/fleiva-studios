@@ -1,0 +1,263 @@
+<main class="sala">
+  <header class="cabecalho">
+    <a
+      class="marca-fleiva"
+      href="https://fleiva.com.br"
+      aria-label="Flêiva Studios"
+    >
+      <span>FLÊIVA</span>
+      <strong>SALA</strong>
+    </a>
+
+    <nav aria-label="Navegação da Sala">
+      <a href="#trabalhos-da-casa">Trabalhos</a>
+      <a href="#cards-da-casa">Cards</a>
+      <a href="https://fleiva.com.br">Sobre a Flêiva ↗</a>
+    </nav>
+  </header>
+
+  <section class="entrada" aria-labelledby="titulo-sala">
+    <div class="parede" aria-hidden="true">
+      <div class="quadro">
+        <img
+          src="/fleiva-desenhos/rosacea.webp"
+          alt=""
+        />
+      </div>
+      <span class="rodape-parede"></span>
+    </div>
+
+    <div class="chamada">
+      <p class="sobretitulo">CASA FLÊIVA · PORTA ABERTA</p>
+
+      <h1 id="titulo-sala">
+        A música independente
+        <strong>mora aqui.</strong>
+      </h1>
+
+      <p class="descricao">
+        Entre, conheça os trabalhos e abra os Cards de quem
+        grava, produz e movimenta a música independente.
+      </p>
+
+      <div class="acoes">
+        <button
+          type="button"
+          [disabled]="dadosCasa.carregando()"
+          (click)="abrirPorta()"
+        >
+          @if (dadosCasa.carregando()) {
+            Abrindo a Casa...
+          } @else {
+            Abrir uma porta
+            <span aria-hidden="true">→</span>
+          }
+        </button>
+
+        <a href="#cards-da-casa">Ver todos os Cards</a>
+      </div>
+    </div>
+
+    <p class="endereco" aria-hidden="true">
+      CASA.FLEIVA.COM.BR
+    </p>
+  </section>
+
+  @if (dadosCasa.erro()) {
+    <section class="estado estado-erro" role="alert">
+      <strong>Não foi possível abrir a Sala.</strong>
+      <p>{{ dadosCasa.erro() }}</p>
+      <button type="button" (click)="dadosCasa.listar()">
+        Tentar novamente
+      </button>
+    </section>
+  } @else {
+    @if (
+      !dadosCasa.carregando() &&
+      dadosCasa.trabalhos().length > 0
+    ) {
+      <section
+        id="trabalhos-da-casa"
+        class="secao trabalhos"
+        aria-labelledby="titulo-trabalhos"
+      >
+        <img
+          class="ramo ramo-esquerdo"
+          src="/fleiva-desenhos/ramo-esquerdo.webp"
+          alt=""
+          aria-hidden="true"
+        />
+        <img
+          class="ramo ramo-direito"
+          src="/fleiva-desenhos/ramo-direito.webp"
+          alt=""
+          aria-hidden="true"
+        />
+
+        <header class="titulo-secao">
+          <div>
+            <p>ESCOLHIDOS POR QUEM FEZ</p>
+            <h2 id="titulo-trabalhos">
+              Trabalhos da Casa
+            </h2>
+          </div>
+          <span>
+            {{ dadosCasa.trabalhos().length }}
+            @if (dadosCasa.trabalhos().length === 1) {
+              trabalho
+            } @else {
+              trabalhos
+            }
+          </span>
+        </header>
+
+        <div class="grade-trabalhos">
+          @for (
+            trabalho of dadosCasa.trabalhos();
+            track trabalho.album_id
+          ) {
+            <a
+              class="cartao-trabalho"
+              [href]="urlTrabalho(trabalho)"
+              [style.--cor-card]="corTrabalho(trabalho)"
+            >
+              <figure>
+                @if (trabalho.capa_url) {
+                  <img
+                    [src]="trabalho.capa_url"
+                    [alt]="'Capa de ' + trabalho.album_nome"
+                  />
+                } @else {
+                  <span aria-hidden="true">
+                    {{ trabalho.album_nome.charAt(0) }}
+                  </span>
+                }
+              </figure>
+
+              <div class="dados-trabalho">
+                @if (trabalho.album_tipo) {
+                  <p>{{ trabalho.album_tipo }}</p>
+                }
+                <h3>{{ trabalho.album_nome }}</h3>
+                <strong>{{ trabalho.projeto_nome }}</strong>
+                <footer>
+                  <span>{{ trabalho.estudio_nome }}</span>
+                  <span aria-hidden="true">↗</span>
+                </footer>
+              </div>
+            </a>
+          }
+        </div>
+      </section>
+    }
+
+    <section
+      id="cards-da-casa"
+      class="secao cards"
+      aria-labelledby="titulo-cards"
+    >
+      <header class="titulo-secao">
+        <div>
+          <p>QUEM FAZ ACONTECER</p>
+          <h2 id="titulo-cards">Cards na Sala</h2>
+        </div>
+
+        @if (!dadosCasa.carregando()) {
+          <span>
+            {{ dadosCasa.estudios().length }}
+            @if (dadosCasa.estudios().length === 1) {
+              Card
+            } @else {
+              Cards
+            }
+          </span>
+        }
+      </header>
+
+      @if (dadosCasa.carregando()) {
+        <div class="estado">
+          <span class="carregador" aria-hidden="true"></span>
+          <p>Procurando quem está em casa...</p>
+        </div>
+      } @else if (dadosCasa.estudios().length > 0) {
+        <div class="grade-cards">
+          @for (
+            estudio of dadosCasa.estudios();
+            track estudio.id
+          ) {
+            <a
+              class="cartao-estudio"
+              [href]="urlCard(estudio.slug)"
+              [style.--cor-card]="corEstudio(estudio)"
+            >
+              <header>
+                <div class="avatar">
+                  @if (estudio.logo_url) {
+                    <img
+                      [src]="estudio.logo_url"
+                      [alt]="'Logo de ' + estudio.nome"
+                    />
+                  } @else {
+                    <span>
+                      {{ inicialEstudio(estudio.nome) }}
+                    </span>
+                  }
+                </div>
+
+                <span class="aberto">
+                  <i aria-hidden="true"></i>
+                  PORTA ABERTA
+                </span>
+              </header>
+
+              <div class="dados-estudio">
+                @if (estudio.cidade) {
+                  <p>{{ estudio.cidade }}</p>
+                }
+
+                <h3>{{ estudio.nome }}</h3>
+
+                @if (estudio.descricao_publica) {
+                  <span class="bio">
+                    {{ estudio.descricao_publica }}
+                  </span>
+                }
+
+                @if (estudio.servicos.length > 0) {
+                  <ul>
+                    @for (
+                      servico of estudio.servicos.slice(0, 3);
+                      track servico
+                    ) {
+                      <li>{{ servico }}</li>
+                    }
+                  </ul>
+                }
+              </div>
+
+              <footer>
+                <span>Abrir Card</span>
+                <span aria-hidden="true">→</span>
+              </footer>
+            </a>
+          }
+        </div>
+      } @else {
+        <div class="estado">
+          <strong>A Sala está abrindo as portas.</strong>
+          <p>Os Cards publicados aparecerão aqui.</p>
+        </div>
+      }
+    </section>
+  }
+
+  <footer class="rodape">
+    <span>CASA FLÊIVA</span>
+    <img
+      src="/fleiva-desenhos/rosacea.webp"
+      alt=""
+      aria-hidden="true"
+    />
+    <span>BRASIL · {{ anoAtual }}</span>
+  </footer>
+</main>

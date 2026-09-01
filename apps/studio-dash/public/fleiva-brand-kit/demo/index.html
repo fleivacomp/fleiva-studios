@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Flêiva — teste de marca</title>
+
+    <style>
+      :root {
+        color-scheme: dark;
+        --verde: #5e886f;
+        --roxo: #885f74;
+        --creme: #f7f2e0;
+        --fundo: #111311;
+        --superficie: #191c19;
+        --borda: #303530;
+        font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        padding: clamp(1rem, 5vw, 4rem);
+        background:
+          radial-gradient(circle at 15% 10%, rgb(94 136 111 / 18%), transparent 30rem),
+          var(--fundo);
+        color: #edf0eb;
+      }
+
+      main {
+        width: min(68rem, 100%);
+        margin: 0 auto;
+      }
+
+      header p {
+        margin: 0;
+        color: var(--verde);
+        font-size: 0.68rem;
+        font-weight: 800;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0.5rem 0 0.75rem;
+        font-size: clamp(2.4rem, 7vw, 5.5rem);
+        line-height: 0.9;
+        letter-spacing: -0.065em;
+      }
+
+      header > span {
+        color: #aeb5ad;
+      }
+
+      .grade {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+        margin-top: 2rem;
+      }
+
+      .cartao {
+        display: grid;
+        min-height: 20rem;
+        place-items: center;
+        padding: 2rem;
+        overflow: hidden;
+        background: var(--superficie);
+        border: 1px solid var(--borda);
+        border-radius: 0.8rem;
+      }
+
+      .cartao > div {
+        width: min(100%, 30rem);
+      }
+
+      .cartao p {
+        margin: 1.5rem 0 0;
+        color: #aeb5ad;
+        font-size: 0.75rem;
+        text-align: center;
+      }
+
+      .logo-imagem {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      .logo-jitter {
+        position: relative;
+        display: block;
+        width: 100%;
+        aspect-ratio: 1256 / 596;
+        border-radius: 0.35rem;
+        cursor: pointer;
+        outline: none;
+      }
+
+      .camada {
+        position: absolute;
+        inset: 0;
+        background: currentColor;
+        mask: url('../mask/fleiva-wordmark-mask.png') center / contain no-repeat;
+        -webkit-mask: url('../mask/fleiva-wordmark-mask.png') center / contain no-repeat;
+        will-change: transform;
+      }
+
+      .camada-clara {
+        color: var(--creme);
+        transform: translate(-2px, -1px);
+      }
+
+      .camada-roxa {
+        color: var(--roxo);
+        transform: translate(4px, 5px);
+      }
+
+      .camada-verde {
+        color: var(--verde);
+      }
+
+      .logo-jitter:hover .camada-clara,
+      .logo-jitter:focus-visible .camada-clara {
+        animation: jitter-claro 360ms steps(2, end);
+      }
+
+      .logo-jitter:hover .camada-roxa,
+      .logo-jitter:focus-visible .camada-roxa {
+        animation: jitter-roxo 360ms steps(2, end);
+      }
+
+      .logo-jitter:hover .camada-verde,
+      .logo-jitter:focus-visible .camada-verde {
+        animation: jitter-verde 360ms steps(2, end);
+      }
+
+      .logo-jitter:active .camada-clara {
+        transform: translate(-6px, 2px);
+      }
+
+      .logo-jitter:active .camada-roxa {
+        transform: translate(8px, 3px);
+      }
+
+      @keyframes jitter-claro {
+        0%, 100% { transform: translate(-2px, -1px); }
+        25% { transform: translate(-5px, 1px); }
+        50% { transform: translate(1px, -3px); }
+        75% { transform: translate(-3px, 2px); }
+      }
+
+      @keyframes jitter-roxo {
+        0%, 100% { transform: translate(4px, 5px); }
+        25% { transform: translate(7px, 2px); }
+        50% { transform: translate(1px, 7px); }
+        75% { transform: translate(6px, 6px); }
+      }
+
+      @keyframes jitter-verde {
+        0%, 100% { transform: translate(0); }
+        25% { transform: translate(1px, -1px); }
+        50% { transform: translate(-1px, 1px); }
+        75% { transform: translate(1px, 0); }
+      }
+
+      @media (max-width: 44rem) {
+        .grade {
+          grid-template-columns: 1fr;
+        }
+
+        .cartao {
+          min-height: 15rem;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .camada {
+          animation: none !important;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <main>
+      <header>
+        <p>Laboratório de marca</p>
+        <h1>Jitter Flêiva</h1>
+        <span>Passe o mouse, navegue com Tab ou pressione a marca.</span>
+      </header>
+
+      <section class="grade">
+        <article class="cartao">
+          <div>
+            <span
+              class="logo-jitter"
+              role="img"
+              aria-label="Flêiva"
+              tabindex="0"
+            >
+              <span class="camada camada-clara" aria-hidden="true"></span>
+              <span class="camada camada-roxa" aria-hidden="true"></span>
+              <span class="camada camada-verde" aria-hidden="true"></span>
+            </span>
+
+            <p>Versão programável com máscara CSS.</p>
+          </div>
+        </article>
+
+        <article class="cartao">
+          <div>
+            <img
+              class="logo-imagem"
+              src="../web/fleiva-wordmark-color-1280.webp"
+              alt="Flêiva"
+            />
+
+            <p>Arquivo colorido otimizado para uso estático.</p>
+          </div>
+        </article>
+      </section>
+    </main>
+  </body>
+</html>

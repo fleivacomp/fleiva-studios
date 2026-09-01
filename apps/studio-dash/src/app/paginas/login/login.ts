@@ -4,12 +4,12 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Autenticacao } from '@fleiva-studios/shared-data-access';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './login.html',
   styleUrl: './login.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -18,7 +18,6 @@ export class PaginaLogin {
   private readonly autenticacao = inject(Autenticacao);
   private readonly construtorFormulario = inject(FormBuilder);
   private readonly rota = inject(ActivatedRoute);
-  private readonly roteador = inject(Router);
 
   readonly enviando = signal(false);
   readonly mensagemErro = signal('');
@@ -48,7 +47,7 @@ export class PaginaLogin {
           ? retorno
           : '/';
 
-      await this.roteador.navigateByUrl(destino);
+      window.location.replace(destino);
     } catch {
       this.mensagemErro.set('E-mail ou senha inválidos.');
     } finally {

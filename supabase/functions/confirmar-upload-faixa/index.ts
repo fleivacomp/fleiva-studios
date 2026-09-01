@@ -5,6 +5,7 @@ import {
   HeadObjectCommand,
   S3Client,
 } from 'npm:@aws-sdk/client-s3@3';
+
 import { FetchHttpHandler } from 'npm:@smithy/fetch-http-handler@5';
 
 interface SolicitacaoConfirmacao {
@@ -14,6 +15,16 @@ interface SolicitacaoConfirmacao {
 interface VersaoReservada {
   id: string;
   chave_objeto: string;
+}
+
+interface Configuracao {
+  supabaseUrl: string;
+  supabaseAnonKey: string;
+  supabaseServiceRoleKey: string;
+  r2AccountId: string;
+  r2AccessKeyId: string;
+  r2SecretAccessKey: string;
+  r2BucketName: string;
 }
 
 const cabecalhosCors = {
@@ -37,7 +48,8 @@ Deno.serve(async (requisicao) => {
     });
   }
 
-  const autorizacao = requisicao.headers.get('Authorization');
+  const autorizacao =
+    requisicao.headers.get('Authorization');
 
   if (!autorizacao) {
     return responder(401, {
@@ -78,7 +90,7 @@ Deno.serve(async (requisicao) => {
     });
   }
 
-  const supabase = createClient(
+  const supabaseUsuario = createClient(
     configuracao.supabaseUrl,
     configuracao.supabaseAnonKey,
     {
@@ -97,7 +109,7 @@ Deno.serve(async (requisicao) => {
   const {
     data: { user },
     error: erroUsuario,
-  } = await supabase.auth.getUser();
+  } = await supabaseUsuario.auth.getUser();
 
   if (erroUsuario || !user) {
     return responder(401, {
@@ -105,13 +117,15 @@ Deno.serve(async (requisicao) => {
     });
   }
 
-  const { data: versao, error: erroVersao } =
-    await supabase
-      .from('versoes_faixa')
-      .select('id, chave_objeto')
-      .eq('id', versaoId)
-      .eq('estudio_id', user.id)
-      .single();
+  const {
+    data: versao,
+    error: erroVersao,
+  } = await supabaseUsuario
+    .from('versoes_faixa')
+    .select('id, chave_objeto')
+    .eq('id', versaoId)
+    .eq('estudio_id', user.id)
+    .single();
 
   if (erroVersao || !versao) {
     return responder(404, {
@@ -119,7 +133,33 @@ Deno.serve(async (requisicao) => {
     });
   }
 
-  const clienteR2 = criarClienteR2(configuracao);
+  const prefixoSeguro = `${user.id}/`;
+
+  if (
+    !versao.chave_objeto.startsWith(
+      prefixoSeguro,
+    )
+  ) {
+    console.error(
+      'A reserva aponta para uma chave fora do estúdio.',
+      {
+        versaoId,
+        estudioId: user.id,
+      },
+    );
+
+    await cancelarReserva(
+      supabaseUsuario,
+      versaoId,
+    );
+
+    return responder(400, {
+      erro: 'A reserva de upload é inválida.',
+    });
+  }
+
+  const clienteR2 =
+    criarClienteR2(configuracao);
 
   let tamanhoReal: number;
 
@@ -131,18 +171,20 @@ Deno.serve(async (requisicao) => {
       }),
     );
 
-    tamanhoReal = resposta.ContentLength ?? 0;
+    tamanhoReal =
+      resposta.ContentLength ?? 0;
   } catch (erro) {
     const status = obterStatusHttp(erro);
 
     if (status === 404) {
       await cancelarReserva(
-        supabase,
+        supabaseUsuario,
         versaoId,
       );
 
       return responder(404, {
-        erro: 'O arquivo enviado não foi encontrado.',
+        erro:
+          'O arquivo enviado não foi encontrado.',
       });
     }
 
@@ -152,7 +194,8 @@ Deno.serve(async (requisicao) => {
     );
 
     return responder(500, {
-      erro: 'Não foi possível verificar o arquivo enviado.',
+      erro:
+        'Não foi possível verificar o arquivo enviado.',
     });
   }
 
@@ -164,30 +207,46 @@ Deno.serve(async (requisicao) => {
       clienteR2,
       bucket: configuracao.r2BucketName,
       versao,
-      supabase,
+      supabase: supabaseUsuario,
       mensagem:
         'O arquivo enviado está vazio ou possui tamanho inválido.',
     });
   }
 
+  const supabaseAdmin = createClient(
+    configuracao.supabaseUrl,
+    configuracao.supabaseServiceRoleKey,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    },
+  );
+
   const {
     data: confirmacaoRecebida,
     error: erroConfirmacao,
-  } = await supabase.rpc('confirmar_upload_faixa', {
-    p_versao_id: versaoId,
-    p_tamanho_bytes_real: tamanhoReal,
-  });
+  } = await supabaseAdmin.rpc(
+    'confirmar_upload_faixa_interno',
+    {
+      p_estudio_id: user.id,
+      p_versao_id: versaoId,
+      p_tamanho_bytes_real: tamanhoReal,
+    },
+  );
 
   if (erroConfirmacao) {
-    const arquivoRemovido = await removerObjeto(
-      clienteR2,
-      configuracao.r2BucketName,
-      versao.chave_objeto,
-    );
+    const arquivoRemovido =
+      await removerObjeto(
+        clienteR2,
+        configuracao.r2BucketName,
+        versao.chave_objeto,
+      );
 
     if (arquivoRemovido) {
       await cancelarReserva(
-        supabase,
+        supabaseUsuario,
         versaoId,
       );
     }
@@ -202,9 +261,10 @@ Deno.serve(async (requisicao) => {
     );
   }
 
-  const confirmacao = obterRegistroConfirmado(
-    confirmacaoRecebida,
-  );
+  const confirmacao =
+    obterRegistroConfirmado(
+      confirmacaoRecebida,
+    );
 
   if (!confirmacao) {
     console.error(
@@ -213,7 +273,8 @@ Deno.serve(async (requisicao) => {
     );
 
     return responder(500, {
-      erro: 'O upload foi processado, mas a confirmação não pôde ser lida.',
+      erro:
+        'O upload foi processado, mas a confirmação não pôde ser lida.',
     });
   }
 
@@ -222,26 +283,37 @@ Deno.serve(async (requisicao) => {
   });
 });
 
-function obterConfiguracao(): {
-  supabaseUrl: string;
-  supabaseAnonKey: string;
-  r2AccountId: string;
-  r2AccessKeyId: string;
-  r2SecretAccessKey: string;
-  r2BucketName: string;
-} | null {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL');
-  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
-  const r2AccountId = Deno.env.get('R2_ACCOUNT_ID');
-  const r2AccessKeyId = Deno.env.get('R2_ACCESS_KEY_ID');
-  const r2SecretAccessKey = Deno.env.get(
-    'R2_SECRET_ACCESS_KEY',
-  );
-  const r2BucketName = Deno.env.get('R2_BUCKET_NAME');
+function obterConfiguracao():
+  Configuracao | null {
+  const supabaseUrl =
+    Deno.env.get('SUPABASE_URL');
+
+  const supabaseAnonKey =
+    Deno.env.get('SUPABASE_ANON_KEY');
+
+  const supabaseServiceRoleKey =
+    Deno.env.get(
+      'SUPABASE_SERVICE_ROLE_KEY',
+    );
+
+  const r2AccountId =
+    Deno.env.get('R2_ACCOUNT_ID');
+
+  const r2AccessKeyId =
+    Deno.env.get('R2_ACCESS_KEY_ID');
+
+  const r2SecretAccessKey =
+    Deno.env.get(
+      'R2_SECRET_ACCESS_KEY',
+    );
+
+  const r2BucketName =
+    Deno.env.get('R2_BUCKET_NAME');
 
   if (
     !supabaseUrl ||
     !supabaseAnonKey ||
+    !supabaseServiceRoleKey ||
     !r2AccountId ||
     !r2AccessKeyId ||
     !r2SecretAccessKey ||
@@ -253,6 +325,7 @@ function obterConfiguracao(): {
   return {
     supabaseUrl,
     supabaseAnonKey,
+    supabaseServiceRoleKey,
     r2AccountId,
     r2AccessKeyId,
     r2SecretAccessKey,
@@ -261,21 +334,24 @@ function obterConfiguracao(): {
 }
 
 function criarClienteR2(
-  configuracao: NonNullable<
-    ReturnType<typeof obterConfiguracao>
-  >,
+  configuracao: Configuracao,
 ): S3Client {
   return new S3Client({
     region: 'auto',
     endpoint:
       `https://${configuracao.r2AccountId}.r2.cloudflarestorage.com`,
     credentials: {
-      accessKeyId: configuracao.r2AccessKeyId,
-      secretAccessKey: configuracao.r2SecretAccessKey,
+      accessKeyId:
+        configuracao.r2AccessKeyId,
+      secretAccessKey:
+        configuracao.r2SecretAccessKey,
     },
-    requestHandler: new FetchHttpHandler(),
-    requestChecksumCalculation: 'WHEN_REQUIRED',
-    responseChecksumValidation: 'WHEN_REQUIRED',
+    requestHandler:
+      new FetchHttpHandler(),
+    requestChecksumCalculation:
+      'WHEN_REQUIRED',
+    responseChecksumValidation:
+      'WHEN_REQUIRED',
   });
 }
 
@@ -284,7 +360,9 @@ async function removerArquivoInvalido(
     clienteR2: S3Client;
     bucket: string;
     versao: VersaoReservada;
-    supabase: ReturnType<typeof createClient>;
+    supabase: ReturnType<
+      typeof createClient
+    >;
     mensagem: string;
   },
 ): Promise<Response> {
@@ -336,7 +414,9 @@ async function removerObjeto(
 }
 
 async function cancelarReserva(
-  supabase: ReturnType<typeof createClient>,
+  supabase: ReturnType<
+    typeof createClient
+  >,
   versaoId: string,
 ): Promise<void> {
   const { error } = await supabase.rpc(
@@ -368,7 +448,10 @@ function obterRegistroConfirmado(
     return null;
   }
 
-  return registro as Record<string, unknown>;
+  return registro as Record<
+    string,
+    unknown
+  >;
 }
 
 function obterStatusHttp(
@@ -392,7 +475,8 @@ function obterStatusHttp(
     return null;
   }
 
-  return typeof metadata.httpStatusCode === 'number'
+  return typeof metadata.httpStatusCode ===
+    'number'
     ? metadata.httpStatusCode
     : null;
 }
@@ -401,11 +485,15 @@ function responder(
   status: number,
   corpo: Record<string, unknown>,
 ): Response {
-  return new Response(JSON.stringify(corpo), {
-    status,
-    headers: {
-      ...cabecalhosCors,
-      'Content-Type': 'application/json',
+  return new Response(
+    JSON.stringify(corpo),
+    {
+      status,
+      headers: {
+        ...cabecalhosCors,
+        'Content-Type':
+          'application/json',
+      },
     },
-  });
+  );
 }

@@ -12,16 +12,6 @@ create table public.armazenamento_estudios (
     check (limite_bytes >= 0)
 );
 
-insert into public.armazenamento_estudios (
-  estudio_id,
-  limite_bytes
-)
-values (
-  'f5ea47aa-ea34-4f8a-83f0-2895b004e873',
-  5000000000
-)
-on conflict (estudio_id) do nothing;
-
 do $$
 begin
   if not exists (

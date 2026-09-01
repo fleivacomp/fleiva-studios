@@ -30,6 +30,7 @@ export * from './lib/dados-album-compartilhado';
 
 export * from './lib/dados-pagina-estudio';
 
-export * from './lib/dados-servicos';
-
 export * from './lib/dados-album-publico';
+
+export * from './lib/dados-casa';
+

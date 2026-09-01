@@ -62,10 +62,30 @@ export class LayoutPrincipal implements OnInit {
         .charAt(0)
         .toLocaleUpperCase('pt-BR') || 'F',
   );
+readonly destinoInicial = computed(() => {
+  if (this.dadosEstudio.possuiModulo('agenda')) {
+    return '/agendamentos';
+  }
 
+  if (this.dadosEstudio.possuiModulo('artistas')) {
+    return '/projetos';
+  }
+
+  if (this.dadosEstudio.possuiModulo('faixas')) {
+    return '/faixas';
+  }
+
+  if (this.dadosEstudio.possuiModulo('financeiro')) {
+    return '/acertos';
+  }
+
+  return '/perfil';
+});
   ngOnInit(): void {
+  if (!this.dadosEstudio.estudio()) {
     void this.dadosEstudio.carregar();
   }
+}
 
   alternarMenu(): void {
     this.menuAberto.update((aberto) => !aberto);

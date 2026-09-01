@@ -5,11 +5,29 @@
 >
   <header class="cabecalho-pagina">
     <div>
-      <p class="secao">IDENTIDADE DO ESTÚDIO</p>
-      <h1>Perfil</h1>
-      <p>
-        A marca que aparece no Fleiva e nos materiais compartilhados.
-      </p>
+     <p class="secao">
+  @if (dadosEstudio.possuiModulos()) {
+    IDENTIDADE DO ESTÚDIO
+  } @else {
+    CASA FLÊIVA
+  }
+</p>
+
+<h1>
+  @if (dadosEstudio.possuiModulos()) {
+    Perfil
+  } @else {
+    Minha página
+  }
+</h1>
+
+<p>
+  @if (dadosEstudio.possuiModulos()) {
+    A marca que aparece no Flêiva e nos materiais compartilhados.
+  } @else {
+    Crie e publique a presença digital do seu estúdio.
+  }
+</p>
     </div>
 
     <div class="assinatura-fleiva" aria-label="Fleiva Studios">
@@ -61,10 +79,16 @@
           <span>{{ autenticacao.usuario()?.email }}</span>
 
           <div class="estado-conta">
-            <span>{{ formatarPlano(estudio.status_plano) }}</span>
-            <i aria-hidden="true"></i>
-            <span>{{ estudio.modulos.length }} módulos</span>
-          </div>
+  @if (dadosEstudio.possuiModulos()) {
+    <span>{{ formatarPlano(estudio.status_plano) }}</span>
+    <i aria-hidden="true"></i>
+    <span>{{ estudio.modulos.length }} módulos</span>
+  } @else {
+    <span>Plano gratuito</span>
+    <i aria-hidden="true"></i>
+    <span>Casa Flêiva</span>
+  }
+</div>
         </div>
       </div>
 
@@ -144,7 +168,7 @@
       <header class="titulo-secao">
         <div>
           <p class="rotulo-menor">DIREÇÃO DE ARTE</p>
-          <h2>Cor do estúdio</h2>
+          <h2>Cores</h2>
           <span>
             Uma cor principal gera os tons usados pela interface.
           </span>
@@ -161,11 +185,8 @@
         >
           <div class="introducao-cor">
             <span class="numero-etapa">01</span>
-            <h3>Escolha a cor da marca</h3>
-            <p>
-              Estados de sucesso, atenção e perigo continuam com
-              cores universais para não gerar confusão.
-            </p>
+            <h3>Escolha a cor principal</h3>
+
           </div>
 
           <label class="seletor-cor">
@@ -273,12 +294,95 @@
           </div>
         </div>
       </div>
+
+      <section class="ambiente-publico">
+        <header class="cabecalho-ambiente">
+          <div>
+            <p class="rotulo-menor">CASA FLÊIVA</p>
+            <h3>Tema</h3>
+            <span>
+              Escolha um tema base. A cor e a logo do estúdio
+              continuam sendo as protagonistas.
+            </span>
+          </div>
+
+          <span class="tema-selecionado">
+            {{ temaPaginaPublicaPrevia() }}
+          </span>
+        </header>
+
+        <div
+          class="opcoes-ambiente"
+          role="radiogroup"
+          aria-label="Página pública"
+        >
+          @for (
+            tema of opcoesTemaPaginaPublica;
+            track tema.valor
+          ) {
+            <button
+              type="button"
+              class="opcao-ambiente"
+              [class.selecionada]="
+                temaPaginaPublicaPrevia() === tema.valor
+              "
+              [attr.aria-checked]="
+                temaPaginaPublicaPrevia() === tema.valor
+              "
+              role="radio"
+              (click)="
+                selecionarTemaPaginaPublica(tema.valor)
+              "
+            >
+              <span
+                class="miniatura-ambiente"
+                [attr.data-tema]="tema.valor"
+                aria-hidden="true"
+              >
+                <i class="miniatura-topo"></i>
+                <i class="miniatura-titulo"></i>
+                <i class="miniatura-texto"></i>
+                <i class="miniatura-cartao"></i>
+              </span>
+
+              <span class="descricao-ambiente">
+                <strong>{{ tema.nome }}</strong>
+                <small>{{ tema.descricao }}</small>
+              </span>
+
+              <i class="marcador-ambiente" aria-hidden="true"></i>
+            </button>
+          }
+        </div>
+
+        <div class="acoes-ambiente">
+          <span>
+            A alteração afeta somente a página pública.
+          </span>
+
+          <button
+            type="button"
+            class="botao-principal"
+            [disabled]="
+              salvandoTemaPaginaPublica() ||
+              !temaPaginaPublicaAlterado()
+            "
+            (click)="salvarTema()"
+          >
+            @if (salvandoTemaPaginaPublica()) {
+              Salvando...
+            } @else {
+              Salvar ambiente
+            }
+          </button>
+        </div>
+      </section>
     </section>
     <section class="painel configuracao-publica">
   <header class="titulo-painel">
     <div>
       <p>Presença digital</p>
-      <h2>Página pública</h2>
+      <h2>Informações</h2>
     </div>
 
     <span
@@ -305,7 +409,7 @@
   >
     <div class="campos-publicos">
       <label class="campo-texto campo-publico-largo">
-        <span>Apresentação do estúdio</span>
+        <span>Bio</span>
 
         <textarea
           rows="5"
@@ -319,7 +423,7 @@
       </label>
 
       <label class="campo-texto">
-        <span>Cidade</span>
+        <span>Endereço</span>
 
         <input
           type="text"
@@ -329,7 +433,7 @@
       </label>
 
       <label class="campo-texto">
-        <span>WhatsApp público</span>
+        <span>WhatsApp</span>
 
         <input
           type="tel"
@@ -366,6 +470,22 @@
       </span>
     </label>
 
+    <label class="controle-publicacao">
+      <input
+        type="checkbox"
+        formControlName="participar_da_casa"
+      />
+
+      <span>
+        <strong>Aparecer na Casa Flêiva</strong>
+
+        <small>
+          Quando ativada, sua página poderá aparecer na área de
+          descoberta da Casa Flêiva enquanto estiver publicada.
+        </small>
+      </span>
+    </label>
+
     <div class="acoes-formulario">
       <button
         type="submit"
@@ -381,169 +501,392 @@
     </div>
   </form>
 </section>
-
-    <div class="grade-informacoes">
-      <section class="painel identificacao-painel">
-        <header class="titulo-painel">
-          <div>
-            <p>INFORMAÇÕES PÚBLICAS</p>
-            <h2>Nome do estúdio</h2>
-          </div>
-
-          <span aria-hidden="true">02</span>
-        </header>
-
-        <form
-          [formGroup]="formulario"
-          (ngSubmit)="salvarNome()"
-        >
-          <label class="campo-texto">
-            <span>Nome exibido</span>
-
-            <input
-              type="text"
-              formControlName="nome"
-              placeholder="Nome do estúdio"
-            />
-
-            @if (
-              formulario.controls.nome.touched &&
-              formulario.controls.nome.invalid
-            ) {
-              <small>Informe o nome do estúdio.</small>
-            }
-          </label>
-
-          <p class="ajuda-campo">
-            Aparece no menu, no perfil e nos links compartilhados.
-          </p>
-
-          <div class="acoes-formulario">
-            <button
-              type="submit"
-              class="botao-principal"
-              [disabled]="salvandoNome()"
-            >
-              @if (salvandoNome()) {
-                Salvando...
-              } @else {
-                Salvar nome
-              }
-            </button>
-          </div>
-        </form>
-      </section>
-
-      <section class="painel conta-painel">
-        <header class="titulo-painel">
-          <div>
-            <p>ASSINATURA</p>
-            <h2>Conta</h2>
-          </div>
-
-          <span aria-hidden="true">03</span>
-        </header>
-
-        <dl class="informacoes">
-          <div>
-            <dt>E-mail</dt>
-            <dd>{{ autenticacao.usuario()?.email }}</dd>
-          </div>
-
-          <div>
-            <dt>Plano</dt>
-            <dd>
-              <span class="plano">
-                {{ formatarPlano(estudio.status_plano) }}
-              </span>
-            </dd>
-          </div>
-
-          <div>
-            <dt>Endereço interno</dt>
-            <dd class="texto-mono">{{ estudio.slug }}</dd>
-          </div>
-        </dl>
-
-        <div class="modulos">
-          <span class="rotulo">Módulos disponíveis</span>
-
-          <div class="lista-modulos">
-            @for (modulo of estudio.modulos; track modulo) {
-              <span>{{ formatarModulo(modulo) }}</span>
-            }
-          </div>
-        </div>
-      </section>
+<section class="painel configuracao-embeds">
+  <header class="titulo-painel">
+    <div>
+      <p>CONTEÚDO EXTERNO</p>
+      <h2>Trabalhos em destaque</h2>
     </div>
 
-    <section class="painel armazenamento">
-      <header class="titulo-painel">
-        <div>
-          <p>ACERVO DIGITAL</p>
-          <h2>Armazenamento</h2>
-        </div>
+    <span class="contador-embeds">
+      {{ embedsPrevia().length }} / 4
+    </span>
+  </header>
 
-        <span aria-hidden="true">04</span>
-      </header>
+  <p class="introducao-embeds">
+    Adicione trabalhos publicados no Spotify, YouTube ou
+    SoundCloud. Cole apenas o endereço original do conteúdo.
+  </p>
 
-      @if (dadosVersoes.carregando()) {
-        <div class="estado estado-menor">
-          <span class="carregador" aria-hidden="true"></span>
-          <p>Calculando armazenamento...</p>
-        </div>
-      } @else if (dadosVersoes.erro()) {
-        <div class="estado estado-menor estado-erro">
-          <p>{{ dadosVersoes.erro() }}</p>
+  <form
+    class="editor-embed"
+    [formGroup]="formularioEmbed"
+    (ngSubmit)="adicionarEmbed()"
+  >
+    <label>
+      <span>Plataforma</span>
+
+      <select formControlName="provedor">
+        <option value="spotify">Spotify</option>
+        <option value="youtube">YouTube</option>
+        <option value="soundcloud">
+          SoundCloud
+        </option>
+      </select>
+    </label>
+
+    <label class="campo-url-embed">
+      <span>Endereço</span>
+
+      <input
+        type="url"
+        formControlName="url"
+        inputmode="url"
+        autocomplete="url"
+        placeholder="https://..."
+      />
+    </label>
+
+    <button
+      type="submit"
+      class="botao-secundario botao-adicionar-embed"
+      [disabled]="limiteEmbedsAtingido()"
+    >
+      Adicionar
+    </button>
+  </form>
+
+  @if (
+    formularioEmbed.controls.url.touched &&
+    formularioEmbed.controls.url.invalid
+  ) {
+    <small class="erro-campo">
+      Cole o endereço.
+    </small>
+  }
+
+  @if (erroEmbeds()) {
+    <p class="retorno retorno-erro">
+      {{ erroEmbeds() }}
+    </p>
+  }
+
+  @if (mensagemEmbeds()) {
+    <p class="retorno retorno-sucesso">
+      {{ mensagemEmbeds() }}
+    </p>
+  }
+
+  @if (embedsPrevia().length > 0) {
+    <div class="lista-embeds">
+      @for (
+        embed of embedsPrevia();
+        track embed.provedor + ':' + embed.url;
+        let indice = $index
+      ) {
+        <article class="item-embed">
+          <span class="numero-embed">
+            {{ indice + 1 }}
+          </span>
+
+          <div class="dados-embed">
+            <strong>
+              {{ formatarProvedorEmbed(embed.provedor) }}
+            </strong>
+
+            <span>{{ embed.url }}</span>
+          </div>
+
+          <a
+            class="acao-embed"
+            [href]="embed.url"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Abrir
+          </a>
 
           <button
             type="button"
-            class="botao-secundario"
-            (click)="dadosVersoes.listar()"
+            class="acao-embed acao-remover-embed"
+            (click)="removerEmbed(indice)"
           >
-            Tentar novamente
+            Remover
           </button>
-        </div>
-      } @else {
-        <div class="cabecalho-armazenamento">
-          <div>
-            <strong>
-              {{ formatarBytes(dadosVersoes.usoBytes()) }}
-            </strong>
-            <span>utilizados</span>
-          </div>
-
-          <div>
-            <strong>
-              {{
-                formatarBytes(
-                  dadosVersoes.espacoDisponivelBytes()
-                )
-              }}
-            </strong>
-            <span>disponíveis</span>
-          </div>
-        </div>
-
-        <div
-          class="barra-armazenamento"
-          role="progressbar"
-          aria-label="Armazenamento utilizado"
-          aria-valuemin="0"
-          aria-valuemax="100"
-          [attr.aria-valuenow]="percentualUso()"
-        >
-          <span [style.width.%]="percentualUso()"></span>
-        </div>
-
-        <div class="resumo-armazenamento">
-          <span>{{ percentualUso() }}% ocupado</span>
-          <span>
-            Limite de
-            {{ formatarBytes(dadosVersoes.limiteBytes()) }}
-          </span>
-        </div>
+        </article>
       }
+    </div>
+  } @else {
+    <div class="estado-embeds-vazio">
+      <span aria-hidden="true">+</span>
+
+      <p>
+        Nenhum conteúdo externo adicionado.
+      </p>
+    </div>
+  }
+
+  <footer class="rodape-embeds">
+    <p>
+      Os embeds só aparecerão na página quando ela estiver
+      publicada.
+    </p>
+
+    <button
+      type="button"
+      class="botao-principal"
+      [disabled]="
+        salvandoEmbeds() ||
+        !embedsAlterados()
+      "
+      (click)="salvarEmbeds()"
+    >
+      @if (salvandoEmbeds()) {
+        Salvando...
+      } @else {
+        Salvar conteúdos
+      }
+    </button>
+  </footer>
+</section>
+
+<div
+  class="grade-informacoes"
+  [class.apenas-identificacao]="
+    !dadosEstudio.possuiModulos()
+  "
+>
+  <section class="painel identificacao-painel">
+    <header class="titulo-painel">
+      <div>
+        <p>INFORMAÇÕES PÚBLICAS</p>
+        <h2>Nome exibido</h2>
+      </div>
+
+      <span aria-hidden="true">02</span>
+    </header>
+
+    <form
+      [formGroup]="formulario"
+      (ngSubmit)="salvarNome()"
+    >
+      <label class="campo-texto">
+        <span>Nome exibido</span>
+
+        <input
+          type="text"
+          formControlName="nome"
+          placeholder="Nome exibido"
+        />
+
+        @if (
+          formulario.controls.nome.touched &&
+          formulario.controls.nome.invalid
+        ) {
+          <small>Informe o nome que será exibido na página.</small>
+        }
+      </label>
+
+      <p class="ajuda-campo">
+        Aparece no menu, na página pública e nos links
+        compartilhados.
+      </p>
+
+      <div class="acoes-formulario">
+        <button
+          type="submit"
+          class="botao-principal"
+          [disabled]="salvandoNome()"
+        >
+          @if (salvandoNome()) {
+            Salvando...
+          } @else {
+            Salvar nome
+          }
+        </button>
+      </div>
+    </form>
+    <form
+  class="formulario-endereco"
+  [formGroup]="formularioSlug"
+  (ngSubmit)="salvarSlug()"
+>
+  <label class="campo-texto">
+    <span>Endereço da página</span>
+
+    <div class="controle-slug">
+      <span>card.fleiva.com.br/</span>
+
+      <input
+        type="text"
+        formControlName="slug"
+        autocomplete="off"
+        spellcheck="false"
+        placeholder="nome-do-estudio"
+        (blur)="normalizarSlugFormulario()"
+      />
+    </div>
+
+    @if (
+      formularioSlug.controls.slug.touched &&
+      formularioSlug.controls.slug.invalid
+    ) {
+      <small>Informe um endereço válido.</small>
+    }
+  </label>
+
+  <p class="ajuda-campo">
+    Use um endereço curto e fácil de compartilhar. Ao alterá-lo,
+    o endereço anterior deixa de funcionar.
+  </p>
+
+  <div class="acoes-endereco">
+    @if (
+      formularioPaginaPublica.controls
+        .landing_publicada.value
+    ) {
+      <a
+        class="botao-secundario"
+        [href]="urlPaginaPublica()"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Abrir página
+      </a>
+    }
+
+    <button
+      type="submit"
+      class="botao-principal"
+      [disabled]="salvandoSlug()"
+    >
+      @if (salvandoSlug()) {
+        Salvando...
+      } @else {
+        Salvar endereço
+      }
+    </button>
+  </div>
+</form>
+  </section>
+
+  @if (dadosEstudio.possuiModulos()) {
+    <section class="painel conta-painel">
+      <header class="titulo-painel">
+        <div>
+          <p>ASSINATURA</p>
+          <h2>Conta</h2>
+        </div>
+
+        <span aria-hidden="true">03</span>
+      </header>
+
+      <dl class="informacoes">
+        <div>
+          <dt>E-mail</dt>
+          <dd>{{ autenticacao.usuario()?.email }}</dd>
+        </div>
+
+        <div>
+          <dt>Plano</dt>
+          <dd>
+            <span class="plano">
+              {{ formatarPlano(estudio.status_plano) }}
+            </span>
+          </dd>
+        </div>
+
+        <div>
+          <dt>Endereço interno</dt>
+          <dd class="texto-mono">{{ estudio.slug }}</dd>
+        </div>
+      </dl>
+
+      <div class="modulos">
+        <span class="rotulo">Módulos disponíveis</span>
+
+        <div class="lista-modulos">
+          @for (
+            modulo of estudio.modulos;
+            track modulo
+          ) {
+            <span>{{ formatarModulo(modulo) }}</span>
+          }
+        </div>
+      </div>
     </section>
+  }
+</div>
+
+@if (dadosEstudio.possuiModulos()) {
+  <section class="painel armazenamento">
+    <header class="titulo-painel">
+      <div>
+        <p>ACERVO DIGITAL</p>
+        <h2>Armazenamento</h2>
+      </div>
+
+      <span aria-hidden="true">04</span>
+    </header>
+
+    @if (dadosVersoes.carregando()) {
+      <div class="estado estado-menor">
+        <span class="carregador" aria-hidden="true"></span>
+        <p>Calculando armazenamento...</p>
+      </div>
+    } @else if (dadosVersoes.erro()) {
+      <div class="estado estado-menor estado-erro">
+        <p>{{ dadosVersoes.erro() }}</p>
+
+        <button
+          type="button"
+          class="botao-secundario"
+          (click)="dadosVersoes.listar()"
+        >
+          Tentar novamente
+        </button>
+      </div>
+    } @else {
+      <div class="cabecalho-armazenamento">
+        <div>
+          <strong>
+            {{ formatarBytes(dadosVersoes.usoBytes()) }}
+          </strong>
+          <span>utilizados</span>
+        </div>
+
+        <div>
+          <strong>
+            {{
+              formatarBytes(
+                dadosVersoes.espacoDisponivelBytes()
+              )
+            }}
+          </strong>
+          <span>disponíveis</span>
+        </div>
+      </div>
+
+      <div
+        class="barra-armazenamento"
+        role="progressbar"
+        aria-label="Armazenamento utilizado"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        [attr.aria-valuenow]="percentualUso()"
+      >
+        <span [style.width.%]="percentualUso()"></span>
+      </div>
+
+      <div class="resumo-armazenamento">
+        <span>{{ percentualUso() }}% ocupado</span>
+        <span>
+          Limite de
+          {{ formatarBytes(dadosVersoes.limiteBytes()) }}
+        </span>
+      </div>
+    }
+  </section>
+}
   }
 </main>

@@ -1,0 +1,80 @@
+.aviso-acesso a {
+  color: #485e50;
+  font-weight: 800;
+  text-decoration: underline;
+  text-decoration-thickness: 0.08rem;
+  text-underline-offset: 0.18rem;
+  transition: color 150ms ease;
+
+  &:hover {
+    color: var(--fleiva-verde);
+  }
+}
+
+.formulario-confirmacao {
+  align-content: center;
+}
+
+.cabecalho-formulario strong {
+  overflow-wrap: anywhere;
+  color: #485e50;
+  font-weight: 750;
+}
+
+.mensagem-sucesso {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0.9rem;
+  background: rgb(94 136 111 / 9%);
+  color: #3f5848;
+  border: 1px solid rgb(94 136 111 / 25%);
+}
+
+.mensagem-sucesso > span {
+  display: grid;
+  width: 1.4rem;
+  height: 1.4rem;
+  place-items: center;
+  background: var(--fleiva-verde);
+  color: var(--preto);
+  border-radius: 50%;
+  font-size: 0.7rem;
+  font-weight: 900;
+}
+
+.mensagem-sucesso p {
+  margin: 0;
+  font-size: 0.74rem;
+  line-height: 1.6;
+}
+
+.link-botao {
+  box-sizing: border-box;
+  text-decoration: none;
+}
+
+@media (max-height: 52rem) and (min-width: 52.01rem) {
+  .formulario-cadastro {
+    gap: 0.75rem;
+    padding: 1.5rem 0;
+  }
+
+  .formulario-cadastro .cabecalho-formulario {
+    margin-bottom: 0.25rem;
+  }
+
+  .formulario-cadastro .cabecalho-formulario > span {
+    margin-top: 0.65rem;
+  }
+
+  .formulario-cadastro .controle {
+    min-height: 2.85rem;
+  }
+
+  .formulario-cadastro .controle input {
+    min-height: 2.75rem;
+  }
+}

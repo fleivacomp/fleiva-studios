@@ -3,21 +3,14 @@
     <div>
       <p class="secao">ARTISTAS</p>
       <h1>Projetos artísticos</h1>
-      <p>
-        Organize artistas, grupos, membros e responsáveis em um só
-        lugar.
-      </p>
+      <p>Organize artistas, grupos, membros e responsáveis em um só lugar.</p>
     </div>
 
-    <a class="atalho-novo" href="#formulario-projeto">
-      Novo projeto
-    </a>
+    <a class="atalho-novo" href="#formulario-projeto"> Novo projeto </a>
   </header>
 
   @if (erroOperacao()) {
-    <div class="alerta" role="alert">
-      {{ erroOperacao() }}
-    </div>
+  <div class="alerta" role="alert">{{ erroOperacao() }}</div>
   }
 
   <section class="painel catalogo-painel">
@@ -27,380 +20,308 @@
         <h2>Projetos cadastrados</h2>
       </div>
 
-      <span class="contador">
-        {{ dadosProjetos.projetos().length }}
-      </span>
+      <span class="contador"> {{ dadosProjetos.projetos().length }} </span>
     </div>
 
     @if (dadosProjetos.carregando()) {
-      <p class="estado">Carregando projetos...</p>
+    <p class="estado">Carregando projetos...</p>
     } @else if (dadosProjetos.erro()) {
-      <div class="estado erro">
-        <p>{{ dadosProjetos.erro() }}</p>
+    <div class="estado erro">
+      <p>{{ dadosProjetos.erro() }}</p>
 
-        <button
-          type="button"
-          class="botao secundario"
-          (click)="dadosProjetos.listar()"
-        >
-          Tentar novamente
-        </button>
-      </div>
+      <button
+        type="button"
+        class="botao secundario"
+        (click)="dadosProjetos.listar()"
+      >
+        Tentar novamente
+      </button>
+    </div>
     } @else if (dadosProjetos.projetos().length === 0) {
-      <div class="estado-vazio">
-        <span aria-hidden="true">00</span>
-        <div>
-          <h3>Seu catálogo começa aqui</h3>
-          <p>
-            Cadastre o primeiro artista, banda, dupla ou projeto
-            musical do estúdio.
-          </p>
-        </div>
-        <a href="#formulario-projeto">Cadastrar projeto</a>
+    <div class="estado-vazio">
+      <span aria-hidden="true">00</span>
+      <div>
+        <h3>Seu catálogo começa aqui</h3>
+        <p>
+          Cadastre o primeiro artista, banda, dupla ou projeto musical do
+          estúdio.
+        </p>
       </div>
+      <a href="#formulario-projeto">Cadastrar projeto</a>
+    </div>
     } @else {
-      <div class="lista-projetos">
-        @for (
-          projeto of dadosProjetos.projetos();
-          track projeto.id
-        ) {
-          <article class="projeto">
-            <header class="cabecalho-projeto">
-              <div class="area-capa">
-                <div
-                  class="capa-projeto"
-                  [class.capa-processando]="
+    <div class="lista-projetos">
+      @for ( projeto of dadosProjetos.projetos(); track projeto.id ) {
+      <article class="projeto">
+        <header class="cabecalho-projeto">
+          <div class="area-capa">
+            <div
+              class="capa-projeto"
+              [class.capa-processando]="
                     enviandoCapaId() === projeto.id ||
                     removendoCapaId() === projeto.id
                   "
-                >
-                  @if (
-                    dadosProjetos.capaUrl(projeto);
-                    as capaUrl
-                  ) {
-                    <img
-                      [src]="capaUrl"
-                      [alt]="'Capa de ' + projeto.nome"
-                    />
-                  } @else {
-                    <div class="capa-fallback" aria-hidden="true">
-                      <span>{{ projeto.tipo }}</span>
-                      <i></i>
-                      <i></i>
-                      <i></i>
-                    </div>
-                  }
+            >
+              @if ( dadosProjetos.capaUrl(projeto); as capaUrl ) {
+              <img [src]="capaUrl" [alt]="'Capa de ' + projeto.nome" />
+              } @else {
+              <div class="capa-fallback" aria-hidden="true">
+                <span>{{ projeto.tipo }}</span>
+                <i></i>
+                <i></i>
+                <i></i>
+              </div>
+              } @if (enviandoCapaId() === projeto.id) {
+              <span class="estado-capa">Enviando...</span>
+              } @else if ( removendoCapaId() === projeto.id ) {
+              <span class="estado-capa">Removendo...</span>
+              }
+            </div>
 
-                  @if (enviandoCapaId() === projeto.id) {
-                    <span class="estado-capa">Enviando...</span>
-                  } @else if (
-                    removendoCapaId() === projeto.id
-                  ) {
-                    <span class="estado-capa">Removendo...</span>
-                  }
-                </div>
-
-                <div class="acoes-capa">
-                  <label
-                    class="selecionar-capa"
-                    [class.desabilitado]="
+            <div class="acoes-capa">
+              <label
+                class="selecionar-capa"
+                [class.desabilitado]="
                       enviandoCapaId() !== null ||
                       removendoCapaId() !== null
                     "
-                  >
-                    <input
-                      type="file"
-                      accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-                      [disabled]="
-                        enviandoCapaId() !== null ||
-                        removendoCapaId() !== null
-                      "
-                      (change)="enviarCapa(projeto, $event)"
-                    />
-
-                    <span>
-                      @if (projeto.capa_caminho) {
-                        Trocar
-                      } @else {
-                        Adicionar capa
-                      }
-                    </span>
-                  </label>
-
-                  @if (projeto.capa_caminho) {
-                    <button
-                      type="button"
-                      class="remover-capa"
-                      [disabled]="
-                        enviandoCapaId() !== null ||
-                        removendoCapaId() !== null
-                      "
-                      (click)="removerCapa(projeto)"
-                    >
-                      Remover
-                    </button>
-                  }
-                </div>
-              </div>
-
-              <div class="identificacao-projeto">
-                <span class="tipo-projeto">
-                  {{ projeto.tipo }}
-                </span>
-
-                <h3>{{ projeto.nome }}</h3>
-
-                <p>
-                  {{ projeto.membros.length }}
-                  @if (projeto.membros.length === 1) {
-                    contato vinculado
-                  } @else {
-                    contatos vinculados
-                  }
-                </p>
-              </div>
-
-              <div class="acoes acoes-projeto">
-                <button
-                  type="button"
-                  class="botao secundario"
+              >
+                <input
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
                   [disabled]="
+                        enviandoCapaId() !== null ||
+                        removendoCapaId() !== null
+                      "
+                  (change)="enviarCapa(projeto, $event)"
+                />
+
+                <span>
+                  @if (projeto.capa_caminho) { Trocar } @else { Adicionar capa }
+                </span>
+              </label>
+
+              @if (projeto.capa_caminho) {
+              <button
+                type="button"
+                class="remover-capa"
+                [disabled]="
+                        enviandoCapaId() !== null ||
+                        removendoCapaId() !== null
+                      "
+                (click)="removerCapa(projeto)"
+              >
+                Remover
+              </button>
+              }
+            </div>
+          </div>
+
+          <div class="identificacao-projeto">
+            <span class="tipo-projeto"> {{ projeto.tipo }} </span>
+
+            <h3>{{ projeto.nome }}</h3>
+
+            <p>
+              {{ projeto.membros.length }} @if (projeto.membros.length === 1) {
+              contato vinculado } @else { contatos vinculados }
+            </p>
+          </div>
+
+          <div class="acoes acoes-projeto">
+            <a
+              class="botao primario abrir-projeto"
+              [routerLink]="['/projetos', projeto.id]"
+            >
+              Abrir projeto
+            </a>
+
+            <button
+              type="button"
+              class="botao secundario"
+              [disabled]="
                     enviandoCapaId() === projeto.id ||
                     removendoCapaId() === projeto.id
                   "
-                  (click)="editarProjeto(projeto)"
+              (click)="editarProjeto(projeto)"
+            >
+              Editar
+            </button>
+
+            <button
+              type="button"
+              class="botao excluir"
+              [disabled]="
+                    excluindoProjetoId() === projeto.id
+                    || enviandoCapaId() === projeto.id
+                    || removendoCapaId() === projeto.id
+                  "
+              (click)="excluirProjeto(projeto)"
+            >
+              @if ( excluindoProjetoId() === projeto.id ) { Excluindo... } @else
+              { Excluir }
+            </button>
+          </div>
+        </header>
+
+        <div class="membros">
+          <div class="titulo-membros">
+            <div>
+              <span>Equipe e contatos</span>
+              <h4>Membros e responsáveis</h4>
+            </div>
+
+            <button
+              type="button"
+              class="botao adicionar-contato"
+              (click)="abrirNovoMembro(projeto.id)"
+            >
+              Adicionar contato
+            </button>
+          </div>
+
+          @if (projeto.membros.length === 0) {
+          <div class="sem-membros">
+            <span aria-hidden="true"></span>
+            <p>Nenhum contato vinculado.</p>
+          </div>
+          } @else {
+          <div class="lista-membros">
+            @for ( membro of projeto.membros; track membro.id ) {
+            <div class="membro" [class.membro-inativo]="!membro.ativo">
+              <span class="avatar-membro" aria-hidden="true"></span>
+
+              <div class="dados-membro">
+                <strong> {{ membro.contato.nome }} </strong>
+
+                <span>{{ membro.papel }}</span>
+              </div>
+
+              @if (!membro.ativo) {
+              <small class="situacao-membro"> Inativo </small>
+              }
+
+              <div class="acoes-membro">
+                <button
+                  type="button"
+                  class="botao acao-texto"
+                  (click)="
+                            editarMembro(projeto.id, membro)
+                          "
                 >
                   Editar
                 </button>
 
                 <button
                   type="button"
-                  class="botao excluir"
+                  class="botao acao-texto remover"
                   [disabled]="
-                    excluindoProjetoId() === projeto.id
-                    || enviandoCapaId() === projeto.id
-                    || removendoCapaId() === projeto.id
-                  "
-                  (click)="excluirProjeto(projeto)"
-                >
-                  @if (
-                    excluindoProjetoId() === projeto.id
-                  ) {
-                    Excluindo...
-                  } @else {
-                    Excluir
-                  }
-                </button>
-              </div>
-            </header>
-
-            <div class="membros">
-              <div class="titulo-membros">
-                <div>
-                  <span>Equipe e contatos</span>
-                  <h4>Membros e responsáveis</h4>
-                </div>
-
-                <button
-                  type="button"
-                  class="botao adicionar-contato"
-                  (click)="abrirNovoMembro(projeto.id)"
-                >
-                  Adicionar contato
-                </button>
-              </div>
-
-              @if (projeto.membros.length === 0) {
-                <div class="sem-membros">
-                  <span aria-hidden="true"></span>
-                  <p>Nenhum contato vinculado.</p>
-                </div>
-              } @else {
-                <div class="lista-membros">
-                  @for (
-                    membro of projeto.membros;
-                    track membro.id
-                  ) {
-                    <div
-                      class="membro"
-                      [class.membro-inativo]="!membro.ativo"
-                    >
-                      <span
-                        class="avatar-membro"
-                        aria-hidden="true"
-                      ></span>
-
-                      <div class="dados-membro">
-                        <strong>
-                          {{ membro.contato.nome }}
-                        </strong>
-
-                        <span>{{ membro.papel }}</span>
-                      </div>
-
-                      @if (!membro.ativo) {
-                        <small class="situacao-membro">
-                          Inativo
-                        </small>
-                      }
-
-                      <div class="acoes-membro">
-                        <button
-                          type="button"
-                          class="botao acao-texto"
-                          (click)="
-                            editarMembro(projeto.id, membro)
-                          "
-                        >
-                          Editar
-                        </button>
-
-                        <button
-                          type="button"
-                          class="botao acao-texto remover"
-                          [disabled]="
                             excluindoMembroId() === membro.id
                           "
-                          (click)="removerMembro(membro)"
-                        >
-                          @if (
-                            excluindoMembroId() === membro.id
-                          ) {
-                            Removendo...
-                          } @else {
-                            Remover
-                          }
-                        </button>
-                      </div>
-                    </div>
-                  }
-                </div>
-              }
-
-              @if (projetoMembroId() === projeto.id) {
-                <form
-                  class="formulario-membro"
-                  [formGroup]="formularioMembro"
-                  (ngSubmit)="salvarMembro(projeto.id)"
+                  (click)="removerMembro(membro)"
                 >
-                  <div class="cabecalho-formulario-membro">
-                    <div>
-                      <span>VÍNCULO</span>
-                      <h4>
-                        @if (membroEditandoId()) {
-                          Editar contato
-                        } @else {
-                          Adicionar contato
-                        }
-                      </h4>
-                    </div>
-
-                    <button
-                      type="button"
-                      class="fechar-formulario"
-                      aria-label="Fechar formulário"
-                      [disabled]="salvandoMembro()"
-                      (click)="fecharFormularioMembro()"
-                    >
-                      ×
-                    </button>
-                  </div>
-
-                  <div class="campos-membro">
-                    <label>
-                      <span>Contato</span>
-
-                      <select formControlName="contato_id">
-                        <option value="">
-                          Selecione um contato
-                        </option>
-
-                        @for (
-                          contato of dadosContatos.contatos();
-                          track contato.id
-                        ) {
-                          <option [value]="contato.id">
-                            {{ contato.nome }}
-                          </option>
-                        }
-                      </select>
-                    </label>
-
-                    <label>
-                      <span>Papel</span>
-
-                      <input
-                        type="text"
-                        formControlName="papel"
-                        placeholder="Ex.: vocalista, produtor, empresário"
-                      />
-                    </label>
-
-                    <label class="campo-ativo">
-                      <input
-                        type="checkbox"
-                        formControlName="ativo"
-                      />
-
-                      <span>Vínculo ativo</span>
-                    </label>
-                  </div>
-
-                  <div class="acoes">
-                    <button
-                      type="button"
-                      class="botao secundario"
-                      [disabled]="salvandoMembro()"
-                      (click)="fecharFormularioMembro()"
-                    >
-                      Cancelar
-                    </button>
-
-                    <button
-                      type="submit"
-                      class="botao primario"
-                      [disabled]="salvandoMembro()"
-                    >
-                      @if (salvandoMembro()) {
-                        Salvando...
-                      } @else if (membroEditandoId()) {
-                        Salvar vínculo
-                      } @else {
-                        Adicionar
-                      }
-                    </button>
-                  </div>
-                </form>
-              }
+                  @if ( excluindoMembroId() === membro.id ) { Removendo... }
+                  @else { Remover }
+                </button>
+              </div>
             </div>
-          </article>
-        }
-      </div>
+            }
+          </div>
+          } @if (projetoMembroId() === projeto.id) {
+          <form
+            class="formulario-membro"
+            [formGroup]="formularioMembro"
+            (ngSubmit)="salvarMembro(projeto.id)"
+          >
+            <div class="cabecalho-formulario-membro">
+              <div>
+                <span>VÍNCULO</span>
+                <h4>
+                  @if (membroEditandoId()) { Editar contato } @else { Adicionar
+                  contato }
+                </h4>
+              </div>
+
+              <button
+                type="button"
+                class="fechar-formulario"
+                aria-label="Fechar formulário"
+                [disabled]="salvandoMembro()"
+                (click)="fecharFormularioMembro()"
+              >
+                ×
+              </button>
+            </div>
+
+            <div class="campos-membro">
+              <label>
+                <span>Contato</span>
+
+                <select formControlName="contato_id">
+                  <option value="">Selecione um contato</option>
+
+                  @for ( contato of dadosContatos.contatos(); track contato.id )
+                  {
+                  <option [value]="contato.id">{{ contato.nome }}</option>
+                  }
+                </select>
+              </label>
+
+              <label>
+                <span>Papel</span>
+
+                <input
+                  type="text"
+                  formControlName="papel"
+                  placeholder="Ex.: vocalista, produtor, empresário"
+                />
+              </label>
+
+              <label class="campo-ativo">
+                <input type="checkbox" formControlName="ativo" />
+
+                <span>Vínculo ativo</span>
+              </label>
+            </div>
+
+            <div class="acoes">
+              <button
+                type="button"
+                class="botao secundario"
+                [disabled]="salvandoMembro()"
+                (click)="fecharFormularioMembro()"
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="submit"
+                class="botao primario"
+                [disabled]="salvandoMembro()"
+              >
+                @if (salvandoMembro()) { Salvando... } @else if
+                (membroEditandoId()) { Salvar vínculo } @else { Adicionar }
+              </button>
+            </div>
+          </form>
+          }
+        </div>
+      </article>
+      }
+    </div>
     }
   </section>
 
-  <aside
-    id="formulario-projeto"
-    class="painel formulario-projeto"
-  >
+  <aside id="formulario-projeto" class="painel formulario-projeto">
     <div class="cabecalho-formulario">
       <p>PROJETO</p>
       <h2>
-        @if (projetoEditandoId()) {
-          Editar projeto
-        } @else {
-          Novo projeto
-        }
+        @if (projetoEditandoId()) { Editar projeto } @else { Novo projeto }
       </h2>
-      <span>
-        Use a classificação que fizer sentido para o seu catálogo.
-      </span>
+      <span> Use a classificação que fizer sentido para o seu catálogo. </span>
     </div>
 
-    <form
-      [formGroup]="formularioProjeto"
-      (ngSubmit)="salvarProjeto()"
-    >
+    <form [formGroup]="formularioProjeto" (ngSubmit)="salvarProjeto()">
       <div class="campos-projeto">
         <label>
           <span>Nome</span>
@@ -411,11 +332,9 @@
             placeholder="Nome artístico ou nome do grupo"
           />
 
-          @if (
-            formularioProjeto.controls.nome.touched &&
-            formularioProjeto.controls.nome.invalid
-          ) {
-            <small>Informe o nome do projeto.</small>
+          @if ( formularioProjeto.controls.nome.touched &&
+          formularioProjeto.controls.nome.invalid ) {
+          <small>Informe o nome do projeto.</small>
           }
         </label>
 
@@ -428,25 +347,23 @@
             placeholder="Ex.: solo, banda, dupla"
           />
 
-          @if (
-            formularioProjeto.controls.tipo.touched &&
-            formularioProjeto.controls.tipo.invalid
-          ) {
-            <small>Informe o tipo do projeto.</small>
+          @if ( formularioProjeto.controls.tipo.touched &&
+          formularioProjeto.controls.tipo.invalid ) {
+          <small>Informe o tipo do projeto.</small>
           }
         </label>
       </div>
 
       <div class="acoes">
         @if (projetoEditandoId()) {
-          <button
-            type="button"
-            class="botao secundario"
-            [disabled]="salvandoProjeto()"
-            (click)="cancelarEdicaoProjeto()"
-          >
-            Cancelar
-          </button>
+        <button
+          type="button"
+          class="botao secundario"
+          [disabled]="salvandoProjeto()"
+          (click)="cancelarEdicaoProjeto()"
+        >
+          Cancelar
+        </button>
         }
 
         <button
@@ -454,13 +371,8 @@
           class="botao primario"
           [disabled]="salvandoProjeto()"
         >
-          @if (salvandoProjeto()) {
-            Salvando...
-          } @else if (projetoEditandoId()) {
-            Salvar alterações
-          } @else {
-            Cadastrar projeto
-          }
+          @if (salvandoProjeto()) { Salvando... } @else if (projetoEditandoId())
+          { Salvar alterações } @else { Cadastrar projeto }
         </button>
       </div>
     </form>

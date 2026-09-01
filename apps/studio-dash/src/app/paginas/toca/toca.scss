@@ -1,0 +1,675 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+}
+
+.toca {
+  min-height: 100dvh;
+  background: #f4efdd;
+  color: #151714;
+
+  --accent: #4f7b61;
+  --on-accent: #ffffff;
+  --paper: #fbf8ec;
+  --ink: #151714;
+  --soft: #62675f;
+  --border: rgb(21 23 20 / 20%);
+}
+
+.marca-fleiva {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+
+  > span {
+    display: block;
+    width: 7.5rem;
+    height: 2rem;
+    background: currentColor;
+    mask:
+      url('/fleiva-brand-kit/mask/fleiva-wordmark-mask.png')
+      left center / contain no-repeat;
+    -webkit-mask:
+      url('/fleiva-brand-kit/mask/fleiva-wordmark-mask.png')
+      left center / contain no-repeat;
+  }
+
+  strong {
+    padding-left: 0.7rem;
+    border-left: 1px solid currentColor;
+    font-size: 0.55rem;
+    letter-spacing: 0.16em;
+  }
+}
+
+/* Início da Toca */
+
+.inicio-toca {
+  position: relative;
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
+  overflow: hidden;
+  padding:
+    1rem
+    clamp(1rem, 4vw, 4rem);
+  background:
+    linear-gradient(
+      120deg,
+      rgb(79 123 97 / 9%),
+      transparent 48%
+    ),
+    #f4efdd;
+  isolation: isolate;
+}
+
+.moire {
+  position: absolute;
+  z-index: -1;
+  right: -15rem;
+  bottom: -18rem;
+  width: min(60rem, 70vw);
+  aspect-ratio: 1;
+  background:
+    url('/fleiva-landing/moire-fleiva.svg')
+    center / contain no-repeat;
+  opacity: 0.18;
+}
+
+.cabecalho-toca,
+.cabecalho-estudio {
+  display: flex;
+  min-height: 4.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  border-bottom: 1px solid var(--ink);
+}
+
+.link-fleiva,
+.voltar-casa {
+  padding-bottom: 0.2rem;
+  border-bottom: 1px solid currentColor;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.apresentacao-toca {
+  display: grid;
+  flex: 1;
+  grid-template-columns:
+    minmax(0, 1.1fr)
+    minmax(22rem, 0.7fr);
+  align-items: center;
+  gap: clamp(3rem, 8vw, 9rem);
+  padding:
+    clamp(4rem, 9vw, 8rem)
+    0;
+}
+
+.texto-apresentacao {
+  > p:first-child {
+    color: #315441;
+    font-size: 0.6rem;
+    font-weight: 850;
+    letter-spacing: 0.16em;
+  }
+
+  h1 {
+    max-width: 12ch;
+    margin: 0;
+    font-size: clamp(3.2rem, 7vw, 7rem);
+    line-height: 0.9;
+    letter-spacing: -0.06em;
+  }
+
+  h1 strong {
+    display: block;
+    color: #4f7b61;
+    font: inherit;
+  }
+}
+
+.descricao {
+  max-width: 38rem;
+  margin: 2rem 0 0;
+  color: #454941;
+  font-size: 1.05rem;
+  line-height: 1.65;
+}
+
+.acoes-inicio {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 2.25rem;
+}
+
+.botao-demonstracao {
+  display: inline-flex;
+  min-height: 3.1rem;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 0.7rem 1rem;
+  background: #151714;
+  color: #f4efdd;
+  font-size: 0.72rem;
+  font-weight: 850;
+}
+
+.link-institucional {
+  padding-bottom: 0.2rem;
+  border-bottom: 1px solid currentColor;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.visor-toca {
+  background: #151714;
+  color: #f4efdd;
+  border: 1px solid #151714;
+  box-shadow:
+    0.4rem 0.4rem 0 #4f7b61,
+    0.75rem 0.75rem 0 #885f74;
+
+  header,
+  footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 2.8rem;
+    padding: 0.65rem 0.85rem;
+    font-size: 0.48rem;
+    font-weight: 850;
+    letter-spacing: 0.1em;
+  }
+
+  header {
+    border-bottom: 1px solid rgb(244 239 221 / 20%);
+  }
+
+  footer {
+    border-top: 1px solid rgb(244 239 221 / 20%);
+  }
+
+  footer strong {
+    color: #82a58e;
+    font-size: inherit;
+  }
+}
+
+.visor-conteudo {
+  position: relative;
+  display: grid;
+  min-height: 22rem;
+  place-items: center;
+  overflow: hidden;
+  background:
+    linear-gradient(
+      135deg,
+      #365d45,
+      #1f392a
+    );
+
+  &::after {
+    position: absolute;
+    right: -7rem;
+    width: 22rem;
+    aspect-ratio: 1;
+    background:
+      url('/fleiva-landing/moire-fleiva.svg')
+      center / contain no-repeat;
+    opacity: 0.28;
+    filter: brightness(0) invert(1);
+    content: '';
+  }
+
+  > div {
+    position: absolute;
+    z-index: 2;
+    bottom: 1.2rem;
+    left: 1.2rem;
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  small,
+  span {
+    color: rgb(244 239 221 / 55%);
+    font-size: 0.46rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+  }
+
+  strong {
+    font-size: 1.1rem;
+  }
+}
+
+.monograma {
+  position: relative;
+  z-index: 2;
+  display: block;
+  width: 7rem;
+  aspect-ratio: 1;
+  background: #f4efdd;
+  mask:
+    url('/fleiva-brand-kit/mask/fleiva-monogram-mask.png')
+    center / contain no-repeat;
+  -webkit-mask:
+    url('/fleiva-brand-kit/mask/fleiva-monogram-mask.png')
+    center / contain no-repeat;
+}
+
+.rodape-inicio {
+  display: flex;
+  min-height: 3rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-top: 1px solid #151714;
+  color: #62675f;
+  font-size: 0.48rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+/* Página do estúdio */
+
+.pagina-estudio {
+  width: min(78rem, calc(100% - 2rem));
+  margin: 0 auto;
+}
+
+.identidade-estudio {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(1.25rem, 4vw, 3rem);
+  padding:
+    clamp(3rem, 7vw, 6rem)
+    0;
+  border-bottom: 1px solid var(--border);
+
+  > div:last-child > p {
+    margin-bottom: 0.6rem;
+    color: var(--accent);
+    font-size: 0.58rem;
+    font-weight: 850;
+    letter-spacing: 0.14em;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(2.8rem, 7vw, 6rem);
+    line-height: 0.94;
+    letter-spacing: -0.055em;
+  }
+
+  > div:last-child > span {
+    display: block;
+    margin-top: 0.7rem;
+    color: var(--soft);
+  }
+}
+
+.logo-estudio {
+  display: grid;
+  width: clamp(5.5rem, 12vw, 9rem);
+  aspect-ratio: 1;
+  place-items: center;
+  overflow: hidden;
+  background: var(--accent);
+  color: var(--on-accent);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  span {
+    font-size: 2rem;
+    font-weight: 850;
+  }
+}
+
+.trabalhos {
+  padding:
+    clamp(3rem, 7vw, 6rem)
+    0;
+}
+
+.titulo-trabalhos {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem;
+  margin-bottom: 2rem;
+
+  p {
+    margin-bottom: 0.5rem;
+    color: var(--accent);
+    font-size: 0.58rem;
+    font-weight: 850;
+    letter-spacing: 0.14em;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    letter-spacing: -0.04em;
+  }
+
+  > span {
+    display: grid;
+    width: 2.3rem;
+    aspect-ratio: 1;
+    place-items: center;
+    background: var(--accent);
+    color: var(--on-accent);
+    font-family: monospace;
+    font-size: 0.65rem;
+    font-weight: 850;
+  }
+}
+
+.grade-albuns {
+  display: grid;
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+  gap: clamp(1.25rem, 3vw, 2rem);
+}
+
+.album {
+  min-width: 0;
+  color: inherit;
+}
+
+.capa-album {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: var(--accent);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 180ms ease;
+  }
+
+  > span {
+    display: grid;
+    width: 100%;
+    height: 100%;
+    place-items: center;
+    color: var(--on-accent);
+    font-size: 3rem;
+    font-weight: 850;
+  }
+
+  i {
+    position: absolute;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    display: grid;
+    width: 2.3rem;
+    aspect-ratio: 1;
+    place-items: center;
+    background: #151714;
+    color: #f4efdd;
+    font-style: normal;
+    opacity: 0;
+    transform: translateY(0.4rem);
+    transition:
+      opacity 150ms ease,
+      transform 150ms ease;
+  }
+}
+
+.album:hover {
+  .capa-album img {
+    transform: scale(1.025);
+  }
+
+  .capa-album i {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dados-album {
+  padding-top: 1rem;
+
+  > div:first-child {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    color: var(--accent);
+    font-size: 0.52rem;
+    font-weight: 850;
+    letter-spacing: 0.09em;
+  }
+
+  h3 {
+    margin: 0.65rem 0 0.2rem;
+    font-size: 1.2rem;
+  }
+
+  > p {
+    margin: 0;
+    color: var(--soft);
+    font-size: 0.75rem;
+  }
+}
+
+.descricao-album {
+  display: -webkit-box;
+  margin-top: 0.8rem;
+  overflow: hidden;
+  color: var(--soft);
+  font-size: 0.7rem;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.recursos-album {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.9rem;
+
+  span {
+    padding: 0.3rem 0.45rem;
+    background:
+      color-mix(
+        in srgb,
+        var(--accent) 10%,
+        transparent
+      );
+    color: var(--accent);
+    font-size: 0.52rem;
+    font-weight: 800;
+  }
+}
+
+.sem-trabalhos {
+  padding: 4rem 1rem;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+
+  p {
+    color: var(--soft);
+  }
+
+  a {
+    display: inline-block;
+    padding-bottom: 0.2rem;
+    border-bottom: 1px solid currentColor;
+    font-size: 0.72rem;
+    font-weight: 800;
+  }
+}
+
+.rodape-estudio {
+  display: flex;
+  min-height: 5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-top: 1px solid var(--border);
+  color: var(--soft);
+  font-size: 0.6rem;
+
+  a {
+    padding-bottom: 0.15rem;
+    border-bottom: 1px solid currentColor;
+    font-weight: 800;
+  }
+}
+
+/* Estados */
+
+.estado {
+  display: grid;
+  min-height: 100dvh;
+  place-content: center;
+  justify-items: center;
+  padding: 2rem;
+  text-align: center;
+
+  h1 {
+    margin: 0.5rem 0;
+    font-size: clamp(2.5rem, 8vw, 5rem);
+  }
+
+  > p {
+    max-width: 34rem;
+    color: var(--soft);
+  }
+
+  .rotulo {
+    color: #4f7b61;
+    font-size: 0.58rem;
+    font-weight: 850;
+    letter-spacing: 0.14em;
+  }
+}
+
+.marca-estado {
+  display: block;
+  width: 6rem;
+  aspect-ratio: 1;
+  background: #4f7b61;
+  mask:
+    url('/fleiva-brand-kit/mask/fleiva-monogram-mask.png')
+    center / contain no-repeat;
+  -webkit-mask:
+    url('/fleiva-brand-kit/mask/fleiva-monogram-mask.png')
+    center / contain no-repeat;
+}
+
+.acoes-estado {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+
+  button,
+  a {
+    min-height: 2.75rem;
+    padding: 0.65rem 0.9rem;
+    background: transparent;
+    color: #151714;
+    border: 1px solid #151714;
+    font: inherit;
+    font-size: 0.7rem;
+    font-weight: 800;
+  }
+
+  button {
+    background: #151714;
+    color: #f4efdd;
+  }
+}
+
+@media (max-width: 58rem) {
+  .apresentacao-toca {
+    grid-template-columns: 1fr;
+  }
+
+  .visor-toca {
+    width: min(32rem, 100%);
+  }
+
+  .grade-albuns {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 38rem) {
+  .marca-fleiva strong {
+    display: none;
+  }
+
+  .inicio-toca {
+    padding-inline: 1rem;
+  }
+
+  .apresentacao-toca {
+    padding: 4rem 0;
+  }
+
+  .texto-apresentacao h1 {
+    font-size: clamp(3rem, 15vw, 5rem);
+  }
+
+  .acoes-inicio {
+    align-items: stretch;
+    flex-direction: column;
+
+    a {
+      width: 100%;
+      text-align: center;
+    }
+  }
+
+  .visor-conteudo {
+    min-height: 17rem;
+  }
+
+  .rodape-inicio span:nth-child(2) {
+    display: none;
+  }
+
+  .pagina-estudio {
+    width: min(100% - 1.25rem, 78rem);
+  }
+
+  .cabecalho-estudio {
+    min-height: 4rem;
+  }
+
+  .identidade-estudio {
+    grid-template-columns: 1fr;
+  }
+
+  .logo-estudio {
+    width: 5.5rem;
+  }
+
+  .grade-albuns {
+    grid-template-columns: 1fr;
+  }
+
+  .rodape-estudio {
+    align-items: flex-start;
+    flex-direction: column;
+    justify-content: center;
+  }
+}

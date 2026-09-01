@@ -5,7 +5,10 @@ import {
   signal,
 } from '@angular/core';
 import { ClienteSupabase } from './cliente-supabase';
-import type { Database } from './tipos-banco';
+import type {
+  Database,
+  Json,
+} from './tipos-banco';
 
 export type Estudio =
   Database['public']['Tables']['estudios']['Row'];
@@ -13,6 +16,32 @@ export type Estudio =
 export const COR_PADRAO_ESTUDIO = '#9aa653' ;
 export const COR_TEXTO_ESCURA = '#07130c';
 export const COR_TEXTO_CLARA = '#ffffff';
+
+export const TEMAS_PAGINA_PUBLICA = [
+  'grafite',
+  'creme',
+  'ameixa',
+] as const;
+
+export type TemaPaginaPublica =
+  (typeof TEMAS_PAGINA_PUBLICA)[number];
+
+export const TEMA_PADRAO_PAGINA_PUBLICA:
+  TemaPaginaPublica = 'grafite';
+
+export const PROVEDORES_EMBED_PUBLICO = [
+  'spotify',
+  'youtube',
+  'soundcloud',
+] as const;
+
+export type ProvedorEmbedPublico =
+  (typeof PROVEDORES_EMBED_PUBLICO)[number];
+
+export interface EmbedPublico {
+  provedor: ProvedorEmbedPublico;
+  url: string;
+}
 
 const BUCKET_LOGOS = 'logos-estudios';
 const LIMITE_LOGO_BYTES = 5_000_000;
@@ -28,6 +57,7 @@ export interface ConfiguracaoPublicaEstudio {
   whatsapp_publico: string | null;
   instagram: string | null;
   landing_publicada: boolean;
+  participar_da_casa: boolean;
 }
 export function normalizarCorEstudio(
   valor: string | null | undefined,
@@ -37,6 +67,19 @@ export function normalizarCorEstudio(
   return cor && /^#[0-9a-f]{6}$/.test(cor)
     ? cor
     : null;
+}
+
+export function normalizarTemaPaginaPublica(
+  valor: string | null | undefined,
+): TemaPaginaPublica {
+  if (
+    valor === 'creme' ||
+    valor === 'ameixa'
+  ) {
+    return valor;
+  }
+
+  return TEMA_PADRAO_PAGINA_PUBLICA;
 }
 
 export function obterCorContrasteEstudio(
@@ -66,6 +109,17 @@ export function obterCorContrasteEstudio(
     ? COR_TEXTO_ESCURA
     : COR_TEXTO_CLARA;
 }
+export function normalizarSlugEstudio(
+  valor: string,
+): string {
+  return valor
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLocaleLowerCase('pt-BR')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
 
 @Injectable({
   providedIn: 'root',
@@ -91,6 +145,21 @@ export class DadosEstudio {
     this.salvandoInterno.asReadonly();
 
   readonly erro = this.erroInterno.asReadonly();
+  readonly possuiModulos = computed(
+  () =>
+    (this.estudioInterno()?.modulos ?? []).length > 0,
+);
+readonly embedsPublicos = computed(() =>
+  obterEmbedsPublicos(
+    this.estudioInterno()?.embeds_publicos,
+  ),
+);
+
+possuiModulo(modulo: string): boolean {
+  return (
+    this.estudioInterno()?.modulos ?? []
+  ).includes(modulo);
+}
 
   readonly corPrincipal = computed(() =>
     normalizarCorEstudio(
@@ -100,6 +169,12 @@ export class DadosEstudio {
 
   readonly corTextoPrincipal = computed(() =>
     obterCorContrasteEstudio(this.corPrincipal()),
+  );
+
+  readonly temaPaginaPublica = computed(() =>
+    normalizarTemaPaginaPublica(
+      this.estudioInterno()?.tema_pagina_publica,
+    ),
   );
 
   readonly logoUrl = computed(() => {
@@ -181,7 +256,138 @@ export class DadosEstudio {
       this.salvandoInterno.set(false);
     }
   }
+async atualizarSlug(
+  slug: string,
+): Promise<Estudio> {
+  const slugNormalizado =
+    normalizarSlugEstudio(slug);
 
+  if (
+    !slugNormalizado ||
+    slugNormalizado.length > 120
+  ) {
+    throw new Error(
+      'Informe um endereço válido para a página.',
+    );
+  }
+
+  if (slugNormalizado === 'estudio') {
+    throw new Error(
+      'Este endereço é reservado pelo Flêiva.',
+    );
+  }
+
+  this.salvandoInterno.set(true);
+
+  try {
+    const estudioId =
+      await this.obterEstudioId();
+
+    const { data, error } =
+      await this.clienteSupabase.cliente
+        .from('estudios')
+        .update({
+          slug: slugNormalizado,
+        })
+        .eq('id', estudioId)
+        .select()
+        .single();
+
+    if (error) {
+      if (error.code === '23505') {
+        throw new Error(
+          'Este endereço já está sendo usado por outro estúdio.',
+        );
+      }
+
+      throw error;
+    }
+
+    this.estudioInterno.set(data);
+
+    return data;
+  } finally {
+    this.salvandoInterno.set(false);
+  }
+}
+async atualizarEmbedsPublicos(
+  embeds: readonly EmbedPublico[],
+): Promise<Estudio> {
+  if (embeds.length > 4) {
+    throw new Error(
+      'Adicione no máximo quatro conteúdos externos.',
+    );
+  }
+
+  const normalizados = embeds.map((embed) => {
+    const url = normalizarUrlEmbedPublico(
+      embed.provedor,
+      embed.url,
+    );
+
+    if (!url) {
+      throw new Error(
+        `O endereço informado para ${formatarProvedorEmbed(
+          embed.provedor,
+        )} não é válido.`,
+      );
+    }
+
+    return {
+      provedor: embed.provedor,
+      url,
+    };
+  });
+
+  const identificadores = new Set(
+    normalizados.map(
+      (embed) =>
+        `${embed.provedor}:${embed.url}`,
+    ),
+  );
+
+  if (
+    identificadores.size !== normalizados.length
+  ) {
+    throw new Error(
+      'O mesmo conteúdo foi adicionado mais de uma vez.',
+    );
+  }
+
+  const embedsJson: Json = normalizados.map(
+    (embed): Json => ({
+      provedor: embed.provedor,
+      url: embed.url,
+    }),
+  );
+
+  this.salvandoInterno.set(true);
+
+  try {
+    const estudioId =
+      await this.obterEstudioId();
+
+    const { data, error } =
+      await this.clienteSupabase.cliente
+        .from('estudios')
+        .update({
+          embeds_publicos: embedsJson,
+        })
+        .eq('id', estudioId)
+        .select()
+        .single();
+
+    if (error) {
+      throw error;
+    }
+
+    this.estudioInterno.set(data);
+
+    return data;
+  } finally {
+    this.salvandoInterno.set(false);
+  }
+}
   async atualizarCorPrincipal(
     cor: string | null,
   ): Promise<Estudio> {
@@ -205,6 +411,36 @@ export class DadosEstudio {
           .from('estudios')
           .update({
             cor_principal: corNormalizada,
+          })
+          .eq('id', estudioId)
+          .select()
+          .single();
+
+      if (error) {
+        throw error;
+      }
+
+      this.estudioInterno.set(data);
+
+      return data;
+    } finally {
+      this.salvandoInterno.set(false);
+    }
+  }
+
+  async atualizarTemaPaginaPublica(
+    tema: TemaPaginaPublica,
+  ): Promise<Estudio> {
+    this.salvandoInterno.set(true);
+
+    try {
+      const estudioId = await this.obterEstudioId();
+
+      const { data, error } =
+        await this.clienteSupabase.cliente
+          .from('estudios')
+          .update({
+            tema_pagina_publica: tema,
           })
           .eq('id', estudioId)
           .select()
@@ -250,6 +486,10 @@ export class DadosEstudio {
           ),
           landing_publicada:
             dados.landing_publicada,
+          participar_da_casa:
+            dados.landing_publicada
+              ? dados.participar_da_casa
+              : false,
         })
         .eq('id', estudioId)
         .select()
@@ -268,48 +508,92 @@ export class DadosEstudio {
 }
 
 
-  async enviarLogo(arquivo: File): Promise<Estudio> {
-    this.validarLogo(arquivo);
-    this.salvandoInterno.set(true);
+  async enviarLogo(
+  arquivo: File,
+): Promise<Estudio> {
+  this.validarLogo(arquivo);
 
-    try {
-      const estudioId = await this.obterEstudioId();
-      const caminho = `${estudioId}/logo`;
+  const caminhoAnterior =
+    this.estudioInterno()?.logo_caminho ?? null;
 
-      const { error: erroUpload } =
+  this.salvandoInterno.set(true);
+
+  try {
+    const estudioId =
+      await this.obterEstudioId();
+
+    const extensao =
+      this.obterExtensaoLogo(arquivo.type);
+
+    const caminhoNovo =
+      `${estudioId}/logo-` +
+      `${crypto.randomUUID()}.${extensao}`;
+
+    const { error: erroUpload } =
+      await this.clienteSupabase.cliente.storage
+        .from(BUCKET_LOGOS)
+        .upload(caminhoNovo, arquivo, {
+          cacheControl: '31536000',
+          contentType: arquivo.type,
+          upsert: false,
+        });
+
+    if (erroUpload) {
+      throw erroUpload;
+    }
+
+    const {
+      data,
+      error: erroAtualizacao,
+    } = await this.clienteSupabase.cliente
+      .from('estudios')
+      .update({
+        logo_caminho: caminhoNovo,
+      })
+      .eq('id', estudioId)
+      .select()
+      .single();
+
+    if (erroAtualizacao) {
+      const { error: erroLimpeza } =
         await this.clienteSupabase.cliente.storage
           .from(BUCKET_LOGOS)
-          .upload(caminho, arquivo, {
-            cacheControl: '3600',
-            contentType: arquivo.type,
-            upsert: true,
-          });
+          .remove([caminhoNovo]);
 
-      if (erroUpload) {
-        throw erroUpload;
+      if (erroLimpeza) {
+        console.error(
+          'Não foi possível remover o novo logo após a falha.',
+          erroLimpeza,
+        );
       }
 
-      const { data, error: erroAtualizacao } =
-        await this.clienteSupabase.cliente
-          .from('estudios')
-          .update({
-            logo_caminho: caminho,
-          })
-          .eq('id', estudioId)
-          .select()
-          .single();
-
-      if (erroAtualizacao) {
-        throw erroAtualizacao;
-      }
-
-      this.estudioInterno.set(data);
-
-      return data;
-    } finally {
-      this.salvandoInterno.set(false);
+      throw erroAtualizacao;
     }
+
+    this.estudioInterno.set(data);
+
+    if (
+      caminhoAnterior &&
+      caminhoAnterior !== caminhoNovo
+    ) {
+      const { error: erroRemocaoAnterior } =
+        await this.clienteSupabase.cliente.storage
+          .from(BUCKET_LOGOS)
+          .remove([caminhoAnterior]);
+
+      if (erroRemocaoAnterior) {
+        console.warn(
+          'O logo foi atualizado, mas o arquivo anterior não pôde ser removido.',
+          erroRemocaoAnterior,
+        );
+      }
+    }
+
+    return data;
+  } finally {
+    this.salvandoInterno.set(false);
   }
+}
 
   async removerLogo(): Promise<Estudio> {
     const estudioAtual = this.estudioInterno();
@@ -370,7 +654,7 @@ private normalizarTextoOpcional(
     if (arquivo.size <= 0) {
       throw new Error(
         'Selecione um arquivo de imagem válido.',
-      );
+      )
     }
 
     if (arquivo.size > LIMITE_LOGO_BYTES) {
@@ -385,6 +669,25 @@ private normalizarTextoOpcional(
       );
     }
   }
+  private obterExtensaoLogo(
+  tipoMime: string,
+): string {
+  if (tipoMime === 'image/png') {
+    return 'png';
+  }
+
+  if (tipoMime === 'image/jpeg') {
+    return 'jpg';
+  }
+
+  if (tipoMime === 'image/webp') {
+    return 'webp';
+  }
+
+  throw new Error(
+    'Use uma imagem PNG, JPEG ou WebP.',
+  );
+}
 
   private async obterEstudioId(): Promise<string> {
     const {
@@ -411,6 +714,206 @@ private normalizarTextoOpcional(
 
     return 'Não foi possível carregar o perfil do estúdio.';
   }
+}
+
+export function normalizarUrlEmbedPublico(
+  provedor: ProvedorEmbedPublico,
+  valor: string,
+): string | null {
+  let url: URL;
+
+  try {
+    url = new URL(valor.trim());
+  } catch {
+    return null;
+  }
+
+  if (url.protocol !== 'https:') {
+    return null;
+  }
+
+  if (provedor === 'spotify') {
+    return normalizarUrlSpotify(url);
+  }
+
+  if (provedor === 'youtube') {
+    return normalizarUrlYoutube(url);
+  }
+
+  return normalizarUrlSoundCloud(url);
+}
+
+export function obterEmbedsPublicos(
+  valor: Json | null | undefined,
+): EmbedPublico[] {
+  if (!Array.isArray(valor)) {
+    return [];
+  }
+
+  const embeds: EmbedPublico[] = [];
+
+  for (const item of valor.slice(0, 4)) {
+    if (
+      typeof item !== 'object' ||
+      item === null ||
+      Array.isArray(item)
+    ) {
+      continue;
+    }
+
+    const provedor = item['provedor'];
+    const urlRecebida = item['url'];
+
+    if (
+      !provedorEmbedValido(provedor) ||
+      typeof urlRecebida !== 'string'
+    ) {
+      continue;
+    }
+
+    const url = normalizarUrlEmbedPublico(
+      provedor,
+      urlRecebida,
+    );
+
+    if (url) {
+      embeds.push({
+        provedor,
+        url,
+      });
+    }
+  }
+
+  return embeds;
+}
+
+function provedorEmbedValido(
+  valor: unknown,
+): valor is ProvedorEmbedPublico {
+  return (
+    valor === 'spotify' ||
+    valor === 'youtube' ||
+    valor === 'soundcloud'
+  );
+}
+
+function normalizarUrlSpotify(
+  url: URL,
+): string | null {
+  if (url.hostname !== 'open.spotify.com') {
+    return null;
+  }
+
+  const partes = url.pathname
+    .split('/')
+    .filter(Boolean);
+
+  if (partes[0]?.startsWith('intl-')) {
+    partes.shift();
+  }
+
+  const [tipo, identificador] = partes;
+
+  const tiposPermitidos = new Set([
+    'album',
+    'artist',
+    'episode',
+    'playlist',
+    'show',
+    'track',
+  ]);
+
+  if (
+    !tipo ||
+    !identificador ||
+    !tiposPermitidos.has(tipo) ||
+    !/^[a-zA-Z0-9]+$/.test(identificador)
+  ) {
+    return null;
+  }
+
+  return `https://open.spotify.com/${tipo}/${identificador}`;
+}
+
+function normalizarUrlYoutube(
+  url: URL,
+): string | null {
+  const hostname = url.hostname
+    .toLocaleLowerCase()
+    .replace(/^www\./, '');
+
+  let identificador = '';
+
+  if (hostname === 'youtu.be') {
+    identificador =
+      url.pathname.split('/').filter(Boolean)[0] ?? '';
+  } else if (
+    hostname === 'youtube.com' ||
+    hostname === 'music.youtube.com'
+  ) {
+    if (url.pathname === '/watch') {
+      identificador =
+        url.searchParams.get('v') ?? '';
+    } else {
+      const correspondencia = url.pathname.match(
+        /^\/(?:embed|shorts)\/([^/]+)/,
+      );
+
+      identificador =
+        correspondencia?.[1] ?? '';
+    }
+  }
+
+  if (
+    !/^[a-zA-Z0-9_-]{11}$/.test(
+      identificador,
+    )
+  ) {
+    return null;
+  }
+
+  return `https://www.youtube.com/watch?v=${identificador}`;
+}
+
+function normalizarUrlSoundCloud(
+  url: URL,
+): string | null {
+  const hostname = url.hostname
+    .toLocaleLowerCase()
+    .replace(/^www\./, '');
+
+  if (hostname !== 'soundcloud.com') {
+    return null;
+  }
+
+  const partes = url.pathname
+    .split('/')
+    .filter(Boolean);
+
+  if (partes.length < 2) {
+    return null;
+  }
+
+  return `https://soundcloud.com/${partes
+    .map((parte) => encodeURIComponent(
+      decodeURIComponent(parte),
+    ))
+    .join('/')}`;
+}
+
+function formatarProvedorEmbed(
+  provedor: ProvedorEmbedPublico,
+): string {
+  const nomes: Record<
+    ProvedorEmbedPublico,
+    string
+  > = {
+    spotify: 'Spotify',
+    youtube: 'YouTube',
+    soundcloud: 'SoundCloud',
+  };
+
+  return nomes[provedor];
 }
 
 function calcularLuminancia(cor: string): number {

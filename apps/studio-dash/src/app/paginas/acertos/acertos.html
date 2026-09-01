@@ -1,4 +1,7 @@
-<main class="pagina">
+<main
+  class="pagina"
+  [class.criacao-aberta]="tipoCriacao() !== null"
+>
   <header class="cabecalho">
     <div>
       <p class="secao">DINHEIRO</p>
@@ -8,11 +11,25 @@
         jeito.
       </p>
     </div>
+
+    <button
+      type="button"
+      class="botao-novo-acerto"
+      [attr.aria-expanded]="tipoCriacao() !== null"
+      aria-controls="criacao-acerto"
+      (click)="alternarCriacao()"
+    >
+      @if (tipoCriacao()) {
+        Fechar criação
+      } @else {
+        Novo acerto
+      }
+    </button>
   </header>
 
   <section class="resumos">
     <article class="resumo resumo-receber">
-      <span>Falta receber</span>
+      <span>A receber</span>
       <strong>
         {{
           formatarMoeda(
@@ -22,27 +39,18 @@
       </strong>
     </article>
 
-    <article class="resumo resumo-recebido">
-      <span>Já entrou</span>
-      <strong>
-        {{
-          formatarMoeda(
-            dadosAcertos.totalRecebido()
-          )
-        }}
-      </strong>
-    </article>
-
-    <article class="resumo resumo-credito">
-      <span>Crédito de clientes</span>
-      <strong>
-        {{
-          formatarMoeda(
-            dadosAcertos.totalEmCredito()
-          )
-        }}
-      </strong>
-    </article>
+    @if (dadosAcertos.totalEmCredito() > 0) {
+      <article class="resumo resumo-credito">
+        <span>Crédito de clientes</span>
+        <strong>
+          {{
+            formatarMoeda(
+              dadosAcertos.totalEmCredito()
+            )
+          }}
+        </strong>
+      </article>
+    }
   </section>
 
   <div class="retornos-pagina">
@@ -59,191 +67,244 @@
     }
   </div>
 
-  <section class="grade-criacao">
-    <article class="painel">
-      <div class="titulo-painel">
-        <div>
-          <h2>Usar um agendamento</h2>
-          <p>
-            Serviços, quantidades e preços são preenchidos
+  @if (tipoCriacao(); as tipo) {
+    <aside
+      id="criacao-acerto"
+      class="grade-criacao"
+    >
+      <article class="painel painel-criacao">
+        <div class="cabecalho-criacao">
+          <div>
+            <p>Novo acerto</p>
+            <h2>
+              @if (tipo === 'agendamento') {
+                Usar um agendamento
+              } @else {
+                Criar acerto livre
+              }
+            </h2>
+          </div>
+
+          <button
+            type="button"
+            class="botao-fechar-criacao"
+            aria-label="Fechar criação"
+            (click)="fecharCriacao()"
+          >
+            ×
+          </button>
+        </div>
+
+        <div class="tipos-criacao" aria-label="Tipo de acerto">
+          <button
+            type="button"
+            [class.ativo]="tipo === 'agendamento'"
+            [attr.aria-pressed]="tipo === 'agendamento'"
+            (click)="selecionarTipoCriacao('agendamento')"
+          >
+            Do agendamento
+          </button>
+
+          <button
+            type="button"
+            [class.ativo]="tipo === 'manual'"
+            [attr.aria-pressed]="tipo === 'manual'"
+            (click)="selecionarTipoCriacao('manual')"
+          >
+            Acerto livre
+          </button>
+        </div>
+
+        @if (tipo === 'agendamento') {
+          <p class="ajuda-criacao">
+            Serviços, quantidades e preços serão preenchidos
             automaticamente.
           </p>
-        </div>
-      </div>
 
-      <form
-        [formGroup]="formularioAgendamento"
-        (ngSubmit)="gerarDoAgendamento()"
-      >
-        <label>
-          <span>Agendamento</span>
+          <form
+            [formGroup]="formularioAgendamento"
+            (ngSubmit)="gerarDoAgendamento()"
+          >
+            <label>
+              <span>Agendamento</span>
 
-          <select formControlName="agendamento_id">
-            <option value="">
-              Selecione um agendamento
-            </option>
+              <select formControlName="agendamento_id">
+                <option value="">
+                  Selecione um agendamento
+                </option>
 
-            @for (
-              agendamento of
-                dadosAgendamentos.agendamentos();
-              track agendamento.id
-            ) {
-              <option [value]="agendamento.id">
-                {{ resumirAgendamento(agendamento) }}
-                @if (
-                  agendamentoJaIncluido(
-                    agendamento.id
-                  )
+                @for (
+                  agendamento of
+                    dadosAgendamentos.agendamentos();
+                  track agendamento.id
                 ) {
-                  — já incluído
+                  <option [value]="agendamento.id">
+                    {{ resumirAgendamento(agendamento) }}
+                    @if (
+                      agendamentoJaIncluido(
+                        agendamento.id
+                      )
+                    ) {
+                      — já incluído
+                    }
+                  </option>
                 }
-              </option>
-            }
-          </select>
+              </select>
 
-          @if (
-            formularioAgendamento.controls
-              .agendamento_id.touched &&
-            formularioAgendamento.controls
-              .agendamento_id.invalid
-          ) {
-            <small>
-              Selecione o agendamento.
-            </small>
-          }
-        </label>
+              @if (
+                formularioAgendamento.controls
+                  .agendamento_id.touched &&
+                formularioAgendamento.controls
+                  .agendamento_id.invalid
+              ) {
+                <small>Selecione o agendamento.</small>
+              }
+            </label>
 
-        <button
-          type="submit"
-          class="botao-principal"
-          [disabled]="salvandoAgendamento()"
-        >
-          @if (salvandoAgendamento()) {
-            Gerando...
-          } @else {
-            Gerar acerto
-          }
-        </button>
-      </form>
-    </article>
-
-    <article class="painel">
-      <div class="titulo-painel">
-        <div>
-          <h2>Novo acerto livre</h2>
-          <p>
+            <button
+              type="submit"
+              class="botao-principal"
+              [disabled]="salvandoAgendamento()"
+            >
+              @if (salvandoAgendamento()) {
+                Gerando...
+              } @else {
+                Gerar acerto
+              }
+            </button>
+          </form>
+        } @else {
+          <p class="ajuda-criacao">
             Para pacote, produção, desconto ou qualquer conta
             fora da agenda.
           </p>
-        </div>
-      </div>
 
-      <form
-        [formGroup]="formularioManual"
-        (ngSubmit)="criarManual()"
-      >
-        <div class="campos">
-          <label>
-            <span>Contato</span>
+          <form
+            [formGroup]="formularioManual"
+            (ngSubmit)="criarManual()"
+          >
+            <div class="campos">
+              <label>
+                <span>Contato</span>
+                <select formControlName="contato_id">
+                  <option value="">Selecione o contato</option>
+                  @for (
+                    contato of dadosContatos.contatos();
+                    track contato.id
+                  ) {
+                    <option [value]="contato.id">
+                      {{ contato.nome }}
+                    </option>
+                  }
+                </select>
+              </label>
 
-            <select formControlName="contato_id">
-              <option value="">
-                Selecione o contato
-              </option>
+              <label>
+                <span>O que está sendo acertado</span>
+                <input
+                  type="text"
+                  formControlName="descricao"
+                  placeholder="Ex.: Produções de agosto"
+                />
+              </label>
 
-              @for (
-                contato of dadosContatos.contatos();
-                track contato.id
-              ) {
-                <option [value]="contato.id">
-                  {{ contato.nome }}
-                </option>
+              <label>
+                <span>Quantidade</span>
+                <input
+                  type="number"
+                  formControlName="quantidade"
+                  min="0.01"
+                  step="0.01"
+                />
+              </label>
+
+              <label>
+                <span>Valor</span>
+                <input
+                  type="number"
+                  formControlName="valor_unitario"
+                  step="0.01"
+                />
+                <small class="ajuda">
+                  Use valor negativo para desconto.
+                </small>
+              </label>
+
+              <label>
+                <span>Data combinada</span>
+                <input
+                  type="date"
+                  formControlName="vencimento_em"
+                />
+              </label>
+
+              <label class="campo-largo">
+                <span>Observações</span>
+                <textarea
+                  formControlName="observacoes"
+                  rows="3"
+                  placeholder="Opcional"
+                ></textarea>
+              </label>
+            </div>
+
+            <button
+              type="submit"
+              class="botao-principal"
+              [disabled]="salvandoManual()"
+            >
+              @if (salvandoManual()) {
+                Criando...
+              } @else {
+                Criar acerto
               }
-            </select>
-          </label>
-
-          <label>
-            <span>O que está sendo acertado</span>
-
-            <input
-              type="text"
-              formControlName="descricao"
-              placeholder="Ex.: Produções de agosto"
-            />
-          </label>
-
-          <label>
-            <span>Quantidade</span>
-
-            <input
-              type="number"
-              formControlName="quantidade"
-              min="0.01"
-              step="0.01"
-            />
-          </label>
-
-          <label>
-            <span>Valor</span>
-
-            <input
-              type="number"
-              formControlName="valor_unitario"
-              step="0.01"
-            />
-
-            <small class="ajuda">
-              Use valor negativo para desconto.
-            </small>
-          </label>
-
-          <label>
-            <span>Data combinada</span>
-
-            <input
-              type="date"
-              formControlName="vencimento_em"
-            />
-          </label>
-
-          <label class="campo-largo">
-            <span>Observações</span>
-
-            <textarea
-              formControlName="observacoes"
-              rows="3"
-              placeholder="Opcional"
-            ></textarea>
-          </label>
-        </div>
-
-        <button
-          type="submit"
-          class="botao-principal"
-          [disabled]="salvandoManual()"
-        >
-          @if (salvandoManual()) {
-            Criando...
-          } @else {
-            Criar acerto
-          }
-        </button>
-      </form>
-    </article>
-  </section>
+            </button>
+          </form>
+        }
+      </article>
+    </aside>
+  }
 
   <section class="painel lista-painel">
-    <div class="titulo-painel">
+    <div class="titulo-painel titulo-lista-acertos">
       <div>
-        <h2>Contas e acertos</h2>
+        <h2>
+          @if (filtroAcertos() === 'abertos') {
+            O que precisa de atenção
+          } @else {
+            Resolvidos
+          }
+        </h2>
         <p>
-          Abra uma conta para ver itens e pagamentos.
+          @if (filtroAcertos() === 'abertos') {
+            Valores a receber e créditos ainda em aberto.
+          } @else {
+            Contas que já foram totalmente acertadas.
+          }
         </p>
       </div>
 
-      <span class="contador">
-        {{ dadosAcertos.acertos().length }}
-      </span>
+      <div class="filtros-acertos">
+        <button
+          type="button"
+          [class.ativo]="filtroAcertos() === 'abertos'"
+          [attr.aria-pressed]="filtroAcertos() === 'abertos'"
+          (click)="selecionarFiltro('abertos')"
+        >
+          Em aberto
+          <span>{{ acertosEmAberto().length }}</span>
+        </button>
+
+        <button
+          type="button"
+          [class.ativo]="filtroAcertos() === 'resolvidos'"
+          [attr.aria-pressed]="filtroAcertos() === 'resolvidos'"
+          (click)="selecionarFiltro('resolvidos')"
+        >
+          Resolvidos
+          <span>{{ acertosResolvidos().length }}</span>
+        </button>
+      </div>
     </div>
 
     @if (carregandoPagina()) {
@@ -276,10 +337,18 @@
       <p class="estado">
         Nenhum acerto criado ainda.
       </p>
+    } @else if (acertosVisiveis().length === 0) {
+      <p class="estado">
+        @if (filtroAcertos() === 'abertos') {
+          Nenhum acerto precisa de atenção.
+        } @else {
+          Nenhum acerto resolvido ainda.
+        }
+      </p>
     } @else {
       <div class="lista-acertos">
         @for (
-          acerto of dadosAcertos.acertos();
+          acerto of acertosVisiveis();
           track acerto.id
         ) {
           <article
@@ -533,13 +602,15 @@
                       </p>
                     </div>
 
-                    <button
-                      type="button"
-                      class="botao-receber"
-                      (click)="abrirPagamento(acerto)"
-                    >
-                      Registrar pagamento
-                    </button>
+                    @if (acerto.saldo > 0) {
+                      <button
+                        type="button"
+                        class="botao-receber"
+                        (click)="abrirPagamento(acerto)"
+                      >
+                        Registrar pagamento
+                      </button>
+                    }
                   </div>
 
                   @if (

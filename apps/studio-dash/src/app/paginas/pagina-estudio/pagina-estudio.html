@@ -1,12 +1,13 @@
 <main
   class="pagina-estudio"
+  [attr.data-tema]="dados.temaPaginaPublica()"
   [style.--cor-estudio]="dados.corPrincipal()"
   [style.--contraste-estudio]="dados.corContraste()"
 >
   @if (dados.carregando()) {
     <section class="estado-pagina">
       <span class="carregador" aria-hidden="true"></span>
-      <p>Carregando estúdio...</p>
+      <p>Carregando Página...</p>
     </section>
   } @else if (dados.erro()) {
     <section class="estado-pagina estado-erro">
@@ -26,7 +27,7 @@
     <header class="topo">
       <a
         class="marca"
-        [href]="'/estudio/' + estudio.slug"
+        [href]="urlCasa(estudio.slug)"
       >
         <span class="logo-marca">
           @if (estudio.logo_url) {
@@ -39,13 +40,26 @@
           }
         </span>
 
-        <span>
+        <span class="identidade-topo">
+          <small class="rotulo-casa">
+            CASA FLÊIVA
+          </small>
+
           <strong>{{ estudio.nome }}</strong>
-          <small>Estúdio independente</small>
+
+          <small class="local-estudio">
+            {{ estudio.cidade}}
+          </small>
         </span>
       </a>
 
       <nav aria-label="Contato do estúdio">
+        @if (embedsPublicos().length > 0) {
+          <a href="{{estudio.slug}}">
+            Ouvir
+          </a>
+        }
+
         @if (dados.albuns().length > 0) {
           <a href="#trabalhos">
             Trabalhos
@@ -85,10 +99,10 @@
       <div class="conteudo-hero">
         <div class="metadados">
           <span class="indicador"></span>
-          <span>ESTÚDIO INDEPENDENTE</span>
+          <span> /{{estudio.slug}} </span>
 
           @if (estudio.cidade) {
-            <span class="separador">/</span>
+            <span class="separador"> - </span>
             <span>{{ estudio.cidade }}</span>
           }
         </div>
@@ -139,20 +153,23 @@
         aria-label="Identidade do estúdio"
       >
         <header>
-          <span>STUDIO PROFILE</span>
-          <span>FLEIVA / PUBLIC</span>
+          <span>CASA FLÊIVA / IDENTIDADE</span>
+          <span>PUBLIC PROFILE</span>
         </header>
 
         <div class="centro-cartao">
-          <div class="logo-grande">
+          <div
+            class="logo-grande"
+            [class.sem-logo]="!estudio.logo_url"
+          >
             @if (estudio.logo_url) {
-              <img
-                [src]="estudio.logo_url"
-                [alt]="'Logo de ' + estudio.nome"
-              />
-            } @else {
-              <span>{{ inicialEstudio() }}</span>
-            }
+  <img
+    [src]="estudio.logo_url"
+    [alt]="'Identidade visual de ' + estudio.nome"
+  />
+} @else {
+  <span>{{ inicialEstudio() }}</span>
+}
           </div>
 
           <div class="leitura-cartao">
@@ -174,7 +191,81 @@
           </strong>
         </footer>
       </div>
+
+      <footer class="rodape-hero" aria-hidden="true">
+        <span>IDENTIDADE</span>
+        <i></i>
+        <span>SERVIÇOS</span>
+        <i></i>
+        <span>TRABALHOS</span>
+
+        <strong>PUBLICADO ATRAVÉS DA CASA FLÊIVA</strong>
+      </footer>
     </section>
+
+    @if (embedsPublicos().length > 0) {
+      <section
+        id="midia"
+        class="embeds-publicos"
+      >
+        <header class="cabecalho-secao-publica">
+          <div>
+            <p>SELEÇÃO DE {{ estudio.nome }}</p>
+            <h2>Ouça e assista</h2>
+          </div>
+
+          <span>
+            {{ embedsPublicos().length }}
+
+            @if (embedsPublicos().length === 1) {
+              destaque
+            } @else {
+              destaques
+            }
+          </span>
+        </header>
+
+        <div
+          class="grade-embeds-publicos"
+          [class.embed-unico]="
+            embedsPublicos().length === 1
+          "
+        >
+          @for (
+            embed of embedsPublicos();
+            track embed.chave;
+            let indice = $index
+          ) {
+            <article
+              class="embed-publico"
+              [attr.data-provedor]="embed.provedor"
+            >
+              <header>
+                <span>{{ formatarOrdem(indice) }}</span>
+                <strong>{{ embed.rotulo }}</strong>
+                <small>PLAYER OFICIAL</small>
+              </header>
+
+              <div class="moldura-embed">
+                <iframe
+                  [src]="embed.src"
+                  [title]="
+                    'Conteúdo de ' +
+                    embed.rotulo +
+                    ' selecionado por ' +
+                    estudio.nome
+                  "
+                  loading="lazy"
+                  referrerpolicy="strict-origin-when-cross-origin"
+                  allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                  allowfullscreen
+                ></iframe>
+              </div>
+            </article>
+          }
+        </div>
+      </section>
+    }
 
     @if (dados.albuns().length > 0) {
       <section
@@ -206,14 +297,16 @@
           ) {
             <a
               class="album-publico"
-              [attr.href]="
-                '/estudio/' +
-                estudio.slug +
-                '/trabalho/' +
-                album.id
+              [href]="
+                urlTrabalho(
+                  estudio.slug,
+                  album.id
+                )
               "
               [attr.aria-label]="
-                'Abrir ' + album.nome
+                'Abrir ' +
+                album.nome +
+                ' na Toca Flêiva'
               "
             >
               <div class="capa-album-publico">
@@ -440,8 +533,17 @@
       </div>
 
       <a href="https://fleiva.com.br">
-        Gerenciado com Fleiva
+        Publicado com Flêiva
       </a>
+      <footer class="assinatura-fleiva">
+  <span>Publicado com</span>
+
+  <span
+    class="assinatura-wordmark"
+    role="img"
+    aria-label="Flêiva"
+  ></span>
+</footer>
     </footer>
   }
 </main>

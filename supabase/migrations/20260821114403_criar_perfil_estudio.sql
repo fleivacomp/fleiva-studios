@@ -36,8 +36,15 @@ for select
 to authenticated
 using (
   bucket_id = 'logos-estudios'
-  and name = (
-    (select auth.uid())::text || '/logo'
+  and (
+    name = (
+      (select auth.uid())::text || '/logo'
+    )
+    or name ~ (
+      '^'
+      || (select auth.uid())::text
+      || '/logo-[0-9a-f-]{36}\.(png|jpg|webp)$'
+    )
   )
 );
 
@@ -52,8 +59,15 @@ for insert
 to authenticated
 with check (
   bucket_id = 'logos-estudios'
-  and name = (
-    (select auth.uid())::text || '/logo'
+  and (
+    name = (
+      (select auth.uid())::text || '/logo'
+    )
+    or name ~ (
+      '^'
+      || (select auth.uid())::text
+      || '/logo-[0-9a-f-]{36}\.(png|jpg|webp)$'
+    )
   )
 );
 
@@ -68,14 +82,28 @@ for update
 to authenticated
 using (
   bucket_id = 'logos-estudios'
-  and name = (
-    (select auth.uid())::text || '/logo'
+  and (
+    name = (
+      (select auth.uid())::text || '/logo'
+    )
+    or name ~ (
+      '^'
+      || (select auth.uid())::text
+      || '/logo-[0-9a-f-]{36}\.(png|jpg|webp)$'
+    )
   )
 )
 with check (
   bucket_id = 'logos-estudios'
-  and name = (
-    (select auth.uid())::text || '/logo'
+  and (
+    name = (
+      (select auth.uid())::text || '/logo'
+    )
+    or name ~ (
+      '^'
+      || (select auth.uid())::text
+      || '/logo-[0-9a-f-]{36}\.(png|jpg|webp)$'
+    )
   )
 );
 
@@ -90,7 +118,14 @@ for delete
 to authenticated
 using (
   bucket_id = 'logos-estudios'
-  and name = (
-    (select auth.uid())::text || '/logo'
+  and (
+    name = (
+      (select auth.uid())::text || '/logo'
+    )
+    or name ~ (
+      '^'
+      || (select auth.uid())::text
+      || '/logo-[0-9a-f-]{36}\.(png|jpg|webp)$'
+    )
   )
 );

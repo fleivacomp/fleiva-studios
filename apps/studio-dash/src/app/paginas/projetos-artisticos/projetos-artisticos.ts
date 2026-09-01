@@ -1,9 +1,6 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import {
-  FormBuilder,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { Component, OnInit, inject, signal } from "@angular/core";
+import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
+import { RouterLink } from "@angular/router";
 import {
   DadosContatos,
   DadosProjetosArtisticos,
@@ -11,14 +8,14 @@ import {
   type CadastroProjetoArtistico,
   type MembroProjetoCompleto,
   type ProjetoArtisticoCompleto,
-} from '@fleiva-studios/shared-data-access';
+} from "@fleiva-studios/shared-data-access";
 
 @Component({
-  selector: 'app-projetos-artisticos',
+  selector: "app-projetos-artisticos",
   standalone: true,
-  imports: [ReactiveFormsModule],
-  templateUrl: './projetos-artisticos.html',
-  styleUrl: './projetos-artisticos.scss',
+  imports: [ReactiveFormsModule, RouterLink],
+  templateUrl: "./projetos-artisticos.html",
+  styleUrl: "./projetos-artisticos.scss",
 })
 export class ProjetosArtisticos implements OnInit {
   readonly dadosProjetos = inject(DadosProjetosArtisticos);
@@ -38,19 +35,19 @@ export class ProjetosArtisticos implements OnInit {
   readonly erroOperacao = signal<string | null>(null);
 
   readonly formularioProjeto = this.construtorFormulario.group({
-    nome: this.construtorFormulario.nonNullable.control('', [
+    nome: this.construtorFormulario.nonNullable.control("", [
       Validators.required,
     ]),
-    tipo: this.construtorFormulario.nonNullable.control('solo', [
+    tipo: this.construtorFormulario.nonNullable.control("solo", [
       Validators.required,
     ]),
   });
 
   readonly formularioMembro = this.construtorFormulario.group({
-    contato_id: this.construtorFormulario.nonNullable.control('', [
+    contato_id: this.construtorFormulario.nonNullable.control("", [
       Validators.required,
     ]),
-    papel: this.construtorFormulario.nonNullable.control('', [
+    papel: this.construtorFormulario.nonNullable.control("", [
       Validators.required,
     ]),
     ativo: this.construtorFormulario.nonNullable.control(true),
@@ -87,10 +84,7 @@ export class ProjetosArtisticos implements OnInit {
       const projetoId = this.projetoEditandoId();
 
       if (projetoId) {
-        await this.dadosProjetos.atualizarProjeto(
-          projetoId,
-          dados,
-        );
+        await this.dadosProjetos.atualizarProjeto(projetoId, dados);
       } else {
         await this.dadosProjetos.cadastrarProjeto(dados);
       }
@@ -112,21 +106,17 @@ export class ProjetosArtisticos implements OnInit {
       tipo: projeto.tipo,
     });
 
-    document
-      .getElementById('formulario-projeto')
-      ?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      });
+    document.getElementById("formulario-projeto")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   }
 
   cancelarEdicaoProjeto(): void {
     this.limparFormularioProjeto();
   }
 
-  async excluirProjeto(
-    projeto: ProjetoArtisticoCompleto,
-  ): Promise<void> {
+  async excluirProjeto(projeto: ProjetoArtisticoCompleto): Promise<void> {
     const confirmou = window.confirm(
       `Excluir o projeto "${projeto.nome}"? Os vínculos de membros e as faixas desse projeto também serão excluídos.`,
     );
@@ -170,28 +160,21 @@ export class ProjetosArtisticos implements OnInit {
     this.erroOperacao.set(null);
 
     try {
-      await this.dadosProjetos.enviarCapa(
-        projeto.id,
-        arquivo,
-      );
+      await this.dadosProjetos.enviarCapa(projeto.id, arquivo);
     } catch (erro) {
       this.erroOperacao.set(this.obterMensagemErro(erro));
     } finally {
-      input.value = '';
+      input.value = "";
       this.enviandoCapaId.set(null);
     }
   }
 
-  async removerCapa(
-    projeto: ProjetoArtisticoCompleto,
-  ): Promise<void> {
+  async removerCapa(projeto: ProjetoArtisticoCompleto): Promise<void> {
     if (!projeto.capa_caminho) {
       return;
     }
 
-    const confirmou = window.confirm(
-      `Remover a capa de "${projeto.nome}"?`,
-    );
+    const confirmou = window.confirm(`Remover a capa de "${projeto.nome}"?`);
 
     if (!confirmou) {
       return;
@@ -215,16 +198,13 @@ export class ProjetosArtisticos implements OnInit {
     this.erroOperacao.set(null);
 
     this.formularioMembro.reset({
-      contato_id: '',
-      papel: '',
+      contato_id: "",
+      papel: "",
       ativo: true,
     });
   }
 
-  editarMembro(
-    projetoId: string,
-    membro: MembroProjetoCompleto,
-  ): void {
+  editarMembro(projetoId: string, membro: MembroProjetoCompleto): void {
     this.projetoMembroId.set(projetoId);
     this.membroEditandoId.set(membro.id);
     this.erroOperacao.set(null);
@@ -257,15 +237,9 @@ export class ProjetosArtisticos implements OnInit {
       const membroId = this.membroEditandoId();
 
       if (membroId) {
-        await this.dadosProjetos.atualizarMembro(
-          membroId,
-          dados,
-        );
+        await this.dadosProjetos.atualizarMembro(membroId, dados);
       } else {
-        await this.dadosProjetos.adicionarMembro(
-          projetoId,
-          dados,
-        );
+        await this.dadosProjetos.adicionarMembro(projetoId, dados);
       }
 
       this.fecharFormularioMembro();
@@ -281,15 +255,13 @@ export class ProjetosArtisticos implements OnInit {
     this.membroEditandoId.set(null);
 
     this.formularioMembro.reset({
-      contato_id: '',
-      papel: '',
+      contato_id: "",
+      papel: "",
       ativo: true,
     });
   }
 
-  async removerMembro(
-    membro: MembroProjetoCompleto,
-  ): Promise<void> {
+  async removerMembro(membro: MembroProjetoCompleto): Promise<void> {
     const confirmou = window.confirm(
       `Remover "${membro.contato.nome}" deste projeto?`,
     );
@@ -318,20 +290,16 @@ export class ProjetosArtisticos implements OnInit {
     this.projetoEditandoId.set(null);
 
     this.formularioProjeto.reset({
-      nome: '',
-      tipo: 'solo',
+      nome: "",
+      tipo: "solo",
     });
   }
 
   private obterMensagemErro(erro: unknown): string {
-    if (
-      typeof erro === 'object' &&
-      erro !== null &&
-      'message' in erro
-    ) {
+    if (typeof erro === "object" && erro !== null && "message" in erro) {
       return String(erro.message);
     }
 
-    return 'Não foi possível concluir a operação.';
+    return "Não foi possível concluir a operação.";
   }
 }

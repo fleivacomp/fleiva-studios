@@ -4,20 +4,20 @@ import {
   computed,
   inject,
   signal,
+  effect
 } from '@angular/core';
-import {
-  ActivatedRoute,
-  RouterLink,
-} from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import {
   DadosAlbumPublico,
   type FaixaAlbumPublico,
-} from '@fleiva-studios/shared-data-access';
+}
+from '@fleiva-studios/shared-data-access';
+import { Title } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-album-publico',
   standalone: true,
-  imports: [RouterLink],
+  imports: [],
   templateUrl: './album-publico.html',
   styleUrl: './album-publico.scss',
 })
@@ -25,9 +25,26 @@ export class AlbumPublico implements OnInit {
   readonly dados = inject(DadosAlbumPublico);
 
   private readonly rota = inject(ActivatedRoute);
+  private readonly tituloPagina = inject(Title);
 
   private slug = '';
   private albumId = '';
+constructor() {
+  effect(() => {
+    const estudio = this.dados.estudio();
+    const album = this.dados.album();
+
+    if (estudio && album) {
+      this.tituloPagina.setTitle(
+        `${album.nome} — ${estudio.nome}`,
+      );
+
+      return;
+    }
+
+    this.tituloPagina.setTitle('Play Flêiva');
+  });
+}
 
   readonly faixaAtivaId = signal<string | null>(null);
   readonly carregandoAudioId = signal<string | null>(null);
@@ -90,6 +107,16 @@ export class AlbumPublico implements OnInit {
       this.slug,
       this.albumId,
     );
+  }
+
+  urlEstudio(slug: string): string {
+    const slugSeguro = encodeURIComponent(slug);
+
+    if (this.usarDominiosFleiva()) {
+      return `https://card.fleiva.com.br/${slugSeguro}`;
+    }
+
+    return `/estudio/${slugSeguro}`;
   }
 
   async reproduzir(
@@ -271,6 +298,21 @@ export class AlbumPublico implements OnInit {
     this.tempoAtual.set(0);
     this.duracao.set(0);
     this.erroAcao.set(null);
+  }
+
+  private usarDominiosFleiva(): boolean {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+
+    const hostname = window.location.hostname
+      .trim()
+      .toLocaleLowerCase();
+
+    return (
+      hostname === 'fleiva.com.br' ||
+      hostname.endsWith('.fleiva.com.br')
+    );
   }
 
   private obterMensagemErro(erro: unknown): string {

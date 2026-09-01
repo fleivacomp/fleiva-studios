@@ -545,3 +545,37 @@ audio {
     flex-direction: column;
   }
 }
+
+.assinatura-fleiva {
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 2.5rem auto 0;
+  color: var(--text-muted, #747a74);
+  font-size: 0.62rem;
+}
+
+.assinatura-wordmark {
+  width: 3.8rem;
+  aspect-ratio: 1256 / 596;
+  background: currentColor;
+  mask:
+    url('/fleiva-brand-kit/mask/fleiva-wordmark-mask.png')
+    center / contain no-repeat;
+  -webkit-mask:
+    url('/fleiva-brand-kit/mask/fleiva-wordmark-mask.png')
+    center / contain no-repeat;
+  opacity: 0.72;
+  transition:
+    color 160ms ease,
+    opacity 160ms ease;
+}
+
+.assinatura-fleiva:hover .assinatura-wordmark {
+  color: var(
+    --studio-brand,
+    var(--fleiva-verde, #5e886f)
+  );
+  opacity: 1;
+}

@@ -1,5 +1,11 @@
 import { ActivatedRoute } from '@angular/router';
-import { Component, OnInit, inject, signal,} from '@angular/core';
+import {
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import {
   FormBuilder,
   ReactiveFormsModule,
@@ -13,6 +19,9 @@ import {
   type AcertoCompleto,
   type AgendamentoCompleto,
 } from '@fleiva-studios/shared-data-access';
+
+type FiltroAcertos = 'abertos' | 'resolvidos';
+type TipoCriacaoAcerto = 'agendamento' | 'manual';
 
 @Component({
   selector: 'app-acertos',
@@ -46,11 +55,39 @@ export class Acertos implements OnInit {
     signal<string | null>(null);
   readonly acertoPagamentoId =
     signal<string | null>(null);
+  readonly filtroAcertos =
+    signal<FiltroAcertos>('abertos');
+  readonly tipoCriacao =
+    signal<TipoCriacaoAcerto | null>(null);
 
   readonly erroPagina =
     signal<string | null>(null);
   readonly mensagemPagina =
     signal<string | null>(null);
+
+  readonly acertosEmAberto = computed(() =>
+    [...this.dadosAcertos.acertos()]
+      .filter((acerto) => acerto.saldo !== 0)
+      .sort((primeiro, segundo) =>
+        segundo.saldo - primeiro.saldo,
+      ),
+  );
+
+  readonly acertosResolvidos = computed(() =>
+    [...this.dadosAcertos.acertos()]
+      .filter((acerto) => acerto.saldo === 0)
+      .sort(
+        (primeiro, segundo) =>
+          Date.parse(segundo.criado_em) -
+          Date.parse(primeiro.criado_em),
+      ),
+  );
+
+  readonly acertosVisiveis = computed(() =>
+    this.filtroAcertos() === 'abertos'
+      ? this.acertosEmAberto()
+      : this.acertosResolvidos(),
+  );
 
   readonly formularioAgendamento =
     this.construtorFormulario.group({
@@ -138,7 +175,7 @@ export class Acertos implements OnInit {
         ),
     });
 
-    ngOnInit(): void {
+  ngOnInit(): void {
     void this.inicializar();
   }
 
@@ -150,18 +187,19 @@ export class Acertos implements OnInit {
         'abrir',
       );
 
-    if (
-      !acertoId ||
-      !this.dadosAcertos
-        .acertos()
-        .some(
-          (acerto) =>
-            acerto.id === acertoId,
-        )
-    ) {
+    const acerto = acertoId
+      ? this.dadosAcertos
+          .acertos()
+          .find((item) => item.id === acertoId)
+      : undefined;
+
+    if (!acerto) {
       return;
     }
 
+    this.filtroAcertos.set(
+      acerto.saldo === 0 ? 'resolvidos' : 'abertos',
+    );
     this.acertoAbertoId.set(acertoId);
 
     window.setTimeout(() => {
@@ -191,6 +229,31 @@ export class Acertos implements OnInit {
       this.dadosContatos.carregando() ||
       this.dadosAgendamentos.carregando()
     );
+  }
+
+  alternarCriacao(): void {
+    this.tipoCriacao.update((tipo) =>
+      tipo === null ? 'agendamento' : null,
+    );
+  }
+
+  selecionarTipoCriacao(tipo: TipoCriacaoAcerto): void {
+    this.tipoCriacao.set(tipo);
+    this.limparRetorno();
+  }
+
+  fecharCriacao(): void {
+    if (this.salvandoAgendamento() || this.salvandoManual()) {
+      return;
+    }
+
+    this.tipoCriacao.set(null);
+  }
+
+  selecionarFiltro(filtro: FiltroAcertos): void {
+    this.filtroAcertos.set(filtro);
+    this.acertoAbertoId.set(null);
+    this.fecharFormularios();
   }
 
   async gerarDoAgendamento(): Promise<void> {
@@ -223,6 +286,9 @@ export class Acertos implements OnInit {
       this.formularioAgendamento.reset({
         agendamento_id: '',
       });
+
+      this.tipoCriacao.set(null);
+      this.filtroAcertos.set('abertos');
 
       this.mensagemPagina.set(
         'Acerto gerado a partir do agendamento.',
@@ -286,6 +352,8 @@ export class Acertos implements OnInit {
       });
 
       this.acertoAbertoId.set(acerto.id);
+      this.tipoCriacao.set(null);
+      this.filtroAcertos.set('abertos');
 
       this.mensagemPagina.set(
         'Acerto criado.',
@@ -422,6 +490,15 @@ export class Acertos implements OnInit {
       );
 
       this.acertoPagamentoId.set(null);
+
+      const acertoAtualizado = this.dadosAcertos
+        .acertos()
+        .find((acerto) => acerto.id === acertoId);
+
+      if (acertoAtualizado?.saldo === 0) {
+        this.filtroAcertos.set('resolvidos');
+        this.acertoAbertoId.set(acertoId);
+      }
 
       this.mensagemPagina.set(
         'Pagamento registrado.',

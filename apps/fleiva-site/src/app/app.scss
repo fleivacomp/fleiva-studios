@@ -1,0 +1,1649 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  overflow: hidden;
+  background: #f7f2e0;
+  color: #151714;
+
+  --creme: #f7f2e0;
+  --papel: #fffdf4;
+  --preto: #151714;
+  --verde: #5e886f;
+  --verde-escuro: #315441;
+  --roxo: #885f74;
+  --cinza: #686b64;
+  --borda: rgb(21 23 20 / 20%);
+}
+
+.pular-conteudo {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 100;
+  padding: 0.7rem 1rem;
+  background: var(--preto);
+  color: var(--creme);
+  transform: translateY(-200%);
+
+  &:focus {
+    transform: translateY(0);
+  }
+}
+
+/* Cabeçalho */
+/* Cabeçalho */
+
+.cabecalho-site {
+  position: relative;
+  z-index: 20;
+  display: grid;
+  min-height: 5rem;
+  grid-template-columns: auto minmax(5rem, 1fr) auto;
+  align-items: center;
+  gap: clamp(1.5rem, 4vw, 4rem);
+  padding:
+    0.75rem
+    clamp(1.25rem, 3.5vw, 3.5rem);
+  background: var(--creme);
+  color: var(--preto);
+  border-bottom: 1px solid var(--preto);
+}
+
+.cabecalho-site::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 0.2rem;
+  background:
+    linear-gradient(
+      90deg,
+      var(--roxo) 0 18%,
+      var(--verde) 18% 72%,
+      var(--preto) 72% 100%
+    );
+  content: '';
+}
+
+.marca-site {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.wordmark-cabecalho {
+  display: block;
+  width: clamp(8.5rem, 13vw, 11.5rem);
+  height: 2.5rem;
+  flex: none;
+  background: var(--preto);
+  mask:
+    url('/fleiva-brand-kit/mask/fleiva-wordmark-mask.png')
+    left center / contain no-repeat;
+  -webkit-mask:
+    url('/fleiva-brand-kit/mask/fleiva-wordmark-mask.png')
+    left center / contain no-repeat;
+  transition:
+    transform 100ms ease,
+    filter 100ms ease;
+}
+
+.marca-site:hover .wordmark-cabecalho {
+  filter:
+    drop-shadow(
+      0.12rem 0.1rem 0 var(--roxo)
+    );
+  transform: translate(-0.04rem, -0.03rem);
+}
+
+.assinatura-marca {
+  display: grid;
+  gap: 0.15rem;
+  padding-left: 0.8rem;
+  border-left: 1px solid var(--borda);
+
+  strong {
+    font-size: 0.55rem;
+    font-weight: 900;
+    letter-spacing: 0.18em;
+  }
+
+  small {
+    color: var(--cinza);
+    font-family: monospace;
+    font-size: 0.42rem;
+    font-weight: 750;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+}
+
+.status-cabecalho {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.status-cabecalho::before,
+.status-cabecalho::after {
+  height: 1px;
+  flex: 1;
+  background: var(--borda);
+  content: '';
+}
+
+.status-cabecalho > span {
+  width: 0.48rem;
+  height: 0.48rem;
+  flex: none;
+  background: var(--verde);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 0.2rem rgb(94 136 111 / 12%),
+    0 0 0.55rem rgb(94 136 111 / 55%);
+}
+
+.status-cabecalho p {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  color: var(--cinza);
+  font-family: monospace;
+  font-size: 0.47rem;
+  font-weight: 750;
+  letter-spacing: 0.09em;
+
+  strong {
+    color: var(--verde-escuro);
+    font-size: inherit;
+  }
+}
+
+.cabecalho-site nav {
+  display: flex;
+  align-items: center;
+  gap: clamp(1rem, 2.5vw, 2.2rem);
+
+  > a:not(.acesso-site) {
+    padding-bottom: 0.18rem;
+    border-bottom: 1px solid transparent;
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+
+    &:hover {
+      border-bottom-color: currentColor;
+    }
+  }
+}
+
+.acesso-site {
+  display: grid;
+  min-width: 5.6rem;
+  min-height: 3rem;
+  align-content: center;
+  justify-items: start;
+  gap: 0.1rem;
+  padding: 0.45rem 0.75rem;
+  background: var(--preto);
+  color: var(--creme);
+  border: 1px solid var(--preto);
+  transition:
+    background 120ms ease,
+    color 120ms ease;
+
+  span {
+    color: rgb(247 242 224 / 58%);
+    font-family: monospace;
+    font-size: 0.4rem;
+    letter-spacing: 0.1em;
+  }
+
+  strong {
+    font-size: 0.64rem;
+    letter-spacing: 0.06em;
+  }
+
+  &:hover {
+    background: var(--verde);
+    color: var(--creme);
+  }
+}
+
+@media (max-width: 58rem) {
+  .cabecalho-site {
+    grid-template-columns: auto 1fr;
+  }
+
+  .status-cabecalho {
+    display: none;
+  }
+}
+
+@media (max-width: 42rem) {
+  .cabecalho-site {
+    min-height: 4.5rem;
+    gap: 1rem;
+    padding-inline: 1rem;
+  }
+
+  .wordmark-cabecalho {
+    width: 8.2rem;
+    height: 2.1rem;
+  }
+
+  .assinatura-marca {
+    display: none;
+  }
+
+  .cabecalho-site nav {
+    justify-content: flex-end;
+
+    > a:not(.acesso-site) {
+      display: none;
+    }
+  }
+
+  .acesso-site {
+    min-width: 4.8rem;
+    min-height: 2.7rem;
+  }
+}
+/* Hero */
+
+.hero {
+  position: relative;
+  display: flex;
+  min-height: calc(100svh - 5rem);
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  padding:
+    clamp(1.5rem, 3vw, 3rem)
+    clamp(1.25rem, 5vw, 5rem)
+    clamp(2.5rem, 5vw, 5rem);
+  background: var(--verde);
+  color: var(--creme);
+  border-bottom: 1px solid var(--preto);
+  isolation: isolate;
+}
+
+.hero::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background:
+    linear-gradient(
+      115deg,
+      rgb(14 39 27 / 24%),
+      transparent 48%
+    ),
+    linear-gradient(
+      0deg,
+      rgb(21 23 20 / 16%),
+      transparent 35%
+    );
+  content: '';
+}
+
+.hero-moire {
+  position: absolute;
+  z-index: -1;
+  right: clamp(-18rem, -12vw, -7rem);
+  bottom: clamp(-20rem, -20vw, -9rem);
+  width: min(55rem, 68vw);
+  aspect-ratio: 1;
+  background:
+    url('/fleiva-landing/moire-fleiva.svg')
+    center / contain no-repeat;
+  opacity: 0.35;
+  filter: brightness(0) invert(1);
+  pointer-events: none;
+}
+
+.hero-topo {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid rgb(247 242 224 / 42%);
+
+  p {
+    margin: 0;
+    font-size: 0.61rem;
+    font-weight: 850;
+    letter-spacing: 0.16em;
+  }
+
+  > span {
+    display: grid;
+    justify-items: end;
+    gap: 0.25rem;
+    font-size: 0.58rem;
+    font-weight: 850;
+    letter-spacing: 0.13em;
+  }
+
+  strong {
+    color: rgb(247 242 224 / 62%);
+    font-size: inherit;
+  }
+}
+
+.hero-marca {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: clamp(8rem, 21vw, 18rem);
+  margin:
+    clamp(2rem, 5vh, 4.5rem)
+    0
+    clamp(2.5rem, 7vh, 6rem);
+
+  > span {
+    position: absolute;
+    inset: 0;
+    background: currentColor;
+    mask:
+      url('/fleiva-brand-kit/mask/fleiva-wordmark-mask.png')
+      left center / contain no-repeat;
+    -webkit-mask:
+      url('/fleiva-brand-kit/mask/fleiva-wordmark-mask.png')
+      left center / contain no-repeat;
+    transition: transform 140ms ease;
+  }
+}
+
+.marca-sombra {
+  color: var(--roxo);
+  opacity: 0.92;
+  transform: translate(0.34rem, 0.34rem);
+}
+
+.marca-principal {
+  color: var(--creme);
+}
+
+.hero-marca:hover {
+  .marca-sombra {
+    transform: translate(0.58rem, 0.42rem);
+  }
+
+  .marca-principal {
+    transform: translate(-0.08rem, -0.05rem);
+  }
+}
+
+.hero-base {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1.2fr)
+    minmax(18rem, 0.65fr);
+  align-items: end;
+  gap: clamp(3rem, 9vw, 10rem);
+}
+
+.hero-chamada {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: clamp(1rem, 3vw, 2.5rem);
+
+  .indice {
+    padding-top: 0.5rem;
+    color: rgb(247 242 224 / 65%);
+    font-family: monospace;
+    font-size: 0.58rem;
+    font-weight: 750;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+
+  h1 {
+    max-width: 13ch;
+    margin: 0;
+    font-size: clamp(2.7rem, 5.6vw, 6rem);
+    font-weight: 760;
+    line-height: 0.94;
+    letter-spacing: -0.057em;
+  }
+
+  h1 strong {
+    display: block;
+    color: var(--preto);
+    font: inherit;
+  }
+}
+
+.hero-apresentacao {
+  padding-left: clamp(1rem, 3vw, 2.5rem);
+  border-left: 1px solid rgb(247 242 224 / 42%);
+
+  > p {
+    max-width: 32rem;
+    margin: 0;
+    color: rgb(247 242 224 / 87%);
+    font-size: clamp(0.95rem, 1.3vw, 1.12rem);
+    line-height: 1.65;
+  }
+}
+
+.acoes-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.4rem;
+  margin-top: 1.75rem;
+}
+
+.botao-hero {
+  display: inline-flex;
+  min-height: 3.1rem;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: 0.75rem 1.1rem;
+  background: var(--preto);
+  color: var(--creme);
+  border: 1px solid var(--preto);
+  font-size: 0.74rem;
+  font-weight: 850;
+  transition:
+    background 140ms ease,
+    color 140ms ease;
+
+  &:hover {
+    background: var(--creme);
+    color: var(--preto);
+  }
+}
+
+.link-hero {
+  padding-bottom: 0.2rem;
+  border-bottom: 1px solid currentColor;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.hero-legenda {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 0.85rem;
+  color: rgb(247 242 224 / 58%);
+  border-top: 1px solid rgb(247 242 224 / 25%);
+  font-size: 0.52rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.hero-monograma {
+  position: absolute;
+  z-index: 1;
+  top: 38%;
+  right: clamp(1.5rem, 5vw, 5rem);
+  display: block;
+  width: clamp(4.5rem, 8vw, 7rem);
+  aspect-ratio: 1;
+  background: rgb(247 242 224 / 20%);
+  mask:
+    url('/fleiva-brand-kit/mask/fleiva-monogram-mask.png')
+    center / contain no-repeat;
+  -webkit-mask:
+    url('/fleiva-brand-kit/mask/fleiva-monogram-mask.png')
+    center / contain no-repeat;
+}
+
+/* Flêiva Control */
+
+
+/* Seção Flêiva Control */
+
+.secao-control {
+  --modulo: var(--verde);
+
+  position: relative;
+  overflow: hidden;
+  padding:
+    clamp(4rem, 8vw, 7rem)
+    clamp(1rem, 5vw, 5rem)
+    clamp(5rem, 9vw, 8rem);
+  background:
+    linear-gradient(
+      110deg,
+      #111310,
+      #171a16 58%,
+      #10120f
+    );
+  color: var(--creme);
+  isolation: isolate;
+}
+
+.secao-control::before {
+  position: absolute;
+  z-index: -2;
+  top: -16rem;
+  left: -20rem;
+  width: min(52rem, 65vw);
+  aspect-ratio: 1;
+  background:
+    url('/fleiva-landing/moire-fleiva.svg')
+    center / contain no-repeat;
+  opacity: 0.12;
+  filter: brightness(0) invert(1);
+  content: '';
+  pointer-events: none;
+}
+
+.secao-control::after {
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 0.3rem;
+  background:
+    linear-gradient(
+      90deg,
+      var(--verde) 0 58%,
+      var(--roxo) 58% 83%,
+      var(--creme) 83% 100%
+    );
+  content: '';
+}
+
+.secao-control[data-modulo='contatos'],
+.secao-control[data-modulo='albuns'] {
+  --modulo: var(--roxo);
+}
+
+.secao-control[data-modulo='faixas'],
+.secao-control[data-modulo='acertos'] {
+  --modulo: #b39a55;
+}
+
+.introducao-control {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  width: min(84rem, 100%);
+  grid-template-columns:
+    minmax(8rem, 0.35fr)
+    minmax(0, 1.25fr)
+    minmax(17rem, 0.65fr);
+  align-items: end;
+  gap: clamp(2rem, 5vw, 6rem);
+  margin:
+    0
+    auto
+    clamp(3rem, 6vw, 5rem);
+  padding-bottom: clamp(2rem, 4vw, 3.5rem);
+  border-bottom: 1px solid rgb(247 242 224 / 28%);
+}
+
+.identificador-control {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  > span {
+    display: grid;
+    width: 2.6rem;
+    aspect-ratio: 1;
+    place-items: center;
+    background: var(--verde);
+    color: var(--preto);
+    font-family: monospace;
+    font-size: 0.72rem;
+    font-weight: 900;
+  }
+
+  p {
+    display: grid;
+    gap: 0.15rem;
+    margin: 0;
+    color: rgb(247 242 224 / 54%);
+    font-size: 0.55rem;
+    font-weight: 850;
+    letter-spacing: 0.14em;
+  }
+
+  strong {
+    color: var(--creme);
+    font-size: inherit;
+  }
+}
+
+.titulo-control {
+  > p {
+    margin-bottom: 0.9rem;
+    color: var(--verde);
+    font-size: 0.59rem;
+    font-weight: 850;
+    letter-spacing: 0.16em;
+  }
+
+  h2 {
+    max-width: 13ch;
+    margin: 0;
+    font-size: clamp(2.8rem, 5.8vw, 6rem);
+    line-height: 0.9;
+    letter-spacing: -0.06em;
+  }
+
+  h2 span {
+    display: block;
+    color: #b988a0;
+  }
+}
+
+.resumo-control {
+  > p {
+    margin: 0;
+    color: rgb(247 242 224 / 68%);
+    font-size: 0.95rem;
+    line-height: 1.65;
+  }
+
+  > div {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-top: 1.5rem;
+    color: rgb(247 242 224 / 46%);
+    font-family: monospace;
+    font-size: 0.47rem;
+    font-weight: 750;
+    letter-spacing: 0.08em;
+  }
+
+  i {
+    width: 1rem;
+    height: 1px;
+    background: rgb(247 242 224 / 30%);
+  }
+}
+
+@media (max-width: 58rem) {
+  .introducao-control {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .resumo-control {
+    grid-column: 2;
+  }
+}
+
+@media (max-width: 42rem) {
+  .secao-control {
+    padding:
+      3.5rem
+      0.5rem
+      5rem;
+  }
+
+  .secao-control::before {
+    top: -7rem;
+    left: -13rem;
+    width: 29rem;
+    opacity: 0.08;
+  }
+
+  .introducao-control {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    padding-inline: 0.75rem;
+  }
+
+  .identificador-control {
+    > span {
+      width: 2.3rem;
+    }
+  }
+
+  .titulo-control h2 {
+    font-size: clamp(2.8rem, 14vw, 4.6rem);
+  }
+
+  .resumo-control {
+    grid-column: auto;
+  }
+
+  .resumo-control > div {
+    overflow: hidden;
+    white-space: nowrap;
+  }
+}
+
+
+.maquina-control {
+  position: relative;
+  z-index: 2;
+  width: min(84rem, 100%);
+  margin: 0 auto;
+  background: var(--papel);
+  color: var(--preto);
+  border: 1px solid rgb(247 242 224 / 55%);
+  box-shadow:
+    0.7rem 0.7rem 0 var(--roxo),
+    1.4rem 1.4rem 0 rgb(94 136 111 / 58%);
+}
+
+.barra-control,
+.rodape-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: #090a09;
+  color: var(--creme);
+  font-size: 0.58rem;
+  font-weight: 850;
+  letter-spacing: 0.13em;
+}
+
+.barra-control {
+  min-height: 3rem;
+  padding: 0.7rem 1rem;
+
+  > div {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  i {
+    width: 0.5rem;
+    height: 0.5rem;
+    background: var(--modulo);
+    border-radius: 50%;
+    box-shadow: 0 0 0.8rem var(--modulo);
+  }
+}
+
+.modulos-control {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  background: #e7e2d2;
+  border-bottom: 1px solid var(--preto);
+
+  button {
+    display: grid;
+    min-height: 4.5rem;
+    align-content: center;
+    justify-items: start;
+    gap: 0.25rem;
+    padding: 0.8rem 1rem;
+    background: transparent;
+    border: 0;
+    border-right: 1px solid var(--borda);
+    text-align: left;
+
+    &:last-child {
+      border-right: 0;
+    }
+
+    span {
+      color: var(--cinza);
+      font-family: monospace;
+      font-size: 0.6rem;
+    }
+
+    strong {
+      font-size: 0.8rem;
+    }
+
+    &:hover {
+      background: rgb(255 253 244 / 55%);
+    }
+
+    &.ativo {
+      background: var(--papel);
+      box-shadow: inset 0 -0.3rem var(--modulo);
+
+      span,
+      strong {
+        color: var(--modulo);
+      }
+    }
+  }
+}
+
+.conteudo-control {
+  position: relative;
+  min-height: 36rem;
+  padding: clamp(1.5rem, 4vw, 3.5rem);
+  overflow: hidden;
+}
+
+.grafismo-control {
+  position: absolute;
+  right: -10rem;
+  bottom: -12rem;
+  width: 30rem;
+  aspect-ratio: 1;
+  opacity: 0.055;
+  pointer-events: none;
+
+  span {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background:
+      url('/fleiva-landing/moire-fleiva.svg')
+      center / contain no-repeat;
+  }
+}
+
+.modulo-apresentacao {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--borda);
+
+  p {
+    margin-bottom: 0.6rem;
+    color: var(--modulo);
+    font-size: 0.6rem;
+    font-weight: 850;
+    letter-spacing: 0.14em;
+  }
+
+  h3 {
+    max-width: 19ch;
+    margin-bottom: 0.7rem;
+    font-size: clamp(1.8rem, 4vw, 3.5rem);
+    line-height: 1;
+    letter-spacing: -0.045em;
+  }
+
+  > div > span {
+    display: block;
+    max-width: 37rem;
+    color: var(--cinza);
+    line-height: 1.55;
+  }
+}
+
+.codigo-modulo {
+  padding: 0.4rem 0.55rem;
+  background: var(--modulo);
+  color: #ffffff;
+  font-family: monospace;
+  font-size: 0.58rem;
+  font-weight: 800;
+}
+
+.agenda-principal,
+.contato-principal,
+.arquivo-principal {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 2.5rem 0;
+  border-bottom: 1px solid var(--borda);
+
+  small {
+    color: var(--cinza);
+    font-size: 0.57rem;
+    font-weight: 850;
+    letter-spacing: 0.1em;
+  }
+
+  h4 {
+    margin: 0.35rem 0;
+    font-size: clamp(1.35rem, 3vw, 2.2rem);
+  }
+
+  p {
+    margin: 0;
+    color: var(--cinza);
+  }
+}
+
+.agenda-principal {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.horario {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: var(--modulo);
+  font-family: monospace;
+  font-size: clamp(1.4rem, 3vw, 2.2rem);
+
+  span {
+    width: 2rem;
+    height: 1px;
+    background: currentColor;
+  }
+}
+
+.linhas-control {
+  position: relative;
+  z-index: 1;
+
+  > div {
+    display: grid;
+    min-height: 4.2rem;
+    grid-template-columns:
+      5rem
+      minmax(10rem, 1fr)
+      minmax(8rem, 1fr)
+      auto;
+    align-items: center;
+    gap: 1rem;
+    border-bottom: 1px solid var(--borda);
+  }
+
+  span,
+  small,
+  em {
+    color: var(--cinza);
+    font-size: 0.65rem;
+    font-style: normal;
+  }
+
+  span {
+    font-family: monospace;
+  }
+
+  em {
+    color: var(--modulo);
+    font-weight: 800;
+  }
+}
+
+.contato-principal {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.avatar {
+  display: grid;
+  width: 4.8rem;
+  aspect-ratio: 1;
+  place-items: center;
+  background: var(--modulo);
+  color: #ffffff;
+  font-size: 1.8rem;
+  font-weight: 850;
+}
+
+.seta {
+  font-size: 1.5rem;
+}
+
+.dados-distribuidos,
+.valores-acerto {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  > div {
+    display: grid;
+    gap: 0.45rem;
+    padding: 1.5rem 1rem 1.5rem 0;
+    border-bottom: 1px solid var(--borda);
+  }
+
+  small {
+    color: var(--cinza);
+    font-size: 0.56rem;
+    font-weight: 850;
+    letter-spacing: 0.1em;
+  }
+}
+
+.arquivo-principal {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.arquivo-tipo {
+  display: grid;
+  width: 4.6rem;
+  aspect-ratio: 1;
+  place-items: center;
+  background: var(--preto);
+  color: var(--creme);
+  font-family: monospace;
+  font-weight: 850;
+}
+
+.arquivo-atual {
+  color: var(--modulo);
+  font-size: 0.6rem;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+}
+
+.album-control {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns:
+    minmax(12rem, 18rem)
+    minmax(0, 1fr);
+  gap: clamp(1.5rem, 4vw, 3rem);
+  padding: 2.5rem 0;
+}
+
+.capa-album {
+  position: relative;
+  display: block;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: var(--preto);
+  border: 1px solid var(--preto);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition:
+      transform 220ms ease,
+      filter 220ms ease;
+  }
+
+  &:hover img {
+    transform: scale(1.025);
+    filter: contrast(1.04);
+  }
+}
+
+.selo-exemplo {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  padding: 0.42rem 0.55rem;
+  background: var(--modulo);
+  color: #ffffff;
+  font-size: 0.5rem;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  box-shadow: 0.18rem 0.18rem 0 var(--preto);
+}
+
+.faixas-album {
+  min-width: 0;
+
+  header {
+    margin-bottom: 1rem;
+
+    > span {
+      color: var(--modulo);
+      font-size: 0.56rem;
+      font-weight: 850;
+      letter-spacing: 0.11em;
+    }
+  }
+
+  h4 {
+    margin: 0.35rem 0;
+    font-size: clamp(2rem, 4vw, 3.5rem);
+    letter-spacing: -0.04em;
+  }
+
+  p {
+    margin: 0;
+    color: var(--cinza);
+    line-height: 1.5;
+  }
+
+  ol {
+    margin: 1.25rem 0 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid var(--borda);
+  }
+
+  li {
+    display: grid;
+    min-height: 3rem;
+    grid-template-columns:
+      2rem
+      minmax(0, 1fr)
+      auto;
+    align-items: center;
+    gap: 0.75rem;
+    border-bottom: 1px solid var(--borda);
+  }
+
+  li > span {
+    color: var(--cinza);
+    font-family: monospace;
+    font-size: 0.63rem;
+  }
+
+  li strong {
+    overflow-wrap: anywhere;
+    font-size: 0.78rem;
+  }
+
+  li small {
+    color: var(--modulo);
+    font-family: monospace;
+    font-size: 0.5rem;
+    font-weight: 850;
+    letter-spacing: 0.08em;
+  }
+}
+
+@media (max-width: 42rem) {
+  .album-control {
+    grid-template-columns: 1fr;
+  }
+
+  .capa-album {
+    width: min(15rem, 78vw);
+  }
+}
+.demonstracao-publica {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns:
+    minmax(13rem, 0.65fr)
+    minmax(0, 1fr);
+  border-top: 1px solid var(--borda);
+  border-bottom: 1px solid var(--borda);
+}
+
+.demonstracao-identidade {
+  display: grid;
+  align-content: center;
+  gap: 0.35rem;
+  padding: 1.25rem 1.5rem 1.25rem 0;
+
+  > span {
+    color: var(--modulo);
+    font-size: 0.54rem;
+    font-weight: 850;
+    letter-spacing: 0.11em;
+  }
+
+  > strong {
+    font-size: 0.9rem;
+  }
+
+  > small {
+    max-width: 20rem;
+    color: var(--cinza);
+    font-size: 0.62rem;
+    line-height: 1.45;
+  }
+}
+
+.links-demonstracao {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-left: 1px solid var(--borda);
+
+  a {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem;
+    transition:
+      background 120ms ease,
+      color 120ms ease;
+  }
+
+  a + a {
+    border-left: 1px solid var(--borda);
+  }
+
+  a:hover {
+    background: var(--modulo);
+    color: #ffffff;
+
+    small {
+      color: rgb(255 255 255 / 65%);
+    }
+  }
+
+  a > span {
+    display: grid;
+    min-width: 0;
+    gap: 0.3rem;
+  }
+
+  small {
+    color: var(--cinza);
+    font-size: 0.5rem;
+    font-weight: 850;
+    letter-spacing: 0.09em;
+  }
+
+  strong {
+    font-size: 0.8rem;
+  }
+
+  i {
+    flex: none;
+    font-size: 1rem;
+    font-style: normal;
+  }
+}
+
+@media (max-width: 48rem) {
+  .demonstracao-publica {
+    grid-template-columns: 1fr;
+  }
+
+  .demonstracao-identidade {
+    padding: 1.25rem 0;
+  }
+
+  .links-demonstracao {
+    border-top: 1px solid var(--borda);
+    border-left: 0;
+  }
+}
+
+@media (max-width: 32rem) {
+  .links-demonstracao {
+    grid-template-columns: 1fr;
+
+    a + a {
+      border-top: 1px solid var(--borda);
+      border-left: 0;
+    }
+  }
+}
+.valores-acerto {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 2rem 0;
+
+  > div {
+    border-bottom: 0;
+  }
+
+  strong {
+    color: var(--modulo);
+    font-size: clamp(2rem, 4vw, 3.4rem);
+  }
+}
+
+.rodape-control {
+  min-height: 2.7rem;
+  padding: 0.65rem 1rem;
+}
+
+/* Encerramento */
+
+.encerramento {
+  position: relative;
+  display: grid;
+  min-height: 42rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  overflow: hidden;
+  padding:
+    clamp(5rem, 10vw, 9rem)
+    clamp(1.25rem, 5vw, 5rem);
+  background: var(--creme);
+}
+
+.encerramento-moire {
+  position: absolute;
+  top: 50%;
+  right: -10rem;
+  width: min(52rem, 65vw);
+  aspect-ratio: 1;
+  background:
+    url('/fleiva-landing/moire-fleiva.svg')
+    center / contain no-repeat;
+  opacity: 0.32;
+  transform: translateY(-50%);
+}
+
+.encerramento-conteudo {
+  position: relative;
+  z-index: 2;
+
+  > p:first-child {
+    color: var(--verde-escuro);
+    font-size: 0.62rem;
+    font-weight: 850;
+    letter-spacing: 0.15em;
+  }
+
+  h2 {
+    max-width: 11ch;
+    margin-bottom: 1.5rem;
+    font-size: clamp(3.2rem, 8vw, 8rem);
+    line-height: 0.88;
+    letter-spacing: -0.065em;
+
+    span {
+      display: block;
+      color: var(--roxo);
+    }
+  }
+
+  > p:not(:first-child) {
+    max-width: 38rem;
+    color: #444840;
+    font-size: 1.05rem;
+    line-height: 1.65;
+  }
+
+  > div {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.5rem;
+    margin-top: 2.25rem;
+  }
+}
+
+.botao-claro {
+  display: inline-flex;
+  min-height: 3.1rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem 1.1rem;
+  background: var(--preto);
+  color: var(--creme);
+  border: 1px solid var(--preto);
+  font-size: 0.75rem;
+  font-weight: 800;
+  transition:
+    background 140ms ease,
+    color 140ms ease;
+
+  &:hover {
+    background: transparent;
+    color: var(--preto);
+  }
+}
+
+.link-claro {
+  display: inline-flex;
+  gap: 0.6rem;
+  padding-bottom: 0.2rem;
+  border-bottom: 1px solid currentColor;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.wordmark-final {
+  position: relative;
+  z-index: 2;
+  width: clamp(12rem, 28vw, 27rem);
+  height: clamp(5rem, 10vw, 10rem);
+  background: var(--preto);
+  mask:
+    url('/fleiva-brand-kit/mask/fleiva-wordmark-mask.png')
+    center / contain no-repeat;
+  -webkit-mask:
+    url('/fleiva-brand-kit/mask/fleiva-wordmark-mask.png')
+    center / contain no-repeat;
+}
+
+/* Rodapé */
+
+.rodape-site {
+  display: flex;
+  min-height: 4rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem clamp(1.25rem, 5vw, 5rem);
+  background: var(--preto);
+  color: rgb(247 242 224 / 62%);
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+/* Responsividade */
+
+@media (max-width: 58rem) {
+  .hero {
+    min-height: auto;
+  }
+
+  .hero-marca {
+    height: clamp(7rem, 23vw, 12rem);
+  }
+
+  .hero-base {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+
+  .hero-apresentacao {
+    max-width: 38rem;
+  }
+
+  .hero-monograma {
+    display: none;
+  }
+
+  .introducao-control {
+    grid-template-columns: 1fr;
+  }
+
+  .introducao-control > p:first-child {
+    margin-bottom: 0;
+  }
+
+  .modulos-control {
+    display: flex;
+    overflow-x: auto;
+
+    button {
+      min-width: 9rem;
+    }
+  }
+}
+
+@media (max-width: 42rem) {
+  .cabecalho {
+    min-height: 4.5rem;
+
+    nav a:not(.link-acesso) {
+      display: none;
+    }
+  }
+
+  .marca-cabecalho small {
+    display: none;
+  }
+
+  .hero {
+    padding-top: 1.25rem;
+  }
+
+  .hero-topo {
+    > span {
+      display: none;
+    }
+  }
+
+  .hero-marca {
+    height: 6.2rem;
+    margin: 3rem 0 3.5rem;
+  }
+
+  .marca-sombra {
+    transform: translate(0.18rem, 0.2rem);
+  }
+
+  .hero-chamada {
+    grid-template-columns: 1fr;
+
+    .indice {
+      padding: 0;
+    }
+
+    h1 {
+      font-size: clamp(2.8rem, 13.5vw, 4.5rem);
+    }
+  }
+
+  .hero-apresentacao {
+    padding: 1.25rem 0 0;
+    border-top: 1px solid rgb(247 242 224 / 42%);
+    border-left: 0;
+  }
+
+  .hero-legenda span:last-child {
+    display: none;
+  }
+
+  .hero-moire {
+    right: -14rem;
+    bottom: -9rem;
+    width: 31rem;
+    opacity: 0.23;
+  }
+
+  .secao-control {
+    padding-inline: 0.5rem;
+  }
+
+  .maquina-control {
+    box-shadow:
+      0.3rem 0.3rem 0 var(--roxo),
+      0.6rem 0.6rem 0 rgb(94 136 111 / 58%);
+  }
+
+  .barra-control > span {
+    display: none;
+  }
+
+  .conteudo-control {
+    min-height: 39rem;
+    padding: 1.25rem;
+  }
+
+  .codigo-modulo {
+    display: none;
+  }
+
+  .agenda-principal,
+  .contato-principal,
+  .arquivo-principal {
+    grid-template-columns: 1fr;
+  }
+
+  .contato-principal .seta {
+    display: none;
+  }
+
+  .linhas-control > div {
+    grid-template-columns: 3.5rem minmax(0, 1fr);
+
+    small,
+    em {
+      display: none;
+    }
+  }
+
+  .dados-distribuidos {
+    grid-template-columns: 1fr;
+  }
+
+  .album-control {
+    grid-template-columns: 1fr;
+  }
+
+  .capa-album {
+    width: min(14rem, 72vw);
+  }
+
+  .saidas-publicas,
+  .valores-acerto {
+    grid-template-columns: 1fr;
+  }
+
+  .saidas-publicas > span + span {
+    padding-left: 0;
+    border-left: 0;
+    border-top: 1px solid var(--borda);
+  }
+
+  .rodape-control span:nth-child(2) {
+    display: none;
+  }
+
+  .encerramento {
+    min-height: 37rem;
+    grid-template-columns: 1fr;
+  }
+
+  .encerramento-conteudo h2 {
+    font-size: clamp(3.2rem, 16vw, 5.5rem);
+  }
+
+  .wordmark-final {
+    display: none;
+  }
+
+  .rodape-site {
+    align-items: flex-start;
+    flex-direction: column;
+
+    span:nth-child(2) {
+      display: none;
+    }
+  }
+}
+ .rodape span:nth-child(2) {
+    display: none;
+  }
+.assinatura-fleiva {
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 2.5rem auto 0;
+  color: var(--text-muted, #747a74);
+  font-size: 0.62rem;
+}
+
+.assinatura-wordmark {
+  width: 3.8rem;
+  aspect-ratio: 1256 / 596;
+  background: currentColor;
+  mask:
+    url('/fleiva-brand-kit/mask/fleiva-wordmark-mask.png')
+    center / contain no-repeat;
+  -webkit-mask:
+    url('/fleiva-brand-kit/mask/fleiva-wordmark-mask.png')
+    center / contain no-repeat;
+  opacity: 0.72;
+  transition:
+    color 160ms ease,
+    opacity 160ms ease;
+}
+
+.assinatura-fleiva:hover .assinatura-wordmark {
+  color: var(
+    --studio-brand,
+    var(--fleiva-verde, #5e886f)
+  );
+  opacity: 1;
+}

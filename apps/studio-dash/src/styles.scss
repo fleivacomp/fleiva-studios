@@ -1,8 +1,13 @@
 :root {
   color-scheme: light;
 
-  /* Identidade original do Fleiva */
-  --brand-cream: #fcffeb;
+  /* Identidade Flêiva */
+  --brand-cream: #f7f2e0;
+  --brand-sage: #5e886f;
+  --brand-plum: #885f74;
+  --brand-ink: #171916;
+
+  /* Compatibilidade com páginas existentes */
   --brand-red: #e03329;
   --brand-blue: #263891;
   --brand-green: #0a4730;
@@ -11,45 +16,44 @@
   --brand-black: #000000;
 
   /* Identidade configurável do estúdio */
-  --studio-brand: #9aa653;
-  --studio-on-brand: #07130c;
+  --studio-brand: var(--brand-sage);
+  --studio-on-brand: #101611;
 
-  /* Compatibilidade com as páginas profissionais atuais */
   --studio-accent: var(--studio-brand);
   --studio-on-accent: var(--studio-on-brand);
 
   /* Superfícies */
-  --app-background: #ebece8;
-  --app-surface: #fbfcf8;
-  --app-surface-muted: #f2f3ef;
-  --app-surface-hover: #e9ebe6;
-  --app-surface-strong: #dfe2dc;
+  --app-background: #edeee8;
+  --app-surface: #fbfaf4;
+  --app-surface-muted: #f2f1e9;
+  --app-surface-hover: #e9e9df;
+  --app-surface-strong: #dedfd5;
 
   /* Texto */
-  --app-text: #141614;
-  --app-text-soft: #4f554f;
-  --app-text-muted: #747a74;
-  --app-text-inverse: #f3f5f0;
+  --app-text: #171916;
+  --app-text-soft: #505650;
+  --app-text-muted: #767d76;
+  --app-text-inverse: #f8f7f0;
 
   /* Bordas */
-  --app-border: #d7d9d3;
-  --app-border-strong: #bfc3bb;
-  --app-border-dark: #303330;
+  --app-border: #d5d6cc;
+  --app-border-strong: #bec2b8;
+  --app-border-dark: #373b36;
 
   /* Superfícies escuras */
-  --app-black: #0c0d0c;
-  --app-dark: #111311;
-  --app-dark-elevated: #1b1e1b;
-  --app-dark-hover: #242724;
+  --app-black: #0a0c0a;
+  --app-dark: #111411;
+  --app-dark-elevated: #1a1e1a;
+  --app-dark-hover: #242924;
 
-  /* Cores semânticas: não dependem da paleta do estúdio */
+  /* Cores semânticas */
   --color-success: #17633f;
-  --color-success-soft: #edf4ef;
-  --color-success-border: #a8c9b5;
+  --color-success-soft: #edf5ef;
+  --color-success-border: #a8cbb5;
 
-  --color-warning: #976407;
+  --color-warning: #8f620b;
   --color-warning-soft: #fbf3df;
-  --color-warning-border: #d9bf82;
+  --color-warning-border: #dbc181;
 
   --color-danger: #b43a33;
   --color-danger-soft: #f8edec;
@@ -66,6 +70,7 @@
     Helvetica,
     Arial,
     sans-serif;
+
   --font-mono:
     "SFMono-Regular",
     Consolas,
@@ -83,22 +88,25 @@
   --space-10: 2.5rem;
 
   /* Formas */
-  --radius-small: 0.2rem;
-  --radius-medium: 0.35rem;
-  --radius-large: 0.5rem;
+  --radius-small: 0.3rem;
+  --radius-medium: 0.45rem;
+  --radius-large: 0.7rem;
   --radius-round: 999rem;
 
   /* Elevação */
   --shadow-small:
-    0 0.125rem 0.3rem rgb(13 16 13 / 5%);
-  --shadow-medium:
-    0 0.125rem 0.3rem rgb(13 16 13 / 5%),
-    0 1rem 2.5rem rgb(13 16 13 / 7%);
-  --shadow-large:
-    0 0.2rem 0.5rem rgb(13 16 13 / 6%),
-    0 1.6rem 4rem rgb(13 16 13 / 10%);
+    0 0.0625rem 0.125rem rgb(15 19 15 / 5%),
+    0 0.25rem 0.75rem rgb(15 19 15 / 4%);
 
-  /* Compatibilidade temporária com páginas antigas */
+  --shadow-medium:
+    0 0.125rem 0.3rem rgb(15 19 15 / 5%),
+    0 1rem 2.5rem rgb(15 19 15 / 7%);
+
+  --shadow-large:
+    0 0.2rem 0.5rem rgb(15 19 15 / 6%),
+    0 1.8rem 4.5rem rgb(15 19 15 / 10%);
+
+  /* Compatibilidade com páginas antigas */
   --background: var(--app-background);
   --surface: var(--app-surface);
   --surface-muted: var(--app-surface-muted);
@@ -107,11 +115,13 @@
   --text: var(--app-text);
   --text-soft: var(--app-text-soft);
   --text-muted: var(--app-text-muted);
+
   --border: var(--app-border);
 
   --primary: var(--studio-brand);
   --primary-strong: var(--studio-brand-dark);
   --secondary: var(--studio-brand);
+
   --success: var(--color-success);
   --warning: var(--color-warning);
   --danger: var(--color-danger);
@@ -130,115 +140,121 @@
   font-weight: 400;
   line-height: 1.5;
   text-rendering: optimizeLegibility;
+
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 /*
- * Geração da paleta no mesmo elemento que recebe a cor principal.
- * A classe é usada tanto pelo layout quanto pela prévia do perfil.
+ * Paleta derivada da cor escolhida pelo estúdio.
+ * A classe também é usada na prévia do perfil.
  */
 :root,
 .tema-estudio {
   --studio-brand-soft: color-mix(
     in oklab,
     var(--studio-brand) 10%,
-    #f7f8f4
+    var(--app-surface)
   );
+
   --studio-brand-muted: color-mix(
     in oklab,
     var(--studio-brand) 24%,
-    #dfe2dc
+    var(--app-surface-strong)
   );
+
   --studio-brand-border: color-mix(
     in oklab,
     var(--studio-brand) 38%,
-    #c6cac3
+    var(--app-border-strong)
   );
+
   --studio-brand-dark: color-mix(
     in oklab,
-    var(--studio-brand) 42%,
-    #111311
+    var(--studio-brand) 68%,
+    #101310
   );
 
   --studio-accent: var(--studio-brand);
   --studio-on-accent: var(--studio-on-brand);
 
-  /* Compatibilidade enquanto as páginas antigas são migradas. */
   --primary: var(--studio-brand);
   --primary-strong: var(--studio-brand-dark);
   --secondary: var(--studio-brand);
 }
 
-/*
- * Tema escuro aplicado no contêiner autenticado.
- * A identidade do estúdio continua sendo a cor de destaque.
- */
+/* Tema escuro do ambiente autenticado */
 .tema-escuro {
   color-scheme: dark;
 
-  --app-background: #0d0f0d;
-  --app-surface: #171a17;
-  --app-surface-muted: #1e211e;
-  --app-surface-hover: #272b27;
-  --app-surface-strong: #303530;
+  --app-background: #100d0f;
+  --app-surface: #191519;
+  --app-surface-muted: #211b20;
+  --app-surface-hover: #2b2329;
+  --app-surface-strong: #372d34;
 
-  --app-text: #edf0eb;
-  --app-text-soft: #b6bdb5;
-  --app-text-muted: #858d84;
-  --app-text-inverse: #111311;
+  --app-text: #f1edef;
+  --app-text-soft: #c0b7bc;
+  --app-text-muted: #91868c;
+  --app-text-inverse: #151014;
 
-  --app-border: #303530;
-  --app-border-strong: #444b44;
-  --app-border-dark: #596159;
+  --app-border: #393036;
+  --app-border-strong: #50434b;
+  --app-border-dark: #695863;
 
-  --studio-brand-soft: color-mix(
-    in oklab,
-    var(--studio-brand) 12%,
-    var(--app-surface)
-  );
-  --studio-brand-muted: color-mix(
-    in oklab,
-    var(--studio-brand) 24%,
-    var(--app-surface-muted)
-  );
-  --studio-brand-border: color-mix(
-    in oklab,
-    var(--studio-brand) 38%,
-    var(--app-border)
-  );
+  --app-black: #090708;
+  --app-dark: #110d10;
+  --app-dark-elevated: #1b1519;
+  --app-dark-hover: #271f24;
 
-  --color-success-soft: #13261b;
-  --color-success-border: #315f45;
-  --color-warning-soft: #2a2110;
+  --color-success: #78c594;
+  --color-success-soft: #15251b;
+  --color-success-border: #345d44;
+
+  --color-warning: #e1b760;
+  --color-warning-soft: #29200f;
   --color-warning-border: #6d5723;
-  --color-danger-soft: #2c1716;
-  --color-danger-border: #6d3431;
+
+  --color-danger: #ef7c73;
+  --color-danger-soft: #2b1718;
+  --color-danger-border: #6c3434;
+
+  --sidebar-start: #171116;
+  --sidebar-end: #0a0809;
 
   --shadow-small:
     0 0.125rem 0.35rem rgb(0 0 0 / 18%);
+
   --shadow-medium:
     0 0.125rem 0.35rem rgb(0 0 0 / 20%),
     0 1rem 2.5rem rgb(0 0 0 / 24%);
+
   --shadow-large:
     0 0.2rem 0.5rem rgb(0 0 0 / 22%),
     0 1.6rem 4rem rgb(0 0 0 / 30%);
 
-  /* Compatibilidade com os componentes já migrados. */
   --background: var(--app-background);
   --surface: var(--app-surface);
   --surface-muted: var(--app-surface-muted);
   --surface-hover: var(--app-surface-hover);
+
   --text: var(--app-text);
   --text-soft: var(--app-text-soft);
   --text-muted: var(--app-text-muted);
+
   --border: var(--app-border);
+
   --shadow: var(--shadow-large);
   --shadow-soft: var(--shadow-medium);
-}
 
-/* Campos antigos ainda com fundo branco acompanham o tema sem !important. */
-.tema-escuro .conteudo input:not([type='color']),
+  min-height: 100%;
+  background: var(--app-background);
+  color: var(--app-text);
+}
+/* Compatibilidade com campos antigos */
+.tema-escuro .conteudo input:not(
+  [type='color']
+),
 .tema-escuro .conteudo select,
 .tema-escuro .conteudo textarea {
   background-color: var(--app-surface-muted);
@@ -266,17 +282,24 @@ html {
 body {
   min-width: 20rem;
   min-height: 100vh;
+  min-height: 100dvh;
   margin: 0;
+
   background:
-    linear-gradient(
-      180deg,
-      rgb(255 255 255 / 22%),
-      transparent 15rem
-    ),
+
     var(--app-background);
+
+  background-attachment: fixed;
+
   color: var(--app-text);
   font-family: var(--font-sans);
   font-size: 1rem;
+}
+
+app-fleiva-root {
+  display: block;
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 button,
@@ -289,6 +312,12 @@ textarea {
 
 button {
   cursor: pointer;
+  transition:
+    color 140ms ease,
+    background-color 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    opacity 140ms ease;
 }
 
 button:disabled {
@@ -299,6 +328,19 @@ input,
 select,
 textarea {
   accent-color: var(--studio-brand);
+  caret-color: var(--studio-brand);
+
+  transition:
+    color 140ms ease,
+    background-color 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--app-text-muted);
+  opacity: 0.82;
 }
 
 a {
@@ -332,13 +374,19 @@ h4,
 h5,
 h6 {
   color: inherit;
-  font-weight: 720;
-  line-height: 1.1;
-  letter-spacing: -0.025em;
+  font-weight: 730;
+  line-height: 1.08;
+  letter-spacing: -0.027em;
 }
 
 p {
   line-height: 1.6;
+}
+
+hr {
+  margin: var(--space-6) 0;
+  border: 0;
+  border-top: 0.0625rem solid var(--app-border);
 }
 
 code,
@@ -359,10 +407,56 @@ samp,
   outline-offset: 0.14rem;
 }
 
+/*
+ * Ornamento opcional.
+ * Pode ser adicionado a um painel ou cabeçalho sem alterar sua estrutura.
+ */
+.ornamento-fleiva {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.ornamento-fleiva::before {
+  position: absolute;
+  z-index: -1;
+  inset: -25% -8% -25% 52%;
+  color: var(--studio-brand);
+  pointer-events: none;
+  content: '';
+
+  background:
+    repeating-radial-gradient(
+      ellipse at 100% 50%,
+      transparent 0 0.55rem,
+      currentColor 0.58rem 0.64rem
+    );
+
+  opacity: 0.12;
+
+  mask-image:
+    linear-gradient(
+      90deg,
+      transparent,
+      #000 45%
+    );
+
+  -webkit-mask-image:
+    linear-gradient(
+      90deg,
+      transparent,
+      #000 45%
+    );
+}
+
 * {
-  scrollbar-color: var(--app-border-strong) transparent;
+  scrollbar-color:
+    var(--app-border-strong)
+    transparent;
+
   scrollbar-width: thin;
 }
+
 
 @media (prefers-reduced-motion: reduce) {
   html {

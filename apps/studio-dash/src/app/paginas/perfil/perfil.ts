@@ -1,6 +1,7 @@
 import {
   Component,
   OnInit,
+  computed,
   inject,
   signal,
 } from '@angular/core';
@@ -15,8 +16,14 @@ import {
   DadosEstudio,
   DadosVersoesFaixa,
   normalizarCorEstudio,
+  normalizarTemaPaginaPublica,
   obterCorContrasteEstudio,
+  normalizarSlugEstudio,
+  normalizarUrlEmbedPublico,
+type EmbedPublico,
+type ProvedorEmbedPublico,
   type ConfiguracaoPublicaEstudio,
+  type TemaPaginaPublica,
 } from '@fleiva-studios/shared-data-access';
 
 @Component({
@@ -36,13 +43,49 @@ export class Perfil implements OnInit {
 
   readonly salvandoNome = signal(false);
   readonly salvandoCor = signal(false);
+  readonly salvandoTemaPaginaPublica = signal(false);
+  readonly salvandoPaginaPublica = signal(false);
   readonly enviandoLogo = signal(false);
   readonly removendoLogo = signal(false);
   readonly arquivoSelecionado = signal<File | null>(null);
   readonly erroOperacao = signal<string | null>(null);
   readonly mensagemOperacao = signal<string | null>(null);
   readonly corPrevia = signal(COR_PADRAO_ESTUDIO);
-  readonly salvandoPaginaPublica = signal(false);
+  readonly salvandoSlug = signal(false);
+  readonly salvandoEmbeds = signal(false);
+readonly embedsPrevia = signal<EmbedPublico[]>([]);
+readonly erroEmbeds = signal<string | null>(null);
+readonly mensagemEmbeds = signal<string | null>(null);
+  readonly temaPaginaPublicaPrevia =
+    signal<TemaPaginaPublica>('grafite');
+
+  readonly opcoesTemaPaginaPublica: readonly {
+    valor: TemaPaginaPublica;
+    nome: string;
+    descricao: string;
+  }[] = [
+    {
+      valor: 'grafite',
+      nome: 'Grafite',
+      descricao: 'Creme e grafite técnico.',
+    },
+    {
+      valor: 'creme',
+      nome: 'Creme',
+      descricao: 'Claro, editorial e direto.',
+    },
+    {
+      valor: 'ameixa',
+      nome: 'Ameixa',
+      descricao: 'Escuro, artístico e noturno.',
+    },
+  ];
+
+  readonly temaPaginaPublicaAlterado = computed(
+    () =>
+      this.temaPaginaPublicaPrevia() !==
+      this.dadosEstudio.temaPaginaPublica(),
+  );
 
   readonly formulario = this.construtorFormulario.group({
     nome: this.construtorFormulario.nonNullable.control('', [
@@ -60,50 +103,102 @@ export class Perfil implements OnInit {
         ],
       ),
   });
-  readonly formularioPaginaPublica =
-  this.construtorFormulario.nonNullable.group({
-    descricao_publica: [''],
-    cidade: [''],
-    whatsapp_publico: [''],
-    instagram: [''],
-    landing_publicada: [false],
-  });
 
+  readonly formularioPaginaPublica =
+    this.construtorFormulario.nonNullable.group({
+      descricao_publica: [''],
+      cidade: [''],
+      whatsapp_publico: [''],
+      instagram: [''],
+      landing_publicada: [false],
+      participar_da_casa: [false],
+    });
+  readonly formularioSlug =
+  this.construtorFormulario.nonNullable.group({
+    slug: [
+      '',
+      [
+        Validators.required,
+        Validators.maxLength(120),
+      ],
+    ],
+  });
+  readonly limiteEmbedsAtingido = computed(
+  () => this.embedsPrevia().length >= 4,
+);
+readonly formularioEmbed =
+  this.construtorFormulario.group({
+    provedor:
+      this.construtorFormulario.nonNullable.control<
+        ProvedorEmbedPublico
+      >('spotify'),
+
+    url:
+      this.construtorFormulario.nonNullable.control(
+        '',
+        Validators.required,
+      ),
+  });
+readonly embedsAlterados = computed(
+  () =>
+    JSON.stringify(this.embedsPrevia()) !==
+    JSON.stringify(
+      this.dadosEstudio.embedsPublicos(),
+    ),
+);
 
   ngOnInit(): void {
     void this.carregarDados();
   }
 
   async carregarDados(): Promise<void> {
-    this.erroOperacao.set(null);
+  this.erroOperacao.set(null);
 
-    await Promise.all([
-      this.dadosEstudio.carregar(),
-      this.dadosVersoes.listar(),
-    ]);
+  await this.dadosEstudio.carregar();
 
-    const estudio = this.dadosEstudio.estudio();
+  if (this.dadosEstudio.possuiModulos()) {
+    void this.dadosVersoes.listar();
+  }
 
-    if (estudio) {
-      this.formulario.controls.nome.setValue(estudio.nome);
-      this.formularioPaginaPublica.setValue({
-  descricao_publica:
-    estudio.descricao_publica ?? '',
-  cidade: estudio.cidade ?? '',
-  whatsapp_publico:
-    estudio.whatsapp_publico ?? '',
-  instagram: estudio.instagram ?? '',
-  landing_publicada:
-    estudio.landing_publicada,
-});
+  const estudio = this.dadosEstudio.estudio();
 
-      const cor =
-        normalizarCorEstudio(estudio.cor_principal) ??
-        COR_PADRAO_ESTUDIO;
+  if (!estudio) {
+    return;
+  }
 
-      this.formularioCor.controls.cor_principal.setValue(cor);
-      this.corPrevia.set(cor);
-    }
+  // O restante do método permanece igual.
+
+    this.formulario.controls.nome.setValue(estudio.nome);
+    this.formularioSlug.controls.slug.setValue(
+  estudio.slug,
+);
+
+    this.formularioPaginaPublica.setValue({
+      descricao_publica:
+        estudio.descricao_publica ?? '',
+      cidade: estudio.cidade ?? '',
+      whatsapp_publico:
+        estudio.whatsapp_publico ?? '',
+      instagram: estudio.instagram ?? '',
+      landing_publicada: estudio.landing_publicada,
+      participar_da_casa:
+        estudio.participar_da_casa ?? false,
+    });
+
+    const cor =
+      normalizarCorEstudio(estudio.cor_principal) ??
+      COR_PADRAO_ESTUDIO;
+
+    this.formularioCor.controls.cor_principal.setValue(cor);
+    this.corPrevia.set(cor);
+    this.temaPaginaPublicaPrevia.set(
+      normalizarTemaPaginaPublica(
+        estudio.tema_pagina_publica,
+      ),
+    );
+    this.embedsPrevia.set([
+  ...this.dadosEstudio.embedsPublicos(),
+]);
   }
 
   async salvarNome(): Promise<void> {
@@ -121,7 +216,7 @@ export class Perfil implements OnInit {
       await this.dadosEstudio.atualizarNome(valor.nome);
 
       this.mensagemOperacao.set(
-        'Nome do estúdio atualizado.',
+        'Nome atualizado.',
       );
     } catch (erro) {
       this.erroOperacao.set(
@@ -131,6 +226,60 @@ export class Perfil implements OnInit {
       this.salvandoNome.set(false);
     }
   }
+
+  normalizarSlugFormulario(): void {
+  const controle =
+    this.formularioSlug.controls.slug;
+
+  controle.setValue(
+    normalizarSlugEstudio(controle.value),
+  );
+}
+
+async salvarSlug(): Promise<void> {
+  this.normalizarSlugFormulario();
+
+  if (
+    this.formularioSlug.invalid ||
+    this.salvandoSlug()
+  ) {
+    this.formularioSlug.markAllAsTouched();
+    return;
+  }
+
+  this.salvandoSlug.set(true);
+  this.limparRetornoOperacao();
+
+  try {
+    const { slug } =
+      this.formularioSlug.getRawValue();
+
+    const estudio =
+      await this.dadosEstudio.atualizarSlug(slug);
+
+    this.formularioSlug.controls.slug.setValue(
+      estudio.slug,
+    );
+
+    this.mensagemOperacao.set(
+      'Endereço da página atualizado.',
+    );
+  } catch (erro) {
+    this.erroOperacao.set(
+      this.obterMensagemErro(erro),
+    );
+  } finally {
+    this.salvandoSlug.set(false);
+  }
+}
+
+urlPaginaPublica(): string {
+  const slug = normalizarSlugEstudio(
+    this.formularioSlug.controls.slug.value,
+  );
+
+  return `https://card.fleiva.com.br/${slug}`;
+}
 
   selecionarCor(evento: Event): void {
     const input = evento.target as HTMLInputElement;
@@ -164,7 +313,7 @@ export class Perfil implements OnInit {
       this.formularioCor.controls.cor_principal.setValue(cor);
       this.corPrevia.set(cor);
       this.mensagemOperacao.set(
-        'Cor do estúdio atualizada.',
+        'Cores Atualizadas.',
       );
     } catch (erro) {
       this.erroOperacao.set(
@@ -202,6 +351,47 @@ export class Perfil implements OnInit {
     return obterCorContrasteEstudio(this.corPrevia());
   }
 
+  selecionarTemaPaginaPublica(
+    tema: TemaPaginaPublica,
+  ): void {
+    this.temaPaginaPublicaPrevia.set(tema);
+    this.limparRetornoOperacao();
+  }
+
+  async salvarTema(): Promise<void> {
+    if (
+      this.salvandoTemaPaginaPublica() ||
+      !this.temaPaginaPublicaAlterado()
+    ) {
+      return;
+    }
+
+    this.salvandoTemaPaginaPublica.set(true);
+    this.limparRetornoOperacao();
+
+    try {
+      const estudio = await this.dadosEstudio
+        .atualizarTemaPaginaPublica(
+          this.temaPaginaPublicaPrevia(),
+        );
+
+      this.temaPaginaPublicaPrevia.set(
+        normalizarTemaPaginaPublica(
+          estudio.tema_pagina_publica,
+        ),
+      );
+      this.mensagemOperacao.set(
+        'Página pública atualizada.',
+      );
+    } catch (erro) {
+      this.erroOperacao.set(
+        this.obterMensagemErro(erro),
+      );
+    } finally {
+      this.salvandoTemaPaginaPublica.set(false);
+    }
+  }
+
   selecionarLogo(evento: Event): void {
     const input = evento.target as HTMLInputElement;
     const arquivo = input.files?.item(0) ?? null;
@@ -230,7 +420,6 @@ export class Perfil implements OnInit {
 
       this.arquivoSelecionado.set(null);
       inputArquivo.value = '';
-
       this.mensagemOperacao.set(
         'Logo do estúdio atualizado.',
       );
@@ -257,7 +446,6 @@ export class Perfil implements OnInit {
 
     try {
       await this.dadosEstudio.removerLogo();
-
       this.mensagemOperacao.set(
         'Logo do estúdio removido.',
       );
@@ -269,59 +457,58 @@ export class Perfil implements OnInit {
       this.removendoLogo.set(false);
     }
   }
-async salvarPaginaPublica(): Promise<void> {
-  if (this.salvandoPaginaPublica()) {
-    return;
+
+  async salvarPaginaPublica(): Promise<void> {
+    if (this.salvandoPaginaPublica()) {
+      return;
+    }
+
+    this.salvandoPaginaPublica.set(true);
+    this.limparRetornoOperacao();
+
+    try {
+      const valor =
+        this.formularioPaginaPublica.getRawValue();
+
+      const configuracao: ConfiguracaoPublicaEstudio = {
+        descricao_publica: valor.descricao_publica,
+        cidade: valor.cidade,
+        whatsapp_publico: valor.whatsapp_publico,
+        instagram: valor.instagram,
+        landing_publicada: valor.landing_publicada,
+        participar_da_casa:
+          valor.participar_da_casa,
+      };
+
+      const estudio = await this.dadosEstudio
+        .atualizarConfiguracaoPublica(configuracao);
+
+      this.formularioPaginaPublica.setValue({
+        descricao_publica:
+          estudio.descricao_publica ?? '',
+        cidade: estudio.cidade ?? '',
+        whatsapp_publico:
+          estudio.whatsapp_publico ?? '',
+        instagram: estudio.instagram ?? '',
+        landing_publicada: estudio.landing_publicada,
+        participar_da_casa:
+          estudio.participar_da_casa ?? false,
+      });
+
+      this.mensagemOperacao.set(
+        estudio.landing_publicada
+          ? 'Página pública atualizada e publicada.'
+          : 'Configurações salvas. A página continua em rascunho.',
+      );
+    } catch (erro) {
+      this.erroOperacao.set(
+        this.obterMensagemErro(erro),
+      );
+    } finally {
+      this.salvandoPaginaPublica.set(false);
+    }
   }
 
-  this.salvandoPaginaPublica.set(true);
-  this.limparRetornoOperacao();
-
-  try {
-    const valor =
-      this.formularioPaginaPublica.getRawValue();
-
-    const configuracao: ConfiguracaoPublicaEstudio = {
-      descricao_publica:
-        valor.descricao_publica,
-      cidade: valor.cidade,
-      whatsapp_publico:
-        valor.whatsapp_publico,
-      instagram: valor.instagram,
-      landing_publicada:
-        valor.landing_publicada,
-    };
-
-    const estudio =
-      await this.dadosEstudio
-        .atualizarConfiguracaoPublica(
-          configuracao,
-        );
-
-    this.formularioPaginaPublica.setValue({
-      descricao_publica:
-        estudio.descricao_publica ?? '',
-      cidade: estudio.cidade ?? '',
-      whatsapp_publico:
-        estudio.whatsapp_publico ?? '',
-      instagram: estudio.instagram ?? '',
-      landing_publicada:
-        estudio.landing_publicada,
-    });
-
-    this.mensagemOperacao.set(
-      estudio.landing_publicada
-        ? 'Página pública atualizada e publicada.'
-        : 'Configurações salvas. A página continua em rascunho.',
-    );
-  } catch (erro) {
-    this.erroOperacao.set(
-      this.obterMensagemErro(erro),
-    );
-  } finally {
-    this.salvandoPaginaPublica.set(false);
-  }
-}
   inicialEstudio(): string {
     const nome = this.dadosEstudio.estudio()?.nome.trim();
 
@@ -406,4 +593,120 @@ async salvarPaginaPublica(): Promise<void> {
 
     return 'Não foi possível concluir a operação.';
   }
+  adicionarEmbed(): void {
+  if (
+    this.formularioEmbed.invalid ||
+    this.limiteEmbedsAtingido()
+  ) {
+    this.formularioEmbed.markAllAsTouched();
+    return;
+  }
+
+  this.erroEmbeds.set(null);
+  this.mensagemEmbeds.set(null);
+
+  const {
+    provedor,
+    url: urlRecebida,
+  } = this.formularioEmbed.getRawValue();
+
+  const url = normalizarUrlEmbedPublico(
+    provedor,
+    urlRecebida,
+  );
+
+  if (!url) {
+    this.erroEmbeds.set(
+      `O endereço informado para ${this.formatarProvedorEmbed(
+        provedor,
+      )} não é válido.`,
+    );
+    return;
+  }
+
+  const duplicado = this.embedsPrevia().some(
+    (embed) =>
+      embed.provedor === provedor &&
+      embed.url === url,
+  );
+
+  if (duplicado) {
+    this.erroEmbeds.set(
+      'Este conteúdo já foi adicionado.',
+    );
+    return;
+  }
+
+  this.embedsPrevia.update((embeds) => [
+    ...embeds,
+    {
+      provedor,
+      url,
+    },
+  ]);
+
+  this.formularioEmbed.controls.url.setValue('');
+  this.formularioEmbed.controls.url.markAsUntouched();
+}
+
+removerEmbed(indice: number): void {
+  this.embedsPrevia.update((embeds) =>
+    embeds.filter(
+      (_, indiceAtual) =>
+        indiceAtual !== indice,
+    ),
+  );
+
+  this.erroEmbeds.set(null);
+  this.mensagemEmbeds.set(null);
+}
+
+async salvarEmbeds(): Promise<void> {
+  if (
+    this.salvandoEmbeds() ||
+    !this.embedsAlterados()
+  ) {
+    return;
+  }
+
+  this.salvandoEmbeds.set(true);
+  this.erroEmbeds.set(null);
+  this.mensagemEmbeds.set(null);
+
+  try {
+    await this.dadosEstudio
+      .atualizarEmbedsPublicos(
+        this.embedsPrevia(),
+      );
+
+    this.embedsPrevia.set([
+      ...this.dadosEstudio.embedsPublicos(),
+    ]);
+
+    this.mensagemEmbeds.set(
+      'Conteúdos externos atualizados.',
+    );
+  } catch (erro) {
+    this.erroEmbeds.set(
+      this.obterMensagemErro(erro),
+    );
+  } finally {
+    this.salvandoEmbeds.set(false);
+  }
+}
+
+formatarProvedorEmbed(
+  provedor: ProvedorEmbedPublico,
+): string {
+  const nomes: Record<
+    ProvedorEmbedPublico,
+    string
+  > = {
+    spotify: 'Spotify',
+    youtube: 'YouTube',
+    soundcloud: 'SoundCloud',
+  };
+
+  return nomes[provedor];
+}
 }

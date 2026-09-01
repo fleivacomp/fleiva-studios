@@ -1,0 +1,319 @@
+<main class="casa">
+  <div class="moire" aria-hidden="true"></div>
+
+  <header class="cabecalho">
+    <a
+      class="marca-fleiva"
+      href="https://fleiva.com.br"
+      aria-label="Flêiva Studios"
+    >
+      <span aria-hidden="true"></span>
+      <strong>CASA</strong>
+    </a>
+
+    <a
+      class="link-fleiva"
+      href="https://fleiva.com.br"
+    >
+      Conheça a Flêiva
+      <span aria-hidden="true">↗</span>
+    </a>
+  </header>
+
+  <section class="apresentacao">
+    <div class="texto">
+      <p>CASA FLÊIVA</p>
+
+      <h1>
+        Música nasce em muitos lugares.
+        <strong>Encontre alguns deles.</strong>
+      </h1>
+
+      <p class="descricao">
+        A Casa Flêiva reúne Cards públicos de quem faz a
+        música independente acontecer. Cada Card é organizado
+        por quem está por trás dele.
+      </p>
+
+      <div class="acoes">
+        <a
+          class="botao-explorar"
+          href="#casas-abertas"
+          (click)="abrirPorta($event)"
+        >
+          Abrir uma porta
+          <span aria-hidden="true">→</span>
+        </a>
+
+        <a
+          class="link-institucional"
+          href="https://fleiva.com.br"
+        >
+          Crie seu Card na Flêiva
+        </a>
+      </div>
+    </div>
+  </section>
+
+  @if (
+    !dadosCasa.carregando() &&
+    !dadosCasa.erro() &&
+    (
+      dadosCasa.trabalhos().length > 0 ||
+      dadosCasa.estudios().length > 0
+    )
+  ) {
+    <section class="busca-casa" aria-label="Buscar na Casa Flêiva">
+      <label for="busca-casa">
+        <span>BUSCAR NA CASA</span>
+
+        <input
+          id="busca-casa"
+          type="search"
+          [value]="termoBusca()"
+          placeholder="Trabalho, artista, estúdio, cidade ou serviço"
+          autocomplete="off"
+          (input)="atualizarBusca($event)"
+        />
+      </label>
+
+      @if (buscaAtiva()) {
+        <button type="button" (click)="limparBusca()">
+          Limpar busca
+        </button>
+      }
+    </section>
+  }
+
+  @if (
+    !dadosCasa.carregando() &&
+    !dadosCasa.erro() &&
+    trabalhosFiltrados().length > 0
+  ) {
+    <section
+      id="trabalhos-da-casa"
+      class="trabalhos-da-casa"
+      aria-labelledby="titulo-trabalhos-da-casa"
+    >
+      <header class="cabecalho-descoberta">
+        <div>
+          <p>ESCOLHIDOS PELOS ESTÚDIOS</p>
+          <h2 id="titulo-trabalhos-da-casa">
+            Trabalhos da Casa
+          </h2>
+        </div>
+
+        <span>
+          {{ trabalhosFiltrados().length }}
+          @if (trabalhosFiltrados().length === 1) {
+            trabalho
+          } @else {
+            trabalhos
+          }
+        </span>
+      </header>
+
+      <div class="grade-trabalhos">
+        @for (
+          trabalho of trabalhosFiltrados();
+          track trabalho.album_id
+        ) {
+          <a
+            class="cartao-trabalho"
+            [class.sem-capa]="!trabalho.capa_url"
+            [routerLink]="[
+              '/estudio',
+              trabalho.estudio_slug,
+              'trabalho',
+              trabalho.album_id
+            ]"
+            [style.--studio-brand]="corTrabalho(trabalho)"
+          >
+            @if (trabalho.capa_url) {
+              <figure class="capa-trabalho">
+                <img
+                  [src]="trabalho.capa_url"
+                  [alt]="'Capa de ' + trabalho.album_nome"
+                />
+              </figure>
+            }
+
+            <div class="conteudo-trabalho">
+              <div>
+                @if (trabalho.album_tipo) {
+                  <p class="tipo-trabalho">
+                    {{ trabalho.album_tipo }}
+                  </p>
+                }
+
+                <h3>{{ trabalho.album_nome }}</h3>
+                <p class="projeto-trabalho">
+                  {{ trabalho.projeto_nome }}
+                </p>
+
+                @if (trabalho.album_descricao) {
+                  <p class="descricao-trabalho">
+                    {{ trabalho.album_descricao }}
+                  </p>
+                }
+              </div>
+
+              <footer>
+                <span>{{ trabalho.estudio_nome }}</span>
+                <span>
+                  Abrir trabalho
+                  <i aria-hidden="true">→</i>
+                </span>
+              </footer>
+            </div>
+          </a>
+        }
+      </div>
+    </section>
+  }
+
+  @if (!buscaAtiva() || estudiosFiltrados().length > 0) {
+    <section
+      id="casas-abertas"
+      class="descoberta"
+      aria-labelledby="titulo-casas-abertas"
+    >
+    <header class="cabecalho-descoberta">
+      <div>
+        <p>CARDS FLÊIVA</p>
+        <h2 id="titulo-casas-abertas">Casas abertas</h2>
+      </div>
+
+      @if (!dadosCasa.carregando() && !dadosCasa.erro()) {
+        <span>
+          {{ estudiosFiltrados().length }}
+          @if (estudiosFiltrados().length === 1) {
+            estúdio
+          } @else {
+            estúdios
+          }
+        </span>
+      }
+    </header>
+
+    @if (dadosCasa.carregando()) {
+      <div class="estado-casa">
+        <span class="carregador" aria-hidden="true"></span>
+        <p>Procurando casas abertas...</p>
+      </div>
+    } @else if (dadosCasa.erro()) {
+      <div class="estado-casa estado-erro">
+        <strong>Não foi possível abrir a Casa.</strong>
+        <p>{{ dadosCasa.erro() }}</p>
+
+        <button
+          type="button"
+          (click)="dadosCasa.listar()"
+        >
+          Tentar novamente
+        </button>
+      </div>
+    } @else if (estudiosFiltrados().length > 0) {
+      <div class="grade-estudios">
+        @for (
+          estudio of estudiosFiltrados();
+          track estudio.id
+        ) {
+          <a
+            class="cartao-estudio"
+            [routerLink]="['/', estudio.slug]"
+            [style.--studio-brand]="corEstudio(estudio)"
+          >
+            <header>
+              <div class="avatar-estudio">
+                @if (estudio.logo_url) {
+                  <img
+                    [src]="estudio.logo_url"
+                    [alt]="'Logo de ' + estudio.nome"
+                  />
+                } @else {
+                  <span>
+                    {{ inicialEstudio(estudio.nome) }}
+                  </span>
+                }
+              </div>
+
+              <span class="estado-estudio">
+                <i aria-hidden="true"></i>
+                CASA ABERTA
+              </span>
+            </header>
+
+            <div class="conteudo-cartao">
+              @if (estudio.cidade) {
+                <p class="local-estudio">
+                  {{ estudio.cidade }}
+                </p>
+              }
+
+              <h3>{{ estudio.nome }}</h3>
+
+              @if (estudio.descricao_publica) {
+                <p class="bio-estudio">
+                  {{ estudio.descricao_publica }}
+                </p>
+              }
+
+              @if (estudio.servicos.length > 0) {
+                <ul
+                  class="servicos-estudio"
+                  [attr.aria-label]="
+                    'Serviços de ' + estudio.nome
+                  "
+                >
+                  @for (
+                    servico of estudio.servicos;
+                    track servico
+                  ) {
+                    <li>{{ servico }}</li>
+                  }
+                </ul>
+              }
+            </div>
+
+            <footer>
+              <span>Abrir Card</span>
+              <span aria-hidden="true">→</span>
+            </footer>
+          </a>
+        }
+      </div>
+    } @else {
+      <div class="estado-casa estado-vazio">
+        <strong>A Casa está abrindo as portas.</strong>
+        <p>
+          Os estúdios publicados aparecerão aqui.
+        </p>
+      </div>
+    }
+    </section>
+  }
+
+  @if (
+    buscaAtiva() &&
+    !dadosCasa.carregando() &&
+    !dadosCasa.erro() &&
+    !possuiResultadosBusca()
+  ) {
+    <section class="resultado-vazio-busca">
+      <strong>Nada encontrado na Casa.</strong>
+      <p>
+        Tente outro nome, cidade, serviço ou trabalho.
+      </p>
+      <button type="button" (click)="limparBusca()">
+        Limpar busca
+      </button>
+    </section>
+  }
+
+  <footer class="rodape">
+    <span>CASA FLÊIVA</span>
+    <span>CARDS PÚBLICOS DE QUEM FAZ MÚSICA</span>
+    <span>BRASIL · {{ anoAtual }}</span>
+  </footer>
+</main>

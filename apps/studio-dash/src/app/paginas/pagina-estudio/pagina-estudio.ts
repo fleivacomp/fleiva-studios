@@ -1,18 +1,32 @@
 import {
-  Component,
-  OnInit,
   computed,
+  Component,
+  effect,
   inject,
+  OnInit,
 } from '@angular/core';
 
 import {
   ActivatedRoute,
-  RouterLink,
 } from '@angular/router';
 
 import {
+  DomSanitizer,
+  type SafeResourceUrl,
+  Title,
+} from '@angular/platform-browser';
+
+import {
   DadosPaginaEstudio,
+  type EmbedPaginaPublica,
 } from '@fleiva-studios/shared-data-access';
+
+interface EmbedPublicoRenderizado {
+  chave: string;
+  provedor: EmbedPaginaPublica['provedor'];
+  rotulo: string;
+  src: SafeResourceUrl;
+}
 
 @Component({
   selector: 'app-pagina-estudio',
@@ -27,7 +41,25 @@ export class PaginaEstudio implements OnInit {
   private readonly rota =
     inject(ActivatedRoute);
 
+  private readonly sanitizador =
+    inject(DomSanitizer);
+
+  private readonly tituloPagina =
+    inject(Title);
+
   private slug = '';
+
+  constructor() {
+    effect(() => {
+      const estudio = this.dados.estudio();
+
+      this.tituloPagina.setTitle(
+        estudio
+          ? `${estudio.nome} — Casa Flêiva`
+          : 'Casa Flêiva',
+      );
+    });
+  }
 
   readonly inicialEstudio = computed(() => {
     const nome =
@@ -78,6 +110,20 @@ export class PaginaEstudio implements OnInit {
       : null;
   });
 
+  readonly embedsPublicos = computed(() =>
+    this.dados
+      .embeds()
+      .map((embed) =>
+        this.criarEmbedPublico(embed),
+      )
+      .filter(
+        (
+          embed,
+        ): embed is EmbedPublicoRenderizado =>
+          embed !== null,
+      ),
+  );
+
   readonly anoAtual =
     new Date().getFullYear();
 
@@ -92,6 +138,30 @@ export class PaginaEstudio implements OnInit {
 
   recarregar(): void {
     void this.dados.carregar(this.slug);
+  }
+
+  urlCasa(slug: string): string {
+    const slugSeguro = encodeURIComponent(slug);
+
+    if (this.usarDominiosFleiva()) {
+      return `https://card.fleiva.com.br/${slugSeguro}`;
+    }
+
+    return `/estudio/${slugSeguro}`;
+  }
+
+  urlTrabalho(
+    slug: string,
+    albumId: string,
+  ): string {
+    const slugSeguro = encodeURIComponent(slug);
+    const albumIdSeguro = encodeURIComponent(albumId);
+
+    if (this.usarDominiosFleiva()) {
+      return `https://play.fleiva.com.br/${slugSeguro}/trabalho/${albumIdSeguro}`;
+    }
+
+    return `/estudio/${slugSeguro}/trabalho/${albumIdSeguro}`;
   }
 
   formatarPreco(valor: number): string {
@@ -156,6 +226,176 @@ export class PaginaEstudio implements OnInit {
     );
   }
 
+  private usarDominiosFleiva(): boolean {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+
+    const hostname = window.location.hostname
+      .trim()
+      .toLocaleLowerCase();
+
+    return (
+      hostname === 'fleiva.com.br' ||
+      hostname.endsWith('.fleiva.com.br')
+    );
+  }
+
+  private criarEmbedPublico(
+    embed: EmbedPaginaPublica,
+  ): EmbedPublicoRenderizado | null {
+    const urlSegura =
+      this.criarUrlEmbedSegura(embed);
+
+    if (!urlSegura) {
+      return null;
+    }
+
+    return {
+      chave: `${embed.provedor}:${embed.url}`,
+      provedor: embed.provedor,
+      rotulo:
+        embed.provedor === 'spotify'
+          ? 'Spotify'
+          : embed.provedor === 'youtube'
+            ? 'YouTube'
+            : 'SoundCloud',
+      src: this.sanitizador
+        .bypassSecurityTrustResourceUrl(
+          urlSegura,
+        ),
+    };
+  }
+
+  private criarUrlEmbedSegura(
+    embed: EmbedPaginaPublica,
+  ): string | null {
+    try {
+      const url = new URL(embed.url);
+
+      if (url.protocol !== 'https:') {
+        return null;
+      }
+
+      if (embed.provedor === 'spotify') {
+        return this.criarUrlSpotify(url);
+      }
+
+      if (embed.provedor === 'youtube') {
+        return this.criarUrlYoutube(url);
+      }
+
+      if (embed.provedor === 'soundcloud') {
+        return this.criarUrlSoundCloud(url);
+      }
+
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  private criarUrlSpotify(
+    url: URL,
+  ): string | null {
+    if (url.hostname !== 'open.spotify.com') {
+      return null;
+    }
+
+    const partes = url.pathname
+      .split('/')
+      .filter(Boolean);
+
+    const tipo = partes[0];
+    const id = partes[1];
+
+    const tiposPermitidos = new Set([
+      'album',
+      'artist',
+      'episode',
+      'playlist',
+      'show',
+      'track',
+    ]);
+
+    if (
+      partes.length !== 2 ||
+      !tipo ||
+      !tiposPermitidos.has(tipo) ||
+      !id ||
+      !/^[a-zA-Z0-9]+$/.test(id)
+    ) {
+      return null;
+    }
+
+    return `https://open.spotify.com/embed/${tipo}/${id}`;
+  }
+
+  private criarUrlYoutube(
+    url: URL,
+  ): string | null {
+    const hostname = url.hostname
+      .replace(/^www\./, '')
+      .toLocaleLowerCase();
+
+    let videoId: string | null = null;
+
+    if (hostname === 'youtu.be') {
+      videoId =
+        url.pathname.split('/').filter(Boolean)[0] ??
+        null;
+    } else if (
+      hostname === 'youtube.com' ||
+      hostname === 'music.youtube.com'
+    ) {
+      if (url.pathname === '/watch') {
+        videoId = url.searchParams.get('v');
+      }
+    }
+
+    if (
+      !videoId ||
+      !/^[a-zA-Z0-9_-]{11}$/.test(videoId)
+    ) {
+      return null;
+    }
+
+    return `https://www.youtube-nocookie.com/embed/${videoId}`;
+  }
+
+  private criarUrlSoundCloud(
+    url: URL,
+  ): string | null {
+    const hostname = url.hostname
+      .replace(/^www\./, '')
+      .toLocaleLowerCase();
+
+    const partes = url.pathname
+      .split('/')
+      .filter(Boolean);
+
+    if (
+      hostname !== 'soundcloud.com' ||
+      partes.length < 2
+    ) {
+      return null;
+    }
+
+    const urlCanonica =
+      `https://soundcloud.com${url.pathname}`;
+
+    return (
+      'https://w.soundcloud.com/player/' +
+      `?url=${encodeURIComponent(urlCanonica)}` +
+      '&auto_play=false' +
+      '&hide_related=true' +
+      '&show_comments=false' +
+      '&show_user=true' +
+      '&show_reposts=false' +
+      '&visual=false'
+    );
+  }
+
   private extrairUsuarioInstagram(
     valor: string | null | undefined,
   ): string | null {
@@ -180,4 +420,7 @@ export class PaginaEstudio implements OnInit {
       ? usuario
       : null;
   }
+
+
+
 }

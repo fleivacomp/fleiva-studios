@@ -1,0 +1,147 @@
+:host {
+  --fleiva-largura: 10rem;
+  --fleiva-mascara: url('/marca/fleiva-wordmark-mask.png');
+  --fleiva-proporcao: 1256 / 596;
+  --fleiva-verde: #5e886f;
+  --fleiva-roxo: #885f74;
+  --fleiva-claro: #f7f2e0;
+
+  display: inline-block;
+  width: var(--fleiva-largura);
+  max-width: 100%;
+  color: var(--fleiva-verde);
+}
+
+:host.logo-compacta {
+  --fleiva-largura: 2.75rem;
+  --fleiva-mascara: url('/marca/fleiva-monogram-mask.png');
+  --fleiva-proporcao: 495 / 554;
+}
+
+.marca {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: var(--fleiva-proporcao);
+  outline: none;
+}
+
+.camada {
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  mask: var(--fleiva-mascara) center / contain no-repeat;
+  -webkit-mask: var(--fleiva-mascara) center / contain no-repeat;
+  will-change: transform;
+}
+
+.camada-clara {
+  color: var(--fleiva-claro);
+  transform: translate(-1px, -1px);
+}
+
+.camada-roxa {
+  color: var(--fleiva-roxo);
+  transform: translate(3px, 4px);
+}
+
+.camada-verde {
+  color: var(--fleiva-verde);
+}
+
+:host.logo-com-entrada .marca {
+  animation: revelar-marca 650ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+:host(:hover):not(.logo-sem-jitter) .camada-clara,
+:host(:focus-within):not(.logo-sem-jitter) .camada-clara {
+  animation: jitter-claro 360ms steps(2, end);
+}
+
+:host(:hover):not(.logo-sem-jitter) .camada-roxa,
+:host(:focus-within):not(.logo-sem-jitter) .camada-roxa {
+  animation: jitter-roxo 360ms steps(2, end);
+}
+
+:host(:hover):not(.logo-sem-jitter) .camada-verde,
+:host(:focus-within):not(.logo-sem-jitter) .camada-verde {
+  animation: jitter-verde 360ms steps(2, end);
+}
+
+@keyframes revelar-marca {
+  from {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0;
+    transform: translateX(-0.75rem);
+  }
+
+  to {
+    clip-path: inset(0);
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes jitter-claro {
+  0%,
+  100% {
+    transform: translate(-1px, -1px);
+  }
+
+  25% {
+    transform: translate(-4px, 1px);
+  }
+
+  50% {
+    transform: translate(2px, -2px);
+  }
+
+  75% {
+    transform: translate(-2px, 2px);
+  }
+}
+
+@keyframes jitter-roxo {
+  0%,
+  100% {
+    transform: translate(3px, 4px);
+  }
+
+  25% {
+    transform: translate(6px, 1px);
+  }
+
+  50% {
+    transform: translate(0, 6px);
+  }
+
+  75% {
+    transform: translate(5px, 5px);
+  }
+}
+
+@keyframes jitter-verde {
+  0%,
+  100% {
+    transform: translate(0);
+  }
+
+  25% {
+    transform: translate(1px, -1px);
+  }
+
+  50% {
+    transform: translate(-1px, 1px);
+  }
+
+  75% {
+    transform: translate(1px, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marca,
+  .camada {
+    animation: none !important;
+  }
+}

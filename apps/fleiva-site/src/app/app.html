@@ -1,0 +1,481 @@
+<a class="pular-conteudo" href="#conteudo">
+  Ir para o conteúdo
+</a>
+
+<header class="cabecalho-site">
+  <a
+    class="marca-site"
+    href="#inicio"
+    aria-label="Flêiva Studios"
+  >
+    <span
+      class="wordmark-cabecalho"
+      aria-hidden="true"
+    ></span>
+
+    <span class="assinatura-marca">
+      <strong>STUDIOS</strong>
+      <small>INDEPENDENT SYSTEM</small>
+    </span>
+  </a>
+
+  <div class="status-cabecalho" aria-hidden="true">
+    <span></span>
+
+    <p>
+      FLÊIVA WEB
+      <strong>ONLINE</strong>
+    </p>
+  </div>
+
+  <nav aria-label="Navegação principal">
+    <a href="#control">O sistema</a>
+
+    <a href="mailto:contato@fleiva.com.br">
+      Contato
+    </a>
+
+    <a
+      class="acesso-site"
+      href="https://app.fleiva.com.br"
+    >
+      <span>ACESSO</span>
+      <strong>ENTRAR</strong>
+    </a>
+  </nav>
+</header>
+<main id="conteudo">
+ <app-hero-fleiva></app-hero-fleiva>
+  <section
+    id="control"
+    class="secao-control"
+    [attr.data-modulo]="moduloAtivo()"
+  >
+    <header class="introducao-control">
+  <div class="identificador-control">
+    <span>02</span>
+
+    <p>
+      FLÊIVA
+      <strong>CONTROL</strong>
+    </p>
+  </div>
+
+  <div class="titulo-control">
+    <p>UM SISTEMA · UM FLUXO</p>
+
+    <h2>
+      O estúdio inteiro
+      <span>trabalhando junto.</span>
+    </h2>
+  </div>
+
+  <div class="resumo-control">
+    <p>
+      A Flêiva conecta o que acontece antes, durante e
+      depois de cada sessão.
+    </p>
+
+    <div aria-hidden="true">
+      <span>AGENDA</span>
+      <i></i>
+      <span>ARQUIVOS</span>
+      <i></i>
+      <span>ACERTOS</span>
+    </div>
+  </div>
+</header>
+    <div class="maquina-control">
+      <header class="barra-control">
+        <div>
+          <i aria-hidden="true"></i>
+          <strong>FLÊIVA / CONTROL</strong>
+        </div>
+
+        <span>SISTEMA ATIVO</span>
+      </header>
+
+      <nav
+        class="modulos-control"
+        aria-label="Módulos da Flêiva"
+        role="tablist"
+      >
+        @for (modulo of modulos; track modulo.id) {
+          <button
+            type="button"
+            role="tab"
+            [class.ativo]="
+              moduloAtivo() === modulo.id
+            "
+            [attr.aria-selected]="
+              moduloAtivo() === modulo.id
+            "
+            aria-controls="conteudo-control"
+            (click)="selecionarModulo(modulo.id)"
+          >
+            <span>{{ modulo.numero }}</span>
+            <strong>{{ modulo.nome }}</strong>
+          </button>
+        }
+      </nav>
+
+      <div
+        id="conteudo-control"
+        class="conteudo-control"
+        role="tabpanel"
+        aria-live="polite"
+      >
+        <div class="grafismo-control" aria-hidden="true">
+          <span></span>
+        </div>
+
+        @switch (moduloAtivo()) {
+          @case ('agenda') {
+            <div class="modulo-apresentacao">
+              <div>
+                <p>AGENDA</p>
+                <h3>O que acontece agora.</h3>
+                <span>
+                  Horários, serviços e pessoas sem transformar
+                  cada sessão em uma tarefa administrativa.
+                </span>
+              </div>
+
+              <span class="codigo-modulo">AGD / 01</span>
+            </div>
+
+            <div class="agenda-principal">
+              <div class="horario">
+                <strong>14:00</strong>
+                <span></span>
+                <strong>17:00</strong>
+              </div>
+
+              <div>
+                <small>PRÓXIMA SESSÃO</small>
+                <h4>Gravação de voz</h4>
+                <p>Bruna · Sala principal</p>
+              </div>
+            </div>
+
+            <div class="linhas-control">
+              <div>
+                <span>18:00</span>
+                <strong>Produção de beat</strong>
+                <small>Diego</small>
+                <em>Confirmado</em>
+              </div>
+
+              <div>
+                <span>AMANHÃ</span>
+                <strong>Mixagem</strong>
+                <small>Projeto CarcaMoi</small>
+                <em>Agendado</em>
+              </div>
+            </div>
+          }
+
+          @case ('contatos') {
+            <div class="modulo-apresentacao">
+              <div>
+                <p>CONTATOS</p>
+                <h3>A pessoa antes do cadastro.</h3>
+                <span>
+                  Clientes, artistas e responsáveis conectados
+                  ao trabalho que realmente fazem no estúdio.
+                </span>
+              </div>
+
+              <span class="codigo-modulo">CTT / 02</span>
+            </div>
+
+            <div class="contato-principal">
+              <span class="avatar">B</span>
+
+              <div>
+                <small>CLIENTE · ARTISTA</small>
+                <h4>Bruna Oliveira</h4>
+                <p>Voz · composição · Projeto Aurora</p>
+              </div>
+
+              <span class="seta" aria-hidden="true">↗</span>
+            </div>
+
+            <div class="dados-distribuidos">
+              <div>
+                <small>ÚLTIMA SESSÃO</small>
+                <strong>Gravação de voz</strong>
+              </div>
+
+              <div>
+                <small>PROJETO</small>
+                <strong>Aurora</strong>
+              </div>
+
+              <div>
+                <small>PRÓXIMO PASSO</small>
+                <strong>Nova versão</strong>
+              </div>
+            </div>
+          }
+
+          @case ('faixas') {
+            <div class="modulo-apresentacao">
+              <div>
+                <p>FAIXAS</p>
+                <h3>Você conhece esse nome.</h3>
+                <span>
+                  Cada arquivo continua ligado à faixa, à versão
+                  e ao histórico do trabalho.
+                </span>
+              </div>
+
+              <span class="codigo-modulo">FXS / 03</span>
+            </div>
+
+            <div class="arquivo-principal">
+              <span class="arquivo-tipo">WAV</span>
+
+              <div>
+                <small>VERSÃO MAIS RECENTE</small>
+                <h4>final_agora_vai_7.wav</h4>
+                <p>A Verdade · enviada há 12 minutos</p>
+              </div>
+
+              <span class="arquivo-atual">ATUAL</span>
+            </div>
+
+            <div class="linhas-control versoes">
+              <div>
+                <span>V07</span>
+                <strong>final_agora_vai_7.wav</strong>
+                <small>Mix atual · 84 MB</small>
+                <em>Atual</em>
+              </div>
+
+              <div>
+                <span>V06</span>
+                <strong>final_agora_vai_6.wav</strong>
+                <small>Voz +1.5 dB · 83 MB</small>
+                <em>Anterior</em>
+              </div>
+
+              <div>
+                <span>V05</span>
+                <strong>final_agora_vai.wav</strong>
+                <small>Primeira revisão · 81 MB</small>
+                <em>Arquivo</em>
+              </div>
+            </div>
+          }
+
+         @case ('albuns') {
+  <div class="modulo-apresentacao">
+    <div>
+      <p>ÁLBUNS</p>
+      <h3>A ordem também faz parte.</h3>
+
+      <span>
+        Organize versões, capa e sequência antes de
+        apresentar o trabalho.
+      </span>
+    </div>
+
+    <span class="codigo-modulo">ALB / 04</span>
+  </div>
+
+  <div class="album-control">
+    <a
+      class="capa-album"
+      href="https://play.fleiva.com.br/sampabeatstop/trabalho/b2be2b97-cd7a-4ab6-b7bd-94bf1f1ef308"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Abrir na Toca Flêiva"
+    >
+      <img
+        src="/demonstracoes/carcamoi-capa.jpg"
+        alt="Capa do álbum CarcaMoi"
+      />
+
+      <span class="selo-exemplo">
+        EXEMPLO REAL
+      </span>
+    </a>
+
+    <div class="faixas-album">
+      <header>
+        <span>SAMPA BEATSTOP · ÁLBUM</span>
+        <h4>ST - EP/2026 </h4>
+
+        <p>
+          Colaboração entre Carcamano e Baby Moi
+        </p>
+      </header>
+
+      <ol>
+        <li>
+          <span>01</span>
+          <strong>A Verdade</strong>
+          <small>MASTER</small>
+        </li>
+
+        <li>
+          <span>02</span>
+          <strong>A Bolha</strong>
+          <small>MASTER</small>
+        </li>
+
+        <li>
+          <span>03</span>
+          <strong>Paraíso</strong>
+          <small>MASTER</small>
+        </li>
+
+        <li>
+          <span>04</span>
+          <strong>feat. Mari Rocha</strong>
+          <small>MASTER</small>
+        </li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="demonstracao-publica">
+    <div class="demonstracao-identidade">
+      <span>DEMONSTRAÇÃO FLÊIVA</span>
+      <strong>Sampa BeatStop</strong>
+
+      <small>
+        Um trabalho real organizado e apresentado
+        através da plataforma.
+      </small>
+    </div>
+
+    <div class="links-demonstracao">
+      <a
+        href="https://card.fleiva.com.br/sampabeatstop"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <span>
+          <small>PÁGINA DO ESTÚDIO</small>
+          <strong>Casa Flêiva</strong>
+        </span>
+
+        <i aria-hidden="true">↗</i>
+      </a>
+
+      <a
+        href="https://play.fleiva.com.br/sampa-beatstop"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <span>
+          <small>ESCUTA E APRESENTAÇÃO</small>
+          <strong>Toca Flêiva</strong>
+        </span>
+
+        <i aria-hidden="true">↗</i>
+      </a>
+    </div>
+  </div>
+}
+          @case ('acertos') {
+            <div class="modulo-apresentacao">
+              <div>
+                <p>ACERTOS</p>
+                <h3>O trabalho precisa fechar.</h3>
+                <span>
+                  Serviços prestados, valores e recebimentos
+                  ligados ao que aconteceu no estúdio.
+                </span>
+              </div>
+
+              <span class="codigo-modulo">ACT / 05</span>
+            </div>
+
+            <div class="valores-acerto">
+              <div>
+                <small>A RECEBER</small>
+                <strong>R$ 680,00</strong>
+              </div>
+
+              <div>
+                <small>RECEBIDO NO MÊS</small>
+                <strong>R$ 3.240,00</strong>
+              </div>
+            </div>
+
+            <div class="linhas-control">
+              <div>
+                <span>●</span>
+                <strong>Marcela Oliveira</strong>
+                <small>Gravação de voz · 3 horas</small>
+                <em>R$ 600,00</em>
+              </div>
+
+              <div>
+                <span>●</span>
+                <strong>Projeto Celacanto</strong>
+                <small>Mixagem · Maremoto</small>
+                <em>R$ 380,00</em>
+              </div>
+            </div>
+          }
+        }
+      </div>
+
+      <footer class="rodape-control">
+        <span>FLEIVA STUDIOS</span>
+        <span>FLUXO DE TRABALHO</span>
+        <span>BRASIL · {{ anoAtual }}</span>
+      </footer>
+    </div>
+  </section>
+
+  <section class="encerramento">
+    <div class="encerramento-moire" aria-hidden="true"></div>
+
+    <div class="encerramento-conteudo">
+      <p>FEITO PARA QUEM FAZ MÚSICA</p>
+
+      <h2>
+        Menos administração.
+        <span>Mais estúdio.</span>
+      </h2>
+
+      <p>
+        Uma estrutura simples para o trabalho continuar
+        independente sem continuar desorganizado.
+      </p>
+
+      <div>
+        <a
+          class="botao-claro"
+          href="mailto:contato@fleiva.com.br"
+        >
+          Conversar com a Flêiva
+        </a>
+
+        <a
+          class="link-claro"
+          href="https://app.fleiva.com.br"
+        >
+          Já tenho acesso
+          <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+    </div>
+
+    <div
+      class="wordmark-final"
+      aria-label="Flêiva"
+    ></div>
+  </section>
+</main>
+
+<footer class="rodape-site">
+  <span>FLÊIVA STUDIOS</span>
+  <span>TECNOLOGIA PARA A MÚSICA INDEPENDENTE</span>
+  <span>© {{ anoAtual }}</span>
+</footer>

@@ -107,6 +107,8 @@ export class DadosAlbuns {
 
   private readonly carregandoInterno = signal(false);
   private readonly erroInterno = signal<string | null>(null);
+  private readonly limiteTrabalhosCasaInterno =
+    signal(2);
 
   readonly albuns = this.listaInterna.asReadonly();
 
@@ -118,8 +120,24 @@ export class DadosAlbuns {
 
   readonly erro = this.erroInterno.asReadonly();
 
+  readonly limiteTrabalhosCasa =
+    this.limiteTrabalhosCasaInterno.asReadonly();
+
   readonly totalAlbuns = computed(
     () => this.listaInterna().length,
+  );
+
+  readonly totalTrabalhosNaCasa = computed(
+    () =>
+      this.listaInterna().filter(
+        (album) => album.publico_na_casa,
+      ).length,
+  );
+
+  readonly podeAdicionarTrabalhoNaCasa = computed(
+    () =>
+      this.totalTrabalhosNaCasa() <
+      this.limiteTrabalhosCasaInterno(),
   );
 
   async listar(): Promise<void> {
@@ -133,6 +151,7 @@ export class DadosAlbuns {
     const [
       resultadoAlbuns,
       resultadoVersoes,
+      resultadoLimiteCasa,
     ] = await Promise.all([
       this.clienteSupabase.cliente
         .from('albuns')
@@ -147,6 +166,8 @@ export class DadosAlbuns {
           tipo_publico,
           descricao_publica,
           publico_na_landing,
+          publico_na_casa,
+          selecionado_para_casa_em,
           reproducao_publica,
           download_publico,
           criado_em,
@@ -207,6 +228,10 @@ export class DadosAlbuns {
         .order('criado_em', {
           ascending: false,
         }),
+
+      this.clienteSupabase.cliente.rpc(
+        'obter_limite_trabalhos_casa',
+      ),
     ]);
 
     if (resultadoAlbuns.error) {
@@ -215,6 +240,10 @@ export class DadosAlbuns {
 
     if (resultadoVersoes.error) {
       throw resultadoVersoes.error;
+    }
+
+    if (resultadoLimiteCasa.error) {
+      throw resultadoLimiteCasa.error;
     }
 
     const albuns =
@@ -235,6 +264,10 @@ export class DadosAlbuns {
     this.versoesInternas.set(
       resultadoVersoes.data as unknown as
         VersaoAlbum[],
+    );
+
+    this.limiteTrabalhosCasaInterno.set(
+      resultadoLimiteCasa.data ?? 2,
     );
   } catch (erro) {
     this.erroInterno.set(
@@ -399,6 +432,92 @@ async despublicar(
 
   return data;
 }
+
+async definirExibicaoNaCasa(
+  albumId: string,
+  exibir: boolean,
+): Promise<void> {
+  const { error } =
+    await this.clienteSupabase.cliente.rpc(
+      'definir_trabalho_na_casa',
+      {
+        trabalho_id: albumId,
+        exibir,
+      },
+    );
+
+  if (error) {
+    throw error;
+  }
+
+  await this.listar();
+}
+
+  async renovarTokenCompartilhamento(
+    albumId: string,
+  ): Promise<string> {
+    const estudioId = await this.obterEstudioId();
+    const album = this.obterAlbum(albumId);
+
+    if (album.faixas.length === 0) {
+      throw new Error(
+        'Adicione pelo menos uma faixa antes de gerar o link.',
+      );
+    }
+
+    const novoToken = crypto.randomUUID();
+
+    const { data, error } =
+      await this.clienteSupabase.cliente
+        .from('albuns')
+        .update({
+          token_compartilhamento: novoToken,
+          atualizado_em: new Date().toISOString(),
+        })
+        .eq('id', albumId)
+        .eq('estudio_id', estudioId)
+        .select('token_compartilhamento')
+        .single();
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data.token_compartilhamento) {
+      throw new Error(
+        'O novo link não foi confirmado.',
+      );
+    }
+
+    await this.listar();
+
+    return data.token_compartilhamento;
+  }
+
+  async desativarTokenCompartilhamento(
+    albumId: string,
+  ): Promise<void> {
+    const estudioId = await this.obterEstudioId();
+
+    const { error } =
+      await this.clienteSupabase.cliente
+        .from('albuns')
+        .update({
+          token_compartilhamento: null,
+          atualizado_em: new Date().toISOString(),
+        })
+        .eq('id', albumId)
+        .eq('estudio_id', estudioId)
+        .select('id')
+        .single();
+
+    if (error) {
+      throw error;
+    }
+
+    await this.listar();
+  }
+
   async excluir(albumId: string): Promise<void> {
     const { data, error } =
       await this.clienteSupabase.cliente.functions.invoke(

@@ -21,11 +21,28 @@ interface AlbumConsultado {
   capa_caminho: string | null;
   reproducao_publica: boolean;
   download_publico: boolean;
+
   projeto:
     | ProjetoAlbumConsultado
     | ProjetoAlbumConsultado[]
     | null;
+
   faixas: ItemAlbumConsultado[] | null;
+}
+
+type TemaPaginaPublica =
+  | 'grafite'
+  | 'creme'
+  | 'ameixa';
+
+type ProvedorEmbedPublico =
+  | 'spotify'
+  | 'youtube'
+  | 'soundcloud';
+
+interface EmbedPublicoConsultado {
+  provedor: ProvedorEmbedPublico;
+  url: string;
 }
 
 const BUCKET_LOGOS = 'logos-estudios';
@@ -99,10 +116,12 @@ Deno.serve(async (requisicao) => {
         slug,
         logo_caminho,
         cor_principal,
+        tema_pagina_publica,
         descricao_publica,
         cidade,
         whatsapp_publico,
-        instagram
+        instagram,
+        embeds_publicos
       `)
       .eq('slug', slug)
       .eq('landing_publicada', true)
@@ -143,10 +162,12 @@ Deno.serve(async (requisicao) => {
           capa_caminho,
           reproducao_publica,
           download_publico,
+
           projeto:projetos_artisticos!albuns_projeto_id_fkey (
             nome,
             capa_caminho
           ),
+
           faixas:album_faixas!album_faixas_album_id_fkey (
             id
           )
@@ -172,10 +193,9 @@ Deno.serve(async (requisicao) => {
 
     const albuns = albunsConsultados
       .map((album) => {
-        const projeto =
-          obterPrimeiroRegistro(
-            album.projeto,
-          );
+        const projeto = obterPrimeiroRegistro(
+          album.projeto,
+        );
 
         if (!projeto) {
           return null;
@@ -192,14 +212,18 @@ Deno.serve(async (requisicao) => {
           tipo: album.tipo_publico,
           descricao:
             album.descricao_publica,
+
           capa_url: criarUrlPublica(
             URL_PUBLICA_CAPAS,
             caminhoCapa,
           ),
+
           quantidade_faixas:
             album.faixas?.length ?? 0,
+
           reproducao_publica:
             album.reproducao_publica,
+
           download_publico:
             album.download_publico,
         };
@@ -232,24 +256,40 @@ Deno.serve(async (requisicao) => {
         }),
       );
 
+    const embeds = obterEmbedsPublicos(
+      estudio.embeds_publicos,
+    );
+
     return responderJson({
       estudio: {
         nome: estudio.nome,
         slug: estudio.slug,
         logo_url: logoUrl,
+
         cor_principal:
           estudio.cor_principal,
+
+        tema_pagina_publica:
+          normalizarTemaPaginaPublica(
+            estudio.tema_pagina_publica,
+          ),
+
         descricao:
           estudio.descricao_publica,
-        cidade: estudio.cidade,
+
+        cidade:
+          estudio.cidade,
+
         whatsapp:
           estudio.whatsapp_publico,
-        instagram: estudio.instagram,
+
+        instagram:
+          estudio.instagram,
       },
 
       servicos,
-
       albuns,
+      embeds,
     });
   } catch (erro) {
     console.error(
@@ -266,7 +306,229 @@ Deno.serve(async (requisicao) => {
   }
 });
 
-function slugValido(slug: string): boolean {
+function normalizarTemaPaginaPublica(
+  valor: string | null,
+): TemaPaginaPublica {
+  if (
+    valor === 'creme' ||
+    valor === 'ameixa'
+  ) {
+    return valor;
+  }
+
+  return 'grafite';
+}
+
+function obterEmbedsPublicos(
+  valor: unknown,
+): EmbedPublicoConsultado[] {
+  if (!Array.isArray(valor)) {
+    return [];
+  }
+
+  const embeds: EmbedPublicoConsultado[] = [];
+
+  for (const item of valor.slice(0, 4)) {
+    if (
+      typeof item !== 'object' ||
+      item === null ||
+      Array.isArray(item)
+    ) {
+      continue;
+    }
+
+    const registro = item as Record<
+      string,
+      unknown
+    >;
+
+    const provedor =
+      registro['provedor'];
+
+    const urlRecebida =
+      registro['url'];
+
+    if (
+      !provedorEmbedValido(provedor) ||
+      typeof urlRecebida !== 'string'
+    ) {
+      continue;
+    }
+
+    const url = normalizarUrlEmbed(
+      provedor,
+      urlRecebida,
+    );
+
+    if (url) {
+      embeds.push({
+        provedor,
+        url,
+      });
+    }
+  }
+
+  return embeds;
+}
+
+function provedorEmbedValido(
+  valor: unknown,
+): valor is ProvedorEmbedPublico {
+  return (
+    valor === 'spotify' ||
+    valor === 'youtube' ||
+    valor === 'soundcloud'
+  );
+}
+
+function normalizarUrlEmbed(
+  provedor: ProvedorEmbedPublico,
+  valor: string,
+): string | null {
+  let url: URL;
+
+  try {
+    url = new URL(valor.trim());
+  } catch {
+    return null;
+  }
+
+  if (url.protocol !== 'https:') {
+    return null;
+  }
+
+  if (provedor === 'spotify') {
+    return normalizarSpotify(url);
+  }
+
+  if (provedor === 'youtube') {
+    return normalizarYoutube(url);
+  }
+
+  return normalizarSoundCloud(url);
+}
+
+function normalizarSpotify(
+  url: URL,
+): string | null {
+  if (url.hostname !== 'open.spotify.com') {
+    return null;
+  }
+
+  const partes = url.pathname
+    .split('/')
+    .filter(Boolean);
+
+  if (partes[0]?.startsWith('intl-')) {
+    partes.shift();
+  }
+
+  const [tipo, identificador] = partes;
+
+  const tiposPermitidos = new Set([
+    'album',
+    'artist',
+    'episode',
+    'playlist',
+    'show',
+    'track',
+  ]);
+
+  if (
+    !tipo ||
+    !identificador ||
+    !tiposPermitidos.has(tipo) ||
+    !/^[a-zA-Z0-9]+$/.test(identificador)
+  ) {
+    return null;
+  }
+
+  return (
+    `https://open.spotify.com/` +
+    `${tipo}/${identificador}`
+  );
+}
+
+function normalizarYoutube(
+  url: URL,
+): string | null {
+  const hostname = url.hostname
+    .toLocaleLowerCase()
+    .replace(/^www\./, '');
+
+  let identificador = '';
+
+  if (hostname === 'youtu.be') {
+    identificador =
+      url.pathname
+        .split('/')
+        .filter(Boolean)[0] ?? '';
+  } else if (
+    hostname === 'youtube.com' ||
+    hostname === 'music.youtube.com'
+  ) {
+    if (url.pathname === '/watch') {
+      identificador =
+        url.searchParams.get('v') ?? '';
+    } else {
+      identificador =
+        url.pathname.match(
+          /^\/(?:embed|shorts)\/([^/]+)/,
+        )?.[1] ?? '';
+    }
+  }
+
+  if (
+    !/^[a-zA-Z0-9_-]{11}$/.test(
+      identificador,
+    )
+  ) {
+    return null;
+  }
+
+  return (
+    'https://www.youtube.com/watch' +
+    `?v=${identificador}`
+  );
+}
+
+function normalizarSoundCloud(
+  url: URL,
+): string | null {
+  const hostname = url.hostname
+    .toLocaleLowerCase()
+    .replace(/^www\./, '');
+
+  if (hostname !== 'soundcloud.com') {
+    return null;
+  }
+
+  const partes = url.pathname
+    .split('/')
+    .filter(Boolean);
+
+  if (partes.length < 2) {
+    return null;
+  }
+
+  try {
+    const caminho = partes
+      .map((parte) =>
+        encodeURIComponent(
+          decodeURIComponent(parte),
+        ),
+      )
+      .join('/');
+
+    return `https://soundcloud.com/${caminho}`;
+  } catch {
+    return null;
+  }
+}
+
+function slugValido(
+  slug: string,
+): boolean {
   return (
     slug.length <= 120 &&
     /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(
@@ -344,8 +606,10 @@ function responderJson(
       status,
       headers: {
         ...cabecalhosCors,
+
         'Content-Type':
           'application/json; charset=utf-8',
+
         'Cache-Control':
           status === 200
             ? 'public, max-age=60, s-maxage=300'

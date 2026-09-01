@@ -10,32 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.15"
-  }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -86,23 +61,32 @@ export type Database = {
         Row: {
           contato_id: string
           estudio_id: string
+          fechado_em: string | null
           fim: string
           id: string
           inicio: string
+          observacoes_fechamento: string | null
+          resultado: string | null
         }
         Insert: {
           contato_id: string
           estudio_id: string
+          fechado_em?: string | null
           fim: string
           id?: string
           inicio: string
+          observacoes_fechamento?: string | null
+          resultado?: string | null
         }
         Update: {
           contato_id?: string
           estudio_id?: string
+          fechado_em?: string | null
           fim?: string
           id?: string
           inicio?: string
+          observacoes_fechamento?: string | null
+          resultado?: string | null
         }
         Relationships: [
           {
@@ -172,10 +156,12 @@ export type Database = {
           nome: string
           observacoes: string | null
           projeto_id: string
+          publico_na_casa: boolean
           publico_na_landing: boolean
           reproducao_publica: boolean
+          selecionado_para_casa_em: string | null
           tipo_publico: string | null
-          token_compartilhamento: string
+          token_compartilhamento: string | null
         }
         Insert: {
           atualizado_em?: string
@@ -188,10 +174,12 @@ export type Database = {
           nome: string
           observacoes?: string | null
           projeto_id: string
+          publico_na_casa?: boolean
           publico_na_landing?: boolean
           reproducao_publica?: boolean
+          selecionado_para_casa_em?: string | null
           tipo_publico?: string | null
-          token_compartilhamento?: string
+          token_compartilhamento?: string | null
         }
         Update: {
           atualizado_em?: string
@@ -204,10 +192,12 @@ export type Database = {
           nome?: string
           observacoes?: string | null
           projeto_id?: string
+          publico_na_casa?: boolean
           publico_na_landing?: boolean
           reproducao_publica?: boolean
+          selecionado_para_casa_em?: string | null
           tipo_publico?: string | null
-          token_compartilhamento?: string
+          token_compartilhamento?: string | null
         }
         Relationships: [
           {
@@ -254,6 +244,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      casa_ocultacoes: {
+        Row: {
+          conteudo_id: string
+          motivo: string | null
+          ocultado_em: string
+          ocultado_por: string | null
+          tipo_conteudo: string
+        }
+        Insert: {
+          conteudo_id: string
+          motivo?: string | null
+          ocultado_em?: string
+          ocultado_por?: string | null
+          tipo_conteudo: string
+        }
+        Update: {
+          conteudo_id?: string
+          motivo?: string | null
+          ocultado_em?: string
+          ocultado_por?: string | null
+          tipo_conteudo?: string
+        }
+        Relationships: []
       }
       cobranca_itens: {
         Row: {
@@ -368,6 +382,24 @@ export type Database = {
           },
         ]
       }
+      configuracoes_casa: {
+        Row: {
+          atualizado_em: string
+          id: string
+          limite_trabalhos_por_estudio: number
+        }
+        Insert: {
+          atualizado_em?: string
+          id: string
+          limite_trabalhos_por_estudio: number
+        }
+        Update: {
+          atualizado_em?: string
+          id?: string
+          limite_trabalhos_por_estudio?: number
+        }
+        Relationships: []
+      }
       contatos: {
         Row: {
           atualizado_em: string
@@ -416,14 +448,17 @@ export type Database = {
           cor_principal: string | null
           criado_em: string
           descricao_publica: string | null
+          embeds_publicos: Json
           id: string
           instagram: string | null
           landing_publicada: boolean
           logo_caminho: string | null
           modulos: string[]
           nome: string
+          participar_da_casa: boolean
           slug: string
           status_plano: string
+          tema_pagina_publica: string | null
           whatsapp_publico: string | null
         }
         Insert: {
@@ -432,14 +467,17 @@ export type Database = {
           cor_principal?: string | null
           criado_em?: string
           descricao_publica?: string | null
+          embeds_publicos?: Json
           id: string
           instagram?: string | null
           landing_publicada?: boolean
           logo_caminho?: string | null
           modulos?: string[]
           nome: string
+          participar_da_casa?: boolean
           slug: string
           status_plano?: string
+          tema_pagina_publica?: string | null
           whatsapp_publico?: string | null
         }
         Update: {
@@ -448,14 +486,17 @@ export type Database = {
           cor_principal?: string | null
           criado_em?: string
           descricao_publica?: string | null
+          embeds_publicos?: Json
           id?: string
           instagram?: string | null
           landing_publicada?: boolean
           logo_caminho?: string | null
           modulos?: string[]
           nome?: string
+          participar_da_casa?: boolean
           slug?: string
           status_plano?: string
+          tema_pagina_publica?: string | null
           whatsapp_publico?: string | null
         }
         Relationships: []
@@ -832,7 +873,72 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      confirmar_upload_faixa_execucao: {
+        Args: {
+          p_estudio_id: string
+          p_tamanho_bytes_real: number
+          p_versao_id: string
+        }
+        Returns: {
+          chave_objeto: string
+          confirmado_em: string | null
+          criado_em: string
+          estudio_id: string
+          faixa_id: string
+          id: string
+          nome_arquivo: string
+          observacoes: string | null
+          reserva_expira_em: string
+          tamanho_bytes: number
+          tipo_mime: string | null
+          token_compartilhamento: string | null
+          versao: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "versoes_faixa"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      confirmar_upload_faixa_interno: {
+        Args: {
+          p_estudio_id: string
+          p_tamanho_bytes_real: number
+          p_versao_id: string
+        }
+        Returns: {
+          chave_objeto: string
+          confirmado_em: string | null
+          criado_em: string
+          estudio_id: string
+          faixa_id: string
+          id: string
+          nome_arquivo: string
+          observacoes: string | null
+          reserva_expira_em: string
+          tamanho_bytes: number
+          tipo_mime: string | null
+          token_compartilhamento: string | null
+          versao: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "versoes_faixa"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       criar_agendamento: {
+        Args: {
+          p_contato_id: string
+          p_fim: string
+          p_inicio: string
+          p_servicos: Json
+        }
+        Returns: string
+      }
+      criar_agendamento_interno: {
         Args: {
           p_contato_id: string
           p_fim: string
@@ -845,11 +951,94 @@ export type Database = {
         Args: { p_agendamento_id: string }
         Returns: string
       }
+      criar_cobranca_agendamento_interno: {
+        Args: { p_agendamento_id: string }
+        Returns: string
+      }
       criar_link_compartilhamento_faixa: {
         Args: { p_versao_id: string }
         Returns: string
       }
+      criar_link_compartilhamento_faixa_interno: {
+        Args: { p_versao_id: string }
+        Returns: string
+      }
+      definir_trabalho_na_casa: {
+        Args: { exibir: boolean; trabalho_id: string }
+        Returns: boolean
+      }
+      estudio_possui_modulo: {
+        Args: { p_estudio_id: string; p_modulo: string }
+        Returns: boolean
+      }
+      estudio_tem_modulo: { Args: { p_modulo: string }; Returns: boolean }
+      listar_casa: {
+        Args: never
+        Returns: {
+          atualizado_em: string
+          cidade: string
+          cor_principal: string
+          criado_em: string
+          descricao_publica: string
+          id: string
+          logo_caminho: string
+          nome: string
+          servicos: string[]
+          slug: string
+        }[]
+      }
+      listar_trabalhos_casa: {
+        Args: never
+        Returns: {
+          album_descricao: string
+          album_id: string
+          album_nome: string
+          album_tipo: string
+          capa_caminho: string
+          download_publico: boolean
+          estudio_cor_principal: string
+          estudio_id: string
+          estudio_nome: string
+          estudio_slug: string
+          projeto_nome: string
+          reproducao_publica: boolean
+          selecionado_para_casa_em: string
+        }[]
+      }
+      obter_limite_trabalhos_casa: { Args: never; Returns: number }
       reservar_upload_faixa: {
+        Args: {
+          p_chave_objeto: string
+          p_faixa_id: string
+          p_nome_arquivo: string
+          p_observacoes: string
+          p_tamanho_bytes: number
+          p_tipo_mime: string
+          p_versao: string
+        }
+        Returns: {
+          chave_objeto: string
+          confirmado_em: string | null
+          criado_em: string
+          estudio_id: string
+          faixa_id: string
+          id: string
+          nome_arquivo: string
+          observacoes: string | null
+          reserva_expira_em: string
+          tamanho_bytes: number
+          tipo_mime: string | null
+          token_compartilhamento: string | null
+          versao: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "versoes_faixa"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      reservar_upload_faixa_interno: {
         Args: {
           p_chave_objeto: string
           p_faixa_id: string
@@ -1020,9 +1209,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       status_producao_faixa: [

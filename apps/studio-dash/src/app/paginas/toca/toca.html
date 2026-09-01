@@ -1,0 +1,261 @@
+<main
+  class="toca"
+  [style.--accent]="dados.corPrincipal()"
+  [style.--on-accent]="dados.corContraste()"
+>
+  @if (paginaInicial()) {
+    <section class="inicio-toca">
+      <div class="moire" aria-hidden="true"></div>
+
+      <header class="cabecalho-toca">
+        <a
+          class="marca-fleiva"
+          href="https://fleiva.com.br"
+          aria-label="Flêiva Studios"
+        >
+          <span aria-hidden="true"></span>
+
+          <strong>TOCA</strong>
+        </a>
+
+        <a
+          class="link-fleiva"
+          href="https://fleiva.com.br"
+        >
+          Conheça a Flêiva
+          <span aria-hidden="true">↗</span>
+        </a>
+      </header>
+
+      <div class="apresentacao-toca">
+        <div class="texto-apresentacao">
+          <p>TOCA FLÊIVA</p>
+
+          <h1>
+            Trabalhos feitos para
+            <strong>serem ouvidos.</strong>
+          </h1>
+
+          <p class="descricao">
+            Um espaço para estúdios, produtores e artistas
+            apresentarem álbuns, versões e projetos sem
+            depender de links soltos.
+          </p>
+
+          <div class="acoes-inicio">
+            <a
+              class="botao-demonstracao"
+              routerLink="/sampabeatstop"
+            >
+              Ver demonstração
+              <span aria-hidden="true">→</span>
+            </a>
+
+            <a
+              class="link-institucional"
+              href="https://fleiva.com.br"
+            >
+              Sobre a plataforma
+            </a>
+          </div>
+        </div>
+
+        <div class="visor-toca" aria-hidden="true">
+          <header>
+            <span>FLÊIVA / PLAY</span>
+            <span>PUBLIC SYSTEM</span>
+          </header>
+
+          <div class="visor-conteudo">
+            <span class="monograma"></span>
+
+            <div>
+              <small>TRABALHO EM DESTAQUE</small>
+              <strong>CarcaMoi</strong>
+              <span>SAMPA BEATSTOP · 4 FAIXAS</span>
+            </div>
+          </div>
+
+          <footer>
+            <span>CAPA</span>
+            <span>ORDEM</span>
+            <span>ESCUTA</span>
+            <strong>● DISPONÍVEL</strong>
+          </footer>
+        </div>
+      </div>
+
+      <footer class="rodape-inicio">
+        <span>TOCA FLÊIVA</span>
+        <span>APRESENTAÇÃO DE TRABALHOS</span>
+        <span>BRASIL · {{ anoAtual }}</span>
+      </footer>
+    </section>
+  } @else if (dados.carregando()) {
+    <section class="estado">
+      <span class="marca-estado" aria-hidden="true"></span>
+      <p>Carregando trabalhos...</p>
+    </section>
+  } @else if (dados.erro()) {
+    <section class="estado estado-erro">
+      <span class="marca-estado" aria-hidden="true"></span>
+
+      <p class="rotulo">TOCA FLÊIVA</p>
+      <h1>Página indisponível</h1>
+      <p>{{ dados.erro() }}</p>
+
+      <div class="acoes-estado">
+        <button
+          type="button"
+          (click)="recarregar()"
+        >
+          Tentar novamente
+        </button>
+
+        <a routerLink="/">
+          Conhecer a Toca
+        </a>
+      </div>
+    </section>
+  } @else if (dados.estudio(); as estudio) {
+    <section class="pagina-estudio">
+      <header class="cabecalho-estudio">
+        <a
+          class="marca-fleiva"
+          routerLink="/"
+          aria-label="Toca Flêiva"
+        >
+          <span aria-hidden="true"></span>
+          <strong>TOCA</strong>
+        </a>
+
+        <a
+          class="voltar-casa"
+          [href]="urlCasa()"
+        >
+          Página do estúdio
+          <span aria-hidden="true">↗</span>
+        </a>
+      </header>
+
+      <section class="identidade-estudio">
+        <div class="logo-estudio">
+          @if (estudio.logo_url) {
+            <img
+              [src]="estudio.logo_url"
+              [alt]="'Logo de ' + estudio.nome"
+            />
+          } @else {
+            <span>{{ inicialEstudio() }}</span>
+          }
+        </div>
+
+        <div>
+          <p>TRABALHOS PÚBLICOS</p>
+          <h1>{{ estudio.nome }}</h1>
+
+          @if (estudio.cidade) {
+            <span>{{ estudio.cidade }}</span>
+          }
+        </div>
+      </section>
+
+      <section class="trabalhos">
+        <header class="titulo-trabalhos">
+          <div>
+            <p>TOCA FLÊIVA</p>
+            <h2>Trabalhos disponíveis</h2>
+          </div>
+
+          <span>{{ dados.albuns().length }}</span>
+        </header>
+
+        @if (dados.albuns().length === 0) {
+          <div class="sem-trabalhos">
+            <p>
+              Este estúdio ainda não publicou nenhum
+              trabalho na Toca Flêiva.
+            </p>
+
+            <a [href]="urlCasa()">
+              Visitar página do estúdio
+            </a>
+          </div>
+        } @else {
+          <div class="grade-albuns">
+            @for (
+              album of dados.albuns();
+              track album.id
+            ) {
+              <a
+                class="album"
+                [routerLink]="rotaAlbum(album.id)"
+              >
+                <div class="capa-album">
+                  @if (album.capa_url) {
+                    <img
+                      [src]="album.capa_url"
+                      [alt]="'Capa de ' + album.nome"
+                    />
+                  } @else {
+                    <span>
+                      {{ inicialAlbum(album) }}
+                    </span>
+                  }
+
+                  <i aria-hidden="true">→</i>
+                </div>
+
+                <div class="dados-album">
+                  <div>
+                    <span>
+                      {{
+                        album.tipo ||
+                          'Trabalho'
+                      }}
+                    </span>
+
+                    <small>
+                      {{
+                        quantidadeFaixas(album)
+                      }}
+                    </small>
+                  </div>
+
+                  <h3>{{ album.nome }}</h3>
+                  <p>{{ album.projeto }}</p>
+
+                  @if (album.descricao) {
+                    <small class="descricao-album">
+                      {{ album.descricao }}
+                    </small>
+                  }
+
+                  <div class="recursos-album">
+                    @if (album.reproducao_publica) {
+                      <span>Reprodução</span>
+                    }
+
+                    @if (album.download_publico) {
+                      <span>Download</span>
+                    }
+                  </div>
+                </div>
+              </a>
+            }
+          </div>
+        }
+      </section>
+
+      <footer class="rodape-estudio">
+        <span>
+          Publicado através da Toca Flêiva
+        </span>
+
+        <a href="https://fleiva.com.br">
+          Conheça a plataforma
+        </a>
+      </footer>
+    </section>
+  }
+</main>

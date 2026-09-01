@@ -1,0 +1,256 @@
+<main class="pagina-projeto">
+  <nav class="navegacao-contextual" aria-label="Navegação do projeto">
+    <a routerLink="/projetos">← Todos os projetos</a>
+  </nav>
+
+  @if (carregandoPagina()) {
+  <section class="estado-pagina" aria-live="polite">
+    <span class="carregador" aria-hidden="true"></span>
+    <p>Carregando projeto...</p>
+  </section>
+  } @else if (erroPagina()) {
+  <section class="estado-pagina estado-erro" role="alert">
+    <p class="rotulo">PROJETO</p>
+    <h1>Não foi possível carregar os dados</h1>
+    <p>{{ erroPagina() }}</p>
+    <button type="button" (click)="recarregar()">Tentar novamente</button>
+  </section>
+  } @else if (projeto(); as projetoAtual) {
+  <header class="cabecalho-projeto">
+    <div class="capa-projeto">
+      @if (dadosProjetos.capaUrl(projetoAtual); as capaUrl) {
+      <img [src]="capaUrl" [alt]="'Capa de ' + projetoAtual.nome" />
+      } @else {
+      <span aria-hidden="true">
+        {{ projetoAtual.nome.charAt(0).toLocaleUpperCase('pt-BR') }}
+      </span>
+      }
+    </div>
+
+    <div class="identidade-projeto">
+      <p>{{ projetoAtual.tipo }}</p>
+      <h1>{{ projetoAtual.nome }}</h1>
+      <span>
+        {{ projetoAtual.membros.length }} @if (projetoAtual.membros.length ===
+        1) { integrante ou responsável } @else { integrantes ou responsáveis }
+      </span>
+    </div>
+
+    <div class="acoes-projeto">
+      <a routerLink="/faixas" [queryParams]="{ projeto: projetoAtual.id }">
+        Gerenciar faixas
+      </a>
+      <a
+        class="acao-principal"
+        routerLink="/albuns"
+        [queryParams]="{ projeto: projetoAtual.id, novo: 1 }"
+      >
+        Montar trabalho
+      </a>
+    </div>
+  </header>
+
+  <section class="resumo" aria-label="Resumo do projeto">
+    <article>
+      <span>Faixas</span>
+      <strong>{{ faixas().length }}</strong>
+    </article>
+    <article>
+      <span>Versões</span>
+      <strong>{{ totalVersoes() }}</strong>
+    </article>
+    <article>
+      <span>Trabalhos</span>
+      <strong>{{ trabalhos().length }}</strong>
+    </article>
+  </section>
+
+  <div class="conteudo-projeto">
+    <section class="painel painel-faixas">
+      <header class="cabecalho-painel">
+        <div>
+          <p>PRODUÇÃO</p>
+          <h2>Faixas e versões</h2>
+        </div>
+        <a routerLink="/faixas" [queryParams]="{ projeto: projetoAtual.id }">
+          Abrir acervo →
+        </a>
+      </header>
+
+      @if (faixas().length === 0) {
+      <div class="estado-vazio">
+        <strong>Nenhuma faixa neste projeto.</strong>
+        <p>Cadastre a primeira faixa para começar a organizar suas versões.</p>
+        <a
+          routerLink="/faixas"
+          [queryParams]="{ projeto: projetoAtual.id, novo: 1 }"
+        >
+          Cadastrar faixa
+        </a>
+      </div>
+      } @else {
+      <div class="lista-faixas">
+        @for (faixa of faixas(); track faixa.id) {
+        <article class="faixa">
+          <div class="numero-faixa" aria-hidden="true">{{ $index + 1 }}</div>
+
+          <div class="dados-faixa">
+            <div>
+              <h3>{{ faixa.titulo }}</h3>
+              <span>{{ formatarStatus(faixa.status_producao) }}</span>
+            </div>
+
+            <p>
+              @if (faixa.bpm) {
+              <span>{{ faixa.bpm }} BPM</span>
+              } @if (faixa.tom) {
+              <span>{{ faixa.tom }}</span>
+              }
+            </p>
+          </div>
+
+          <div class="versao-recente">
+            @if (ultimaVersao(faixa.id); as versao) {
+            <span>Versão mais recente</span>
+            <strong>{{ versao.versao }}</strong>
+            <small>
+              {{ versoesDaFaixa(faixa.id).length }} @if
+              (versoesDaFaixa(faixa.id).length === 1) { versão } @else { versões
+              }
+            </small>
+            <a
+              routerLink="/faixas"
+              [queryParams]="{ projeto: projetoAtual.id, faixa: faixa.id }"
+            >
+              Abrir faixa →
+            </a>
+            } @else {
+            <span>Sem arquivo enviado</span>
+            <a
+              routerLink="/faixas"
+              [queryParams]="{
+                projeto: projetoAtual.id,
+                faixa: faixa.id,
+                upload: 1
+              }"
+            >
+              Enviar versão
+            </a>
+            }
+          </div>
+        </article>
+        }
+      </div>
+      }
+    </section>
+
+    <aside class="coluna-lateral">
+      <section class="painel painel-pessoas">
+        <header class="cabecalho-painel">
+          <div>
+            <p>PESSOAS</p>
+            <h2>Equipe e contatos</h2>
+          </div>
+          <a routerLink="/projetos">Editar →</a>
+        </header>
+
+        @if (projetoAtual.membros.length === 0) {
+        <div class="estado-vazio compacto">
+          <p>Nenhum integrante ou responsável vinculado.</p>
+        </div>
+        } @else {
+        <div class="lista-pessoas">
+          @for (membro of projetoAtual.membros; track membro.id) {
+          <article [class.inativo]="!membro.ativo">
+            <span class="avatar" aria-hidden="true">
+              {{ membro.contato.nome.charAt(0).toLocaleUpperCase('pt-BR') }}
+            </span>
+            <div>
+              <strong>{{ membro.contato.nome }}</strong>
+              <span>{{ membro.papel }}</span>
+            </div>
+            @if (!membro.ativo) {
+            <small>Inativo</small>
+            }
+          </article>
+          }
+        </div>
+        }
+      </section>
+    </aside>
+
+    <section class="painel painel-trabalhos">
+      <header class="cabecalho-painel">
+        <div>
+          <p>APRESENTAÇÃO E ENTREGA</p>
+          <h2>Trabalhos</h2>
+        </div>
+        <a routerLink="/albuns" [queryParams]="{ projeto: projetoAtual.id }">
+          Gerenciar trabalhos →
+        </a>
+      </header>
+
+      @if (trabalhos().length === 0) {
+      <div class="estado-vazio">
+        <strong>Nenhum trabalho montado.</strong>
+        <p>Reúna versões das faixas em um álbum, EP, mixtape ou coletânea.</p>
+        <a
+          routerLink="/albuns"
+          [queryParams]="{ projeto: projetoAtual.id, novo: 1 }"
+        >
+          Montar trabalho
+        </a>
+      </div>
+      } @else {
+      <div class="grade-trabalhos">
+        @for (trabalho of trabalhos(); track trabalho.id) {
+        <article class="trabalho">
+          <div class="capa-trabalho">
+            @if (dadosAlbuns.capaUrl(trabalho); as capaUrl) {
+            <img [src]="capaUrl" [alt]="'Capa de ' + trabalho.nome" />
+            } @else {
+            <span aria-hidden="true">
+              {{ trabalho.nome.charAt(0).toLocaleUpperCase('pt-BR') }}
+            </span>
+            }
+          </div>
+          <div class="dados-trabalho">
+            <span>{{ tipoTrabalho(trabalho) }}</span>
+            <h3>{{ trabalho.nome }}</h3>
+            <p>{{ totalFaixasTrabalho(trabalho) }}</p>
+            <footer>
+              <span>
+                @if (trabalho.publico_na_landing) {
+                <strong>Publicado no Card</strong>
+                } @else if (trabalho.token_compartilhamento) {
+                <strong>Link privado ativo</strong>
+                } @else {
+                Não compartilhado
+                }
+              </span>
+              <a
+                routerLink="/albuns"
+                [queryParams]="{
+                  projeto: projetoAtual.id,
+                  album: trabalho.id
+                }"
+              >
+                Abrir trabalho →
+              </a>
+            </footer>
+          </div>
+        </article>
+        }
+      </div>
+      }
+    </section>
+  </div>
+  } @else {
+  <section class="estado-pagina estado-erro">
+    <p class="rotulo">PROJETO</p>
+    <h1>Projeto não encontrado</h1>
+    <p>Este projeto não existe ou não está disponível para a sua conta.</p>
+    <a routerLink="/projetos">Voltar aos projetos</a>
+  </section>
+  }
+</main>

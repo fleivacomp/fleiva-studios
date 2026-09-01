@@ -38,7 +38,7 @@
       <header class="topo">
         <a
           class="marca"
-          [routerLink]="['/estudio', estudio.slug]"
+          [href]="urlEstudio(estudio.slug)"
         >
           <span class="logo-estudio">
             @if (estudio.logo_url) {
@@ -268,10 +268,19 @@
       <footer class="rodape-pagina">
         <span>{{ estudio.nome }}</span>
         <a
-          [routerLink]="['/estudio', estudio.slug]"
+          [href]="urlEstudio(estudio.slug)"
         >
           Ver página do estúdio
         </a>
+        <footer class="assinatura-fleiva">
+  <span>Publicado com</span>
+
+  <span
+    class="assinatura-wordmark"
+    role="img"
+    aria-label="Flêiva"
+  ></span>
+</footer>
       </footer>
     }
   }

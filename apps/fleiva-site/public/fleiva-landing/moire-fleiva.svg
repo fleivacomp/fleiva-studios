@@ -1,0 +1,93 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 1600 1000"
+  role="img"
+  aria-labelledby="titulo descricao"
+>
+  <title id="titulo">Padrão óptico Flêiva</title>
+  <desc id="descricao">
+    Linhas sobrepostas em verde e roxo formando um padrão moiré suave.
+  </desc>
+
+  <defs>
+    <pattern
+      id="linhas-roxas"
+      width="13"
+      height="13"
+      patternUnits="userSpaceOnUse"
+      patternTransform="rotate(-4)"
+    >
+      <path
+        d="M 0 1 H 13"
+        fill="none"
+        stroke="#885f74"
+        stroke-width="2"
+      />
+    </pattern>
+
+    <pattern
+      id="linhas-verdes"
+      width="14"
+      height="14"
+      patternUnits="userSpaceOnUse"
+      patternTransform="rotate(4)"
+    >
+      <path
+        d="M 0 1 H 14"
+        fill="none"
+        stroke="#5e886f"
+        stroke-width="1.5"
+      />
+    </pattern>
+
+    <radialGradient id="desvanecer" cx="50%" cy="48%" r="68%">
+      <stop offset="0" stop-color="white" />
+      <stop offset="0.68" stop-color="white" stop-opacity="0.88" />
+      <stop offset="1" stop-color="black" stop-opacity="0" />
+    </radialGradient>
+
+    <mask id="mascara-desvanecer">
+      <rect width="1600" height="1000" fill="url(#desvanecer)" />
+    </mask>
+
+    <filter id="ondular" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence
+        type="fractalNoise"
+        baseFrequency="0.0025 0.007"
+        numOctaves="1"
+        seed="8"
+        result="ruido"
+      />
+      <feDisplacementMap
+        in="SourceGraphic"
+        in2="ruido"
+        scale="72"
+        xChannelSelector="R"
+        yChannelSelector="B"
+      />
+    </filter>
+  </defs>
+
+  <g
+    mask="url(#mascara-desvanecer)"
+    filter="url(#ondular)"
+  >
+    <rect
+      x="-120"
+      y="-100"
+      width="1840"
+      height="1200"
+      fill="url(#linhas-roxas)"
+      opacity="0.38"
+    />
+
+    <rect
+      x="-120"
+      y="-100"
+      width="1840"
+      height="1200"
+      fill="url(#linhas-verdes)"
+      opacity="0.2"
+    />
+  </g>
+</svg>

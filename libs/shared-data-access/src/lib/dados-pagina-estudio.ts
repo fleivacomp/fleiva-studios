@@ -4,18 +4,28 @@ import {
   Injectable,
   signal,
 } from '@angular/core';
+
 import { ClienteSupabase } from './cliente-supabase';
+
 import {
   COR_PADRAO_ESTUDIO,
   normalizarCorEstudio,
+  normalizarTemaPaginaPublica,
   obterCorContrasteEstudio,
+  type TemaPaginaPublica,
 } from './dados-estudio';
+
+export interface EmbedPaginaPublica {
+  provedor: 'spotify' | 'youtube' | 'soundcloud';
+  url: string;
+}
 
 export interface EstudioPaginaPublica {
   nome: string;
   slug: string;
   logo_url: string | null;
   cor_principal: string | null;
+  tema_pagina_publica?: TemaPaginaPublica | null;
   descricao: string | null;
   cidade: string | null;
   whatsapp: string | null;
@@ -46,6 +56,7 @@ interface RespostaPaginaEstudio {
   estudio: EstudioPaginaPublica;
   servicos?: ServicoPaginaPublica[];
   albuns?: AlbumPaginaPublica[];
+  embeds?: EmbedPaginaPublica[];
 }
 
 @Injectable({
@@ -64,14 +75,32 @@ export class DadosPaginaEstudio {
   private readonly albunsInternos =
     signal<AlbumPaginaPublica[]>([]);
 
-  private readonly carregandoInterno = signal(false);
-  private readonly erroInterno = signal<string | null>(null);
+  private readonly embedsInternos =
+    signal<EmbedPaginaPublica[]>([]);
 
-  readonly estudio = this.estudioInterno.asReadonly();
-  readonly servicos = this.servicosInternos.asReadonly();
-  readonly albuns = this.albunsInternos.asReadonly();
-  readonly carregando = this.carregandoInterno.asReadonly();
-  readonly erro = this.erroInterno.asReadonly();
+  private readonly carregandoInterno =
+    signal(false);
+
+  private readonly erroInterno =
+    signal<string | null>(null);
+
+  readonly estudio =
+    this.estudioInterno.asReadonly();
+
+  readonly servicos =
+    this.servicosInternos.asReadonly();
+
+  readonly albuns =
+    this.albunsInternos.asReadonly();
+
+  readonly embeds =
+    this.embedsInternos.asReadonly();
+
+  readonly carregando =
+    this.carregandoInterno.asReadonly();
+
+  readonly erro =
+    this.erroInterno.asReadonly();
 
   readonly corPrincipal = computed(() =>
     normalizarCorEstudio(
@@ -80,20 +109,32 @@ export class DadosPaginaEstudio {
   );
 
   readonly corContraste = computed(() =>
-    obterCorContrasteEstudio(this.corPrincipal()),
+    obterCorContrasteEstudio(
+      this.corPrincipal(),
+    ),
   );
+
+  readonly temaPaginaPublica =
+    computed<TemaPaginaPublica>(() =>
+      normalizarTemaPaginaPublica(
+        this.estudioInterno()
+          ?.tema_pagina_publica,
+      ),
+    );
 
   async carregar(slug: string): Promise<void> {
     this.carregandoInterno.set(true);
     this.erroInterno.set(null);
+
     this.estudioInterno.set(null);
     this.servicosInternos.set([]);
     this.albunsInternos.set([]);
+    this.embedsInternos.set([]);
 
     try {
       const slugNormalizado = slug
         .trim()
-        .toLocaleLowerCase();
+        .toLocaleLowerCase('pt-BR');
 
       if (!slugNormalizado) {
         throw new Error(
@@ -115,7 +156,8 @@ export class DadosPaginaEstudio {
         throw await this.criarErroFuncao(error);
       }
 
-      const resposta = data as RespostaPaginaEstudio | null;
+      const resposta =
+        data as RespostaPaginaEstudio | null;
 
       if (!resposta?.estudio) {
         throw new Error(
@@ -123,9 +165,21 @@ export class DadosPaginaEstudio {
         );
       }
 
-      this.estudioInterno.set(resposta.estudio);
-      this.servicosInternos.set(resposta.servicos ?? []);
-      this.albunsInternos.set(resposta.albuns ?? []);
+      this.estudioInterno.set(
+        resposta.estudio,
+      );
+
+      this.servicosInternos.set(
+        resposta.servicos ?? [],
+      );
+
+      this.albunsInternos.set(
+        resposta.albuns ?? [],
+      );
+
+      this.embedsInternos.set(
+        resposta.embeds ?? [],
+      );
     } catch (erro) {
       this.erroInterno.set(
         this.obterMensagemErro(erro),
@@ -164,7 +218,9 @@ export class DadosPaginaEstudio {
     );
   }
 
-  private obterMensagemErro(erro: unknown): string {
+  private obterMensagemErro(
+    erro: unknown,
+  ): string {
     if (
       typeof erro === 'object' &&
       erro !== null &&
