@@ -39,6 +39,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      acoes_bloco_experiencia_imersiva: {
+        Row: {
+          acao: string
+          atualizado_em: string
+          bloco_id: string
+          criado_em: string
+          estudio_id: string
+          experiencia_id: string
+          id: string
+          inicio_segundos: number
+          ordem: number
+          parametros: Json
+          recurso_id: string | null
+        }
+        Insert: {
+          acao: string
+          atualizado_em?: string
+          bloco_id: string
+          criado_em?: string
+          estudio_id: string
+          experiencia_id: string
+          id?: string
+          inicio_segundos?: number
+          ordem: number
+          parametros?: Json
+          recurso_id?: string | null
+        }
+        Update: {
+          acao?: string
+          atualizado_em?: string
+          bloco_id?: string
+          criado_em?: string
+          estudio_id?: string
+          experiencia_id?: string
+          id?: string
+          inicio_segundos?: number
+          ordem?: number
+          parametros?: Json
+          recurso_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acoes_bloco_experiencia_imersiva_bloco_fkey"
+            columns: ["bloco_id", "experiencia_id", "estudio_id"]
+            isOneToOne: false
+            referencedRelation: "blocos_experiencia_imersiva"
+            referencedColumns: ["id", "experiencia_id", "estudio_id"]
+          },
+          {
+            foreignKeyName: "acoes_bloco_experiencia_imersiva_recurso_fkey"
+            columns: ["recurso_id", "experiencia_id", "estudio_id"]
+            isOneToOne: false
+            referencedRelation: "recursos_experiencia_imersiva"
+            referencedColumns: ["id", "experiencia_id", "estudio_id"]
+          },
+        ]
+      }
       agendamento_servicos: {
         Row: {
           agendamento_id: string
@@ -267,6 +324,53 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "estudios"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      blocos_experiencia_imersiva: {
+        Row: {
+          atualizado_em: string
+          conteudo: string | null
+          criado_em: string
+          estudio_id: string
+          experiencia_id: string
+          hold_point_segundos: number | null
+          id: string
+          imagem_caminho: string | null
+          ordem: number
+          teto_temporal_segundos: number | null
+        }
+        Insert: {
+          atualizado_em?: string
+          conteudo?: string | null
+          criado_em?: string
+          estudio_id: string
+          experiencia_id: string
+          hold_point_segundos?: number | null
+          id?: string
+          imagem_caminho?: string | null
+          ordem: number
+          teto_temporal_segundos?: number | null
+        }
+        Update: {
+          atualizado_em?: string
+          conteudo?: string | null
+          criado_em?: string
+          estudio_id?: string
+          experiencia_id?: string
+          hold_point_segundos?: number | null
+          id?: string
+          imagem_caminho?: string | null
+          ordem?: number
+          teto_temporal_segundos?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocos_experiencia_imersiva_experiencia_fkey"
+            columns: ["experiencia_id", "estudio_id"]
+            isOneToOne: false
+            referencedRelation: "experiencias_imersivas"
+            referencedColumns: ["id", "estudio_id"]
           },
         ]
       }
@@ -526,6 +630,51 @@ export type Database = {
         }
         Relationships: []
       }
+      experiencias_imersivas: {
+        Row: {
+          album_id: string | null
+          atualizado_em: string
+          criado_em: string
+          estudio_id: string
+          id: string
+          nome: string
+          publicada_em: string | null
+        }
+        Insert: {
+          album_id?: string | null
+          atualizado_em?: string
+          criado_em?: string
+          estudio_id: string
+          id?: string
+          nome: string
+          publicada_em?: string | null
+        }
+        Update: {
+          album_id?: string | null
+          atualizado_em?: string
+          criado_em?: string
+          estudio_id?: string
+          id?: string
+          nome?: string
+          publicada_em?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "experiencias_imersivas_album_id_fkey"
+            columns: ["album_id"]
+            isOneToOne: false
+            referencedRelation: "albuns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "experiencias_imersivas_estudio_id_fkey"
+            columns: ["estudio_id"]
+            isOneToOne: false
+            referencedRelation: "estudios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       faixas: {
         Row: {
           atualizado_em: string
@@ -751,6 +900,69 @@ export type Database = {
           },
         ]
       }
+      recursos_experiencia_imersiva: {
+        Row: {
+          atualizado_em: string
+          chave_objeto: string | null
+          confirmado_em: string | null
+          criado_em: string
+          estudio_id: string
+          experiencia_id: string
+          id: string
+          nome: string
+          nome_arquivo: string | null
+          reserva_expira_em: string | null
+          tamanho_bytes: number | null
+          tipo_mime: string | null
+          versao_id: string | null
+        }
+        Insert: {
+          atualizado_em?: string
+          chave_objeto?: string | null
+          confirmado_em?: string | null
+          criado_em?: string
+          estudio_id: string
+          experiencia_id: string
+          id?: string
+          nome: string
+          nome_arquivo?: string | null
+          reserva_expira_em?: string | null
+          tamanho_bytes?: number | null
+          tipo_mime?: string | null
+          versao_id?: string | null
+        }
+        Update: {
+          atualizado_em?: string
+          chave_objeto?: string | null
+          confirmado_em?: string | null
+          criado_em?: string
+          estudio_id?: string
+          experiencia_id?: string
+          id?: string
+          nome?: string
+          nome_arquivo?: string | null
+          reserva_expira_em?: string | null
+          tamanho_bytes?: number | null
+          tipo_mime?: string | null
+          versao_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recursos_experiencia_imersiva_experiencia_fkey"
+            columns: ["experiencia_id", "estudio_id"]
+            isOneToOne: false
+            referencedRelation: "experiencias_imersivas"
+            referencedColumns: ["id", "estudio_id"]
+          },
+          {
+            foreignKeyName: "recursos_experiencia_imersiva_versao_id_fkey"
+            columns: ["versao_id"]
+            isOneToOne: false
+            referencedRelation: "versoes_faixa"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       servicos: {
         Row: {
           duracao_minutos: number | null
@@ -880,8 +1092,20 @@ export type Database = {
       }
     }
     Functions: {
+      calcular_uso_armazenamento_estudio: {
+        Args: {
+          p_estudio_id: string
+          p_excluir_recurso_id?: string
+          p_excluir_versao_id?: string
+        }
+        Returns: number
+      }
       cancelar_reserva_upload_faixa: {
         Args: { p_versao_id: string }
+        Returns: undefined
+      }
+      cancelar_reserva_upload_recurso_experiencia: {
+        Args: { p_recurso_id: string }
         Returns: undefined
       }
       confirmar_upload_faixa: {
@@ -960,6 +1184,34 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "versoes_faixa"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      confirmar_upload_recurso_experiencia_interno: {
+        Args: {
+          p_estudio_id: string
+          p_recurso_id: string
+          p_tamanho_bytes_real: number
+        }
+        Returns: {
+          atualizado_em: string
+          chave_objeto: string | null
+          confirmado_em: string | null
+          criado_em: string
+          estudio_id: string
+          experiencia_id: string
+          id: string
+          nome: string
+          nome_arquivo: string | null
+          reserva_expira_em: string | null
+          tamanho_bytes: number | null
+          tipo_mime: string | null
+          versao_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "recursos_experiencia_imersiva"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -1105,6 +1357,37 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      reservar_upload_recurso_experiencia: {
+        Args: {
+          p_chave_objeto: string
+          p_experiencia_id: string
+          p_nome: string
+          p_nome_arquivo: string
+          p_tamanho_bytes: number
+          p_tipo_mime: string
+        }
+        Returns: {
+          atualizado_em: string
+          chave_objeto: string | null
+          confirmado_em: string | null
+          criado_em: string
+          estudio_id: string
+          experiencia_id: string
+          id: string
+          nome: string
+          nome_arquivo: string | null
+          reserva_expira_em: string | null
+          tamanho_bytes: number | null
+          tipo_mime: string | null
+          versao_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "recursos_experiencia_imersiva"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       revogar_link_compartilhamento_faixa: {
         Args: { p_versao_id: string }
         Returns: undefined
@@ -1134,12 +1417,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1163,11 +1446,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1188,11 +1471,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1213,11 +1496,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1230,11 +1513,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

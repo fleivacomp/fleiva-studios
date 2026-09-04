@@ -39,6 +39,11 @@ const carregarArquivoCompartilhado = () =>
 const carregarAlbumCompartilhado = () =>
   import("./paginas/album-compartilhado/album-compartilhado").then(
     (modulo) => modulo.AlbumCompartilhado,
+  );const carregarExperienciaImersivaPublica = () =>
+  import(
+    "./paginas/experiencia-imersiva-publica/experiencia-imersiva-publica"
+  ).then(
+    (modulo) => modulo.ExperienciaImersivaPublica,
   );
 
 const encaminharTrabalhoParaToca: CanActivateFn = (rota) => {
@@ -191,6 +196,11 @@ const rotasPlay: Routes = [
     loadComponent: carregarArquivoCompartilhado,
   },
   {
+  path: "experiencia/:experienciaId",
+  loadComponent:
+    carregarExperienciaImersivaPublica,
+},
+  {
     path: "estudio",
     pathMatch: "full",
     redirectTo: "",
@@ -227,6 +237,10 @@ const rotasPlay: Routes = [
  * Aplicação principal.
  */
 const rotasApp: Routes = [
+  {
+    path: "experiencia/:experienciaId",
+    loadComponent: carregarExperienciaImersivaPublica,
+  },
   {
     path: "estudio/:slug/trabalho/:albumId",
     loadComponent: carregarAlbumPublico,
@@ -322,6 +336,16 @@ const rotasApp: Routes = [
         loadComponent: () =>
           import("./paginas/perfil/perfil").then((modulo) => modulo.Perfil),
       },
+
+{
+  path: "experiencias",
+  loadComponent: () =>
+    import(
+      "./paginas/experiencias-imersivas/experiencias-imersivas"
+    ).then(
+      (modulo) => modulo.ExperienciasImersivas,
+    ),
+},
     ],
   },
   {

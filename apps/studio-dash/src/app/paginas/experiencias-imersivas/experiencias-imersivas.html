@@ -1,0 +1,880 @@
+<main class="pagina-experiencias">
+  <nav class="barra-experiencias" aria-label="Experiências imersivas">
+    <div class="lista-experiencias">
+      @for (item of dadosExperiencias.experiencias(); track item.id) {
+        <button
+          type="button"
+          [class.ativa]="experienciaSelecionadaId() === item.id"
+          (click)="abrirExperiencia(item.id)"
+        >
+          <span>{{ item.nome.charAt(0).toLocaleUpperCase('pt-BR') }}</span>
+          {{ item.nome }}
+        </button>
+      }
+    </div>
+
+    <button type="button" class="nova-experiencia" (click)="abrirCriacaoExperiencia()">
+      + Nova experiência
+    </button>
+  </nav>
+
+  @if (criandoExperiencia()) {
+    <section class="criacao-experiencia">
+      <form [formGroup]="formularioExperiencia" (ngSubmit)="cadastrarExperiencia()">
+        <label>
+          <span>NOVA PUBLICAÇÃO</span>
+          <input
+            type="text"
+            formControlName="nome"
+            placeholder="Nome da experiência"
+            autofocus
+          />
+        </label>
+        <div class="acoes-inline">
+          <button type="button" class="botao-neutro" (click)="cancelarCriacaoExperiencia()">
+            Cancelar
+          </button>
+          <button type="submit" class="botao-principal" [disabled]="salvandoExperiencia()">
+            {{ salvandoExperiencia() ? 'Criando...' : 'Criar' }}
+          </button>
+        </div>
+      </form>
+      @if (erroExperiencia()) {
+        <p class="mensagem-erro">{{ erroExperiencia() }}</p>
+      }
+    </section>
+  }
+
+  @if (dadosExperiencias.carregando() && !experiencia()) {
+    <section class="estado-pagina" aria-live="polite">
+      <span class="carregador" aria-hidden="true"></span>
+      <p>Carregando experiências...</p>
+    </section>
+  } @else if (dadosExperiencias.erro()) {
+    <section class="estado-pagina estado-erro" role="alert">
+      <p class="sobretitulo">EXPERIÊNCIAS</p>
+      <h1>Não foi possível carregar</h1>
+      <p>{{ dadosExperiencias.erro() }}</p>
+      <button type="button" (click)="inicializar()">Tentar novamente</button>
+    </section>
+  } @else if (!experiencia()) {
+    <section class="estado-pagina estado-vazio">
+      <p class="sobretitulo">PUBLICAÇÃO MULTIMÍDIA</p>
+      <h1>Texto conduzindo música.</h1>
+      <p>Crie uma sequência de cenas, escolha os trechos sonoros e decida como cada passagem acontece.</p>
+      <button type="button" class="botao-principal" (click)="abrirCriacaoExperiencia()">
+        Criar primeira experiência
+      </button>
+    </section>
+  } @else if (experiencia(); as experienciaAtual) {
+    <header class="hero-experiencia">
+      <div class="selo-experiencia" aria-hidden="true">
+        {{ experienciaAtual.nome.charAt(0).toLocaleUpperCase('pt-BR') }}
+      </div>
+
+      <div class="identidade-experiencia">
+        <p class="sobretitulo">
+          EXPERIÊNCIA IMERSIVA ·
+          {{ experienciaAtual.publicada_em ? 'PUBLICADA' : 'RASCUNHO' }}
+        </p>
+        @if (renomeandoExperiencia()) {
+          <form
+            class="renomear-experiencia"
+            [formGroup]="formularioNomeExperiencia"
+            (ngSubmit)="salvarNomeExperiencia()"
+          >
+            <input type="text" formControlName="nome" aria-label="Nome da experiência" />
+            <div class="acoes-inline">
+              <button type="button" class="botao-neutro" (click)="cancelarRenomeacaoExperiencia()">
+                Cancelar
+              </button>
+              <button type="submit" class="botao-principal" [disabled]="salvandoNomeExperiencia()">
+                {{ salvandoNomeExperiencia() ? 'Salvando...' : 'Salvar nome' }}
+              </button>
+            </div>
+          </form>
+        } @else {
+          <div class="titulo-editavel">
+            <h1>{{ experienciaAtual.nome }}</h1>
+            <button type="button" (click)="iniciarRenomeacaoExperiencia()">Renomear</button>
+          </div>
+        }
+        <div class="numeros-experiencia">
+          <span><strong>{{ dadosBlocos.blocos().length }}</strong> blocos</span>
+          <span><strong>{{ dadosRecursos.recursos().length }}</strong> recursos</span>
+          <span><strong>{{ dadosAcoes.acoes().length }}</strong> ações</span>
+        </div>
+        @if (erroExperiencia()) {
+          <p class="mensagem-erro">{{ erroExperiencia() }}</p>
+        }
+      </div>
+
+      <div class="acoes-experiencia">
+        <a
+          class="botao-neutro"
+          [routerLink]="['/experiencia', experienciaAtual.id]"
+          [queryParams]="{ teste: 1 }"
+          target="_blank"
+        >
+          Testar experiência ↗
+        </a>
+        <button
+          type="button"
+          class="botao-principal"
+          [disabled]="alterandoPublicacao()"
+          (click)="alternarPublicacao()"
+        >
+          @if (alterandoPublicacao()) {
+            Salvando...
+          } @else if (experienciaAtual.publicada_em) {
+            Retirar publicação
+          } @else {
+            Publicar
+          }
+        </button>
+      </div>
+    </header>
+
+    <nav class="navegacao-editor" aria-label="Áreas do editor">
+      <a href="#roteiro">Roteiro <span>{{ dadosBlocos.blocos().length }}</span></a>
+      <a href="#sons">Sons <span>{{ dadosRecursos.recursos().length }}</span></a>
+      <a href="#publicacao">Publicação</a>
+    </nav>
+
+    @if (erroPublicacao()) {
+      <p class="mensagem-erro">{{ erroPublicacao() }}</p>
+    }
+
+    @if (
+      dadosBlocos.carregando() ||
+      dadosRecursos.carregando() ||
+      dadosAcoes.carregando()
+    ) {
+      <section class="estado-pagina" aria-live="polite">
+        <span class="carregador" aria-hidden="true"></span>
+        <p>Carregando editor...</p>
+      </section>
+    } @else {
+      <section id="roteiro" class="secao-editor">
+        <header class="cabecalho-secao">
+          <div>
+            <p class="sobretitulo">SEQUÊNCIA DE LEITURA</p>
+            <h2>Roteiro</h2>
+            <span>Cada bloco é uma cena. O scroll avança o som junto com o texto.</span>
+          </div>
+          <button type="button" class="botao-neutro" (click)="abrirNovoBloco()">
+            + Adicionar bloco
+          </button>
+        </header>
+
+        @if (erroBloco()) {
+          <p class="mensagem-erro">{{ erroBloco() }}</p>
+        }
+
+        <div class="sequencia-blocos">
+          @for (
+            bloco of dadosBlocos.blocos();
+            track bloco.id;
+            let primeiro = $first;
+            let ultimo = $last
+          ) {
+            <article class="bloco-editor" [class.com-editor]="blocoComEditorId() === bloco.id">
+              <aside class="ordem-bloco">
+                <strong>{{ bloco.ordem.toString().padStart(2, '0') }}</strong>
+                <div>
+                  <button
+                    type="button"
+                    aria-label="Mover bloco para cima"
+                    [disabled]="primeiro"
+                    (click)="moverBloco(bloco.id, -1)"
+                  >↑</button>
+                  <button
+                    type="button"
+                    aria-label="Mover bloco para baixo"
+                    [disabled]="ultimo"
+                    (click)="moverBloco(bloco.id, 1)"
+                  >↓</button>
+                </div>
+              </aside>
+
+              <div class="conteudo-bloco">
+                @if (blocoEditandoId() === bloco.id) {
+                  <form class="editor-texto" [formGroup]="formularioBloco" (ngSubmit)="salvarBloco()">
+                    <div class="editor-imagem-cena">
+                      @if (urlImagemBloco(); as imagemUrl) {
+                        <img [src]="imagemUrl" alt="Prévia da imagem da cena" />
+                      } @else {
+                        <span>Imagem opcional</span>
+                      }
+                      <div>
+                        <label class="botao-arquivo-imagem">
+                          {{ urlImagemBloco() ? 'Trocar imagem' : 'Adicionar imagem' }}
+                          <input #imagemBloco type="file" accept="image/*" (change)="selecionarImagemBloco(imagemBloco)" />
+                        </label>
+                        @if (urlImagemBloco()) {
+                          <button type="button" class="acao-textual perigo" (click)="retirarImagemBloco()">Remover</button>
+                        }
+                      </div>
+                    </div>
+                    <textarea
+                      rows="8"
+                      formControlName="conteudo"
+                      placeholder="Escreva livremente: texto, poema, créditos..."
+                    ></textarea>
+                    <div class="acoes-inline">
+                      <button type="button" class="botao-neutro" (click)="cancelarEdicaoBloco()">
+                        Cancelar
+                      </button>
+                      <button type="submit" class="botao-principal" [disabled]="salvandoBloco()">
+                        {{ salvandoBloco() ? 'Salvando...' : 'Salvar texto' }}
+                      </button>
+                    </div>
+                  </form>
+                } @else {
+                  <div class="texto-cena">
+                    <p class="sobretitulo">CENA {{ bloco.ordem }}</p>
+                    @if (imagemDoBloco(bloco); as imagemUrl) {
+                      <img class="imagem-cena-editor" [src]="imagemUrl" alt="" />
+                    }
+                    @if (bloco.conteudo) {
+                      <pre>{{ bloco.conteudo }}</pre>
+                    } @else {
+                      <p class="texto-vazio">Cena visual, sem texto.</p>
+                    }
+                  </div>
+                }
+
+                <div class="cadeia-sonora">
+                  <header class="cabecalho-cadeia-sonora">
+                    <span class="gatilho">AO APARECER</span>
+                    @if (acoesDoBloco(bloco.id).length > 0) {
+                      <button
+                        type="button"
+                        class="testar-cena"
+                        [class.ativo]="cenaEmPreviaId() === bloco.id"
+                        [disabled]="preparandoPrevia() || preparandoRecursosPrevia()"
+                        (click)="alternarPreviaCena(bloco.id)"
+                      >
+                        @if (preparandoRecursosPrevia()) {
+                          Carregando áudio...
+                        } @else if (preparandoPrevia() && cenaPreviaAlvoId() === bloco.id) {
+                          Preparando...
+                        } @else if (cenaEmPreviaId() === bloco.id) {
+                          ■ Parar cena
+                        } @else {
+                          ▶ Testar cena
+                        }
+                      </button>
+                    }
+                  </header>
+
+                  @for (acao of acoesDoBloco(bloco.id); track acao.id) {
+                    <article class="acao-sonora">
+                      <div>
+                        <span>{{ rotuloModo(acao.acao) }}</span>
+                        <strong>{{ recursoNome(acao.recurso_id) }}</strong>
+                        <small>{{ trechoAcao(acao) }}</small>
+                      </div>
+                      <button type="button" class="acao-textual" (click)="editarAcao(acao)">Editar</button>
+                      <button type="button" class="acao-textual perigo" (click)="excluirAcao(acao)">Excluir</button>
+                    </article>
+                  } @empty {
+                    <button type="button" class="sem-som" (click)="abrirNovaAcao(bloco.id)">
+                      <span>＋</span>
+                      Definir o que toca nesta cena
+                    </button>
+                  }
+
+                  @if (cenaEmPreviaId() === bloco.id) {
+                    <div class="controle-previa-cena">
+                      <span><i></i> Cena {{ bloco.ordem }} tocando</span>
+                      <button
+                        type="button"
+                        [disabled]="!temProximaCena(bloco.id)"
+                        (click)="avancarPrevia()"
+                      >
+                        Próxima cena →
+                      </button>
+                      <button type="button" (click)="pararPrevia()">Parar</button>
+                    </div>
+                  }
+
+                  @if (erroPrevia() && cenaPreviaAlvoId() === bloco.id) {
+                    <p class="mensagem-erro erro-previa">{{ erroPrevia() }}</p>
+                  }
+
+                  @if (acoesDoBloco(bloco.id).length > 0) {
+                    <button type="button" class="adicionar-camada" (click)="abrirNovaAcao(bloco.id)">
+                      + Adicionar camada sonora
+                    </button>
+                  }
+                </div>
+
+                @if (!ultimo && acoesDoBloco(bloco.id).length > 0) {
+                  <section
+                    class="passagem-cena"
+                    [class.editando]="blocoEditandoTransicaoId() === bloco.id"
+                  >
+                    <header>
+                      <div>
+                        <span>AO AVANÇAR PARA A PRÓXIMA CENA</span>
+                        <strong>
+                          {{ rotuloTransicaoCena(bloco.id) }}
+                          @if (detalheTransicaoCena(bloco.id); as detalhe) {
+                            <small>· {{ detalhe }}</small>
+                          }
+                        </strong>
+                      </div>
+                      @if (blocoEditandoTransicaoId() !== bloco.id) {
+                        <button type="button" (click)="abrirEdicaoTransicao(bloco.id)">
+                          Ajustar passagem
+                        </button>
+                      }
+                    </header>
+
+                    @if (blocoEditandoTransicaoId() === bloco.id) {
+                      <div class="editor-passagem">
+                        <div class="opcoes-transicao">
+                          <button type="button" [class.ativo]="transicaoAudio() === 'terminar-loop'" (click)="transicaoAudio.set('terminar-loop')">
+                            Fecha o ciclo
+                          </button>
+                          <button type="button" [class.ativo]="transicaoAudio() === 'corte'" (click)="transicaoAudio.set('corte')">
+                            Corte
+                          </button>
+                          <button type="button" [class.ativo]="transicaoAudio() === 'crossfade'" (click)="transicaoAudio.set('crossfade')">
+                            Crossfade
+                          </button>
+                          <button type="button" [class.ativo]="transicaoAudio() === 'silencio'" (click)="transicaoAudio.set('silencio')">
+                            Silêncio
+                          </button>
+                        </div>
+
+                        @if (transicaoAudio() === 'crossfade') {
+                          <div class="controle-duracao">
+                            <span>Duração do crossfade</span>
+                            <button type="button" (click)="ajustarDuracaoCrossfade(-0.5)">−</button>
+                            <strong>{{ duracaoCrossfade().toFixed(1) }}s</strong>
+                            <button type="button" (click)="ajustarDuracaoCrossfade(0.5)">+</button>
+                          </div>
+                        }
+
+                        @if (erroTransicao()) {
+                          <p class="mensagem-erro">{{ erroTransicao() }}</p>
+                        }
+
+                        <footer>
+                          <button type="button" class="botao-neutro" (click)="cancelarEdicaoTransicao()">Cancelar</button>
+                          <button
+                            type="button"
+                            class="botao-principal"
+                            [disabled]="salvandoTransicao()"
+                            (click)="salvarTransicaoCena()"
+                          >
+                            {{ salvandoTransicao() ? 'Salvando...' : 'Salvar passagem' }}
+                          </button>
+                        </footer>
+                      </div>
+                    }
+                  </section>
+                }
+
+                <footer class="acoes-bloco">
+                  <button type="button" (click)="iniciarEdicaoBloco(bloco)">Editar conteúdo</button>
+                  <button type="button" class="perigo" (click)="excluirBloco(bloco)">Excluir bloco</button>
+                </footer>
+              </div>
+
+              @if (blocoComEditorId() === bloco.id) {
+                <section class="designer-som">
+                  <header>
+                    <div>
+                      <p class="sobretitulo">DESIGN DE SOM · CENA {{ bloco.ordem }}</p>
+                      <h3>{{ acaoEditandoId() ? 'Editar ação' : 'Nova ação' }}</h3>
+                    </div>
+                    <button type="button" class="fechar-editor" (click)="fecharEditorAcao()" aria-label="Fechar">×</button>
+                  </header>
+
+                  @if (dadosRecursos.recursos().length === 0) {
+                    <div class="aviso-sem-recurso">
+                      <strong>Adicione um arquivo em Sons antes de montar esta ação.</strong>
+                      <a href="#sons">Ir para Sons ↓</a>
+                    </div>
+                  } @else {
+                    <div class="configuracao-som-basica">
+                      <div class="etapa-som">
+                        <span class="numero-etapa">1</span>
+                        <div>
+                          <strong>Escolha o áudio</strong>
+                          <div class="escolha-recursos">
+                            @for (recurso of dadosRecursos.recursos(); track recurso.id) {
+                              <button
+                                type="button"
+                                [class.ativo]="arquivoSelecionado(recurso)"
+                                (click)="selecionarRecurso(recurso.id)"
+                              >
+                                <span>{{ recurso.versao_id ? 'FAIXA' : 'ARQUIVO' }}</span>
+                                {{ recurso.nome }}
+                              </button>
+                            }
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="etapa-som">
+                        <span class="numero-etapa">2</span>
+                        <div>
+                          <strong>Escolha como toca</strong>
+                          <div class="opcoes-som">
+                            <button type="button" [class.ativo]="modoAudio() === 'loop'" (click)="definirModo('loop')">
+                              <b>Loop</b><small>repete enquanto a cena estiver ativa</small>
+                            </button>
+                            <button type="button" [class.ativo]="modoAudio() === 'tocar'" (click)="definirModo('tocar')">
+                              <b>Tocar uma vez</b><small>segue até o fim do trecho</small>
+                            </button>
+                            <button type="button" [class.ativo]="modoAudio() === 'one-shot'" (click)="definirModo('one-shot')">
+                              <b>One-shot</b><small>efeito curto sobre a cena</small>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="etapa-som">
+                      <span class="numero-etapa">3</span>
+                      <div class="recorte-audio">
+                        <div class="cabecalho-recorte">
+                          <div>
+                            <strong>Recorte diretamente na waveform</strong>
+                            <span>Arraste IN e OUT. Ouça o resultado sem precisar calcular segundos.</span>
+                          </div>
+                          @if (modoAudio() === 'loop' && fimTrecho() > inicioTrecho()) {
+                            <span class="estado-loop" [class.tocando]="testandoTrecho()">
+                              {{ testandoTrecho() ? 'LOOP TOCANDO' : 'LOOP' }} · {{ formatarTempoPreciso(duracaoTrecho()) }}
+                            </span>
+                          }
+                        </div>
+                        @if (carregandoAudio()) {
+                          <p>Preparando áudio...</p>
+                        } @else if (urlAudio(); as url) {
+                          <div class="transporte-waveform">
+                            <button type="button" class="botao-play" (click)="alternarAudio()">
+                              {{ audioTocando() || testandoTrecho() ? 'Ⅱ' : '▶' }}
+                            </button>
+
+                            <div class="painel-waveform">
+                              <div
+                                #waveformArea
+                                class="waveform"
+                                [class.carregando]="carregandoFormaOnda()"
+                                [class.arrastando]="marcadorArrastando()"
+                                [class.loop-em-teste]="testandoTrecho() && modoAudio() === 'loop'"
+                                (pointerdown)="buscarNaFormaOnda($event, waveformArea)"
+                                (pointermove)="arrastarMarcador($event, waveformArea)"
+                                (pointerup)="finalizarArrasteMarcador($event, waveformArea)"
+                                (pointercancel)="finalizarArrasteMarcador($event, waveformArea)"
+                              >
+                                <div class="barras-waveform" aria-hidden="true">
+                                  @for (pico of formaOnda(); track $index) {
+                                    <i [style.height.%]="pico"></i>
+                                  }
+                                </div>
+
+                                <div
+                                  class="selecao-waveform"
+                                  [class.em-reproducao]="testandoTrecho()"
+                                  [style.left.%]="percentualTempo(inicioTrecho())"
+                                  [style.width.%]="larguraSelecao()"
+                                  aria-hidden="true"
+                                ></div>
+
+                                @if (tempoNaJanela(tempoAtual())) {
+                                  <div
+                                    class="playhead-waveform"
+                                    [style.left.%]="percentualTempo(tempoAtual())"
+                                    aria-hidden="true"
+                                  ></div>
+                                }
+
+                                <button
+                                  type="button"
+                                  class="marcador-waveform marcador-inicio"
+                                  [class.ativo]="marcadorArrastando() === 'inicio'"
+                                  [style.left.%]="percentualTempo(inicioTrecho())"
+                                  (pointerdown)="iniciarArrasteMarcador($event, 'inicio', waveformArea)"
+                                  (keydown)="ajustarMarcadorTeclado($event, 'inicio')"
+                                  [attr.aria-label]="'Início do trecho em ' + formatarTempo(inicioTrecho())"
+                                >
+                                  <span>IN</span>
+                                  <strong>{{ formatarTempoPreciso(inicioTrecho()) }}</strong>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  class="marcador-waveform marcador-fim"
+                                  [class.ativo]="marcadorArrastando() === 'fim'"
+                                  [style.left.%]="percentualTempo(fimTrecho())"
+                                  (pointerdown)="iniciarArrasteMarcador($event, 'fim', waveformArea)"
+                                  (keydown)="ajustarMarcadorTeclado($event, 'fim')"
+                                  [attr.aria-label]="'Fim do trecho em ' + formatarTempo(fimTrecho())"
+                                >
+                                  <span>OUT</span>
+                                  <strong>{{ formatarTempoPreciso(fimTrecho()) }}</strong>
+                                </button>
+                              </div>
+
+                              <div class="escala-waveform">
+                                <span>{{ formatarTempo(inicioJanelaFormaOnda()) }}</span>
+                                <strong>{{ formatarTempo(tempoAtual()) }}</strong>
+                                <span>{{ formatarTempo(fimJanelaFormaOnda() || duracaoAudio()) }}</span>
+                              </div>
+
+                              <div class="resumo-recorte">
+                                <span>
+                                  TRECHO
+                                  <strong>{{ formatarTempoPreciso(duracaoTrecho()) }}</strong>
+                                </span>
+                                @if (waveformAmpliada()) {
+                                  <button type="button" (click)="mostrarFaixaInteira()">
+                                    Ver faixa inteira
+                                  </button>
+                                } @else {
+                                  <button
+                                    type="button"
+                                    [disabled]="!podeAmpliarRecorte()"
+                                    (click)="ampliarRecorte()"
+                                  >
+                                    Ampliar recorte
+                                  </button>
+                                }
+                              </div>
+                            </div>
+                          </div>
+
+                          @if (erroFormaOnda()) {
+                            <p class="aviso-waveform">{{ erroFormaOnda() }}</p>
+                          }
+
+                          <div class="controles-recorte">
+                            <span>A waveform define o trecho. Use os controles abaixo somente para ajuste fino.</span>
+
+                            <div class="ajuste-fino">
+                              <b>IN</b>
+                              <button type="button" (click)="ajustarMarcador('inicio', -0.01)" aria-label="Recuar início em 0,01 segundo">−</button>
+                              <strong>{{ formatarTempoPreciso(inicioTrecho()) }}</strong>
+                              <button type="button" (click)="ajustarMarcador('inicio', 0.01)" aria-label="Avançar início em 0,01 segundo">+</button>
+                              <button type="button" class="usar-cursor" (click)="marcarInicio()">usar cursor</button>
+                            </div>
+
+                            <div class="ajuste-fino">
+                              <b>OUT</b>
+                              <button type="button" (click)="ajustarMarcador('fim', -0.01)" aria-label="Recuar fim em 0,01 segundo">−</button>
+                              <strong>{{ formatarTempoPreciso(fimTrecho()) }}</strong>
+                              <button type="button" (click)="ajustarMarcador('fim', 0.01)" aria-label="Avançar fim em 0,01 segundo">+</button>
+                              <button type="button" class="usar-cursor" (click)="marcarFim()">usar cursor</button>
+                            </div>
+
+                            <button
+                              type="button"
+                              class="testar-loop"
+                              [disabled]="fimTrecho() <= inicioTrecho()"
+                              (click)="testarTrecho()"
+                            >
+                              {{ testandoTrecho() ? '■ Parar' : modoAudio() === 'loop' ? '↻ Ouvir loop' : '▶ Ouvir trecho' }}
+                            </button>
+                          </div>
+
+                          <audio
+                            #reprodutorEditor
+                            [src]="url"
+                            preload="metadata"
+                            (loadedmetadata)="atualizarMetadados($event)"
+                            (durationchange)="atualizarMetadados($event)"
+                            (timeupdate)="atualizarTempo($event)"
+                            (play)="audioTocando.set(true)"
+                            (pause)="audioTocando.set(false)"
+                            (ended)="audioTocando.set(false)"
+                          ></audio>
+                        } @else {
+                          <p>Escolha um áudio para marcar o trecho.</p>
+                        }
+                      </div>
+                    </div>
+
+                    <div class="entrada-audio">
+                      <button
+                        type="button"
+                        class="interruptor"
+                        [class.ativo]="fadeInAtivo()"
+                        (click)="fadeInAtivo.set(!fadeInAtivo())"
+                      >
+                        <span></span> Fade-in na entrada
+                      </button>
+                      @if (fadeInAtivo()) {
+                        <div class="controle-duracao">
+                          <button type="button" (click)="ajustarDuracaoFadeIn(-0.5)">−</button>
+                          <strong>{{ duracaoFadeIn().toFixed(1) }}s</strong>
+                          <button type="button" (click)="ajustarDuracaoFadeIn(0.5)">+</button>
+                        </div>
+                      }
+                    </div>
+
+                    @if (erroAcao()) {
+                      <p class="mensagem-erro">{{ erroAcao() }}</p>
+                    }
+
+                    <footer class="rodape-designer">
+                      <button type="button" class="botao-neutro" (click)="fecharEditorAcao()">Cancelar</button>
+                      <button type="button" class="botao-principal" [disabled]="salvandoAcao()" (click)="salvarAcao()">
+                        {{ salvandoAcao() ? 'Salvando...' : 'Salvar ação sonora' }}
+                      </button>
+                    </footer>
+                  }
+                </section>
+              }
+            </article>
+          } @empty {
+            <div class="estado-vazio roteiro-vazio">
+              <strong>O roteiro ainda está vazio.</strong>
+              <p>Comece pela primeira cena. A ordem será montada automaticamente.</p>
+              <button type="button" class="botao-principal" (click)="abrirNovoBloco()">
+                Criar primeira cena
+              </button>
+            </div>
+          }
+
+          @if (criandoBloco()) {
+            <article class="novo-bloco">
+              <p class="sobretitulo">NOVA CENA</p>
+              <form [formGroup]="formularioBloco" (ngSubmit)="salvarBloco()">
+                <div class="editor-imagem-cena">
+                  @if (urlImagemBloco(); as imagemUrl) {
+                    <img [src]="imagemUrl" alt="Prévia da imagem da cena" />
+                  } @else {
+                    <span>Imagem opcional</span>
+                  }
+                  <div>
+                    <label class="botao-arquivo-imagem">
+                      {{ urlImagemBloco() ? 'Trocar imagem' : 'Adicionar imagem' }}
+                      <input #imagemNovoBloco type="file" accept="image/*" (change)="selecionarImagemBloco(imagemNovoBloco)" />
+                    </label>
+                    @if (urlImagemBloco()) {
+                      <button type="button" class="acao-textual perigo" (click)="retirarImagemBloco()">Remover</button>
+                    }
+                  </div>
+                </div>
+                <textarea
+                  rows="9"
+                  formControlName="conteudo"
+                  placeholder="Escreva livremente: texto, poema, créditos..."
+                ></textarea>
+                <div class="acoes-inline">
+                  <button type="button" class="botao-neutro" (click)="cancelarEdicaoBloco()">Cancelar</button>
+                  <button type="submit" class="botao-principal" [disabled]="salvandoBloco()">
+                    {{ salvandoBloco() ? 'Criando...' : 'Adicionar à sequência' }}
+                  </button>
+                </div>
+              </form>
+            </article>
+          }
+        </div>
+      </section>
+
+      <section id="sons" class="secao-editor">
+        <header class="cabecalho-secao">
+          <div>
+            <p class="sobretitulo">MATÉRIA-PRIMA</p>
+            <h2>Sons</h2>
+            <span>Faixas completas, loops, ambiências e efeitos usados no roteiro.</span>
+          </div>
+        </header>
+
+        <div class="biblioteca-sons">
+          <div class="entrada-sons">
+            <form class="upload-som" [formGroup]="formularioRecurso" (ngSubmit)="enviarRecurso(arquivoRecurso)">
+              <div>
+                <p class="sobretitulo">NOVO ARQUIVO</p>
+                <h3>Adicionar som</h3>
+                <p>Use qualquer duração. O recorte acontece depois, dentro da cena.</p>
+              </div>
+              <label>
+                <span>Nome</span>
+                <input type="text" formControlName="nome" placeholder="Ex.: loop de baixo" />
+              </label>
+              <label class="arquivo-upload">
+                <span>Arquivo de áudio</span>
+                <input #arquivoRecurso type="file" accept="audio/*" />
+              </label>
+              <button type="submit" class="botao-principal" [disabled]="enviandoRecurso()">
+                {{ enviandoRecurso() ? 'Enviando...' : 'Adicionar à biblioteca' }}
+              </button>
+              @if (erroRecurso()) {
+                <p class="mensagem-erro">{{ erroRecurso() }}</p>
+              }
+            </form>
+
+            <section class="versoes-faixa">
+              <button type="button" class="abrir-versoes" (click)="alternarSelecaoVersao()">
+                <span>
+                  <small>SEM NOVO UPLOAD</small>
+                  <strong>Usar versão de faixa</strong>
+                </span>
+                <b>{{ selecionandoVersao() ? '−' : '+' }}</b>
+              </button>
+
+              @if (selecionandoVersao()) {
+                <div class="lista-versoes">
+                  @if (dadosRecursos.carregandoVersoes()) {
+                    <p>Carregando versões...</p>
+                  } @else if (dadosRecursos.erroVersoes()) {
+                    <p class="mensagem-erro">{{ dadosRecursos.erroVersoes() }}</p>
+                  } @else {
+                    @for (versao of dadosRecursos.versoesDisponiveis(); track versao.id) {
+                      <article>
+                        <div>
+                          <strong>{{ versao.faixa_titulo }}</strong>
+                          <span>{{ versao.versao }} · {{ versao.nome_arquivo }}</span>
+                        </div>
+                        <button
+                          type="button"
+                          [disabled]="versaoJaVinculada(versao.id) || vinculandoVersaoId() === versao.id"
+                          (click)="vincularVersao(versao)"
+                        >
+                          @if (versaoJaVinculada(versao.id)) {
+                            Adicionada
+                          } @else if (vinculandoVersaoId() === versao.id) {
+                            Adicionando...
+                          } @else {
+                            Usar
+                          }
+                        </button>
+                      </article>
+                    } @empty {
+                      <p>Nenhuma versão de faixa confirmada.</p>
+                    }
+                  }
+                </div>
+              }
+            </section>
+          </div>
+
+          <div class="lista-sons">
+            @for (recurso of dadosRecursos.recursos(); track recurso.id; let indice = $index) {
+              <article>
+                <span class="indice-som">{{ (indice + 1).toString().padStart(2, '0') }}</span>
+                <div>
+                  <p>{{ recurso.versao_id ? 'VERSÃO DE FAIXA' : 'ARQUIVO PRÓPRIO' }}</p>
+                  <h3>{{ recurso.nome }}</h3>
+                  <small>{{ recurso.nome_arquivo || 'Arquivo vinculado à faixa' }}</small>
+                </div>
+                <strong>
+                  {{ recurso.confirmado_em || recurso.versao_id ? 'PRONTO' : 'PROCESSANDO' }}
+                </strong>
+                <button
+                  type="button"
+                  class="excluir-som"
+                  [disabled]="excluindoRecursoId() === recurso.id"
+                  (click)="excluirRecurso(recurso)"
+                >
+                  {{ excluindoRecursoId() === recurso.id ? 'Excluindo...' : 'Excluir' }}
+                </button>
+              </article>
+            } @empty {
+              <div class="estado-vazio">
+                <strong>Nenhum som adicionado.</strong>
+                <p>Os arquivos enviados aqui ficam disponíveis para todos os blocos desta experiência.</p>
+              </div>
+            }
+          </div>
+        </div>
+      </section>
+
+      <section id="publicacao" class="secao-editor secao-publicacao">
+        <header class="cabecalho-secao">
+          <div>
+            <p class="sobretitulo">PLAY FLÊIVA</p>
+            <h2>Publicação</h2>
+            <span>O leitor público mantém o texto simples e executa a sequência sonora no scroll.</span>
+          </div>
+        </header>
+
+        <section class="vinculo-trabalho">
+          <button type="button" class="abrir-vinculo" (click)="alternarEscolhaAlbum()">
+            <span>
+              <small>TRABALHO RELACIONADO</small>
+              <strong>{{ nomeAlbumVinculado() }}</strong>
+            </span>
+            <b>{{ escolhendoAlbum() ? '−' : 'Alterar' }}</b>
+          </button>
+
+          @if (escolhendoAlbum()) {
+            <div class="lista-albuns">
+              <button
+                type="button"
+                [class.ativo]="!experienciaAtual.album_id"
+                [disabled]="salvandoAlbum()"
+                (click)="definirAlbum(null)"
+              >
+                <span>INDEPENDENTE</span>
+                <strong>Sem trabalho vinculado</strong>
+              </button>
+
+              @if (dadosExperiencias.carregandoAlbuns()) {
+                <p>Carregando trabalhos...</p>
+              } @else if (dadosExperiencias.erroAlbuns()) {
+                <p class="mensagem-erro">{{ dadosExperiencias.erroAlbuns() }}</p>
+              } @else {
+                @for (album of dadosExperiencias.albunsDisponiveis(); track album.id) {
+                  <button
+                    type="button"
+                    [class.ativo]="experienciaAtual.album_id === album.id"
+                    [disabled]="salvandoAlbum()"
+                    (click)="definirAlbum(album.id)"
+                  >
+                    <span>{{ album.tipo_publico || 'TRABALHO' }}</span>
+                    <strong>{{ album.nome }}</strong>
+                  </button>
+                } @empty {
+                  <p>Nenhum trabalho publicado disponível.</p>
+                }
+              }
+            </div>
+          }
+        </section>
+
+        <div class="painel-publicacao">
+          <div>
+            <span class="status-publicacao" [class.publicada]="experienciaAtual.publicada_em">
+              {{ experienciaAtual.publicada_em ? 'PUBLICADA' : 'RASCUNHO' }}
+            </span>
+            <strong>{{ experienciaAtual.nome }}</strong>
+            <p>{{ dadosBlocos.blocos().length }} cenas · {{ dadosAcoes.acoes().length }} ações sonoras</p>
+          </div>
+          <div class="acoes-inline">
+            <button
+              type="button"
+              class="botao-perigo"
+              [disabled]="excluindoExperiencia()"
+              (click)="excluirExperiencia()"
+            >
+              {{ excluindoExperiencia() ? 'Excluindo...' : 'Excluir experiência' }}
+            </button>
+            <a
+              class="botao-neutro"
+              [routerLink]="['/experiencia', experienciaAtual.id]"
+              [queryParams]="{ teste: 1 }"
+              target="_blank"
+            >
+              Testar experiência ↗
+            </a>
+            <button type="button" class="botao-principal" [disabled]="alterandoPublicacao()" (click)="alternarPublicacao()">
+              {{ experienciaAtual.publicada_em ? 'Retirar publicação' : 'Publicar experiência' }}
+            </button>
+          </div>
+        </div>
+        @if (erroExperiencia()) {
+          <p class="mensagem-erro">{{ erroExperiencia() }}</p>
+        }
+      </section>
+    }
+  }
+</main>

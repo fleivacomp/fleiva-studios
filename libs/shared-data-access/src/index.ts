@@ -34,3 +34,12 @@ export * from './lib/dados-album-publico';
 
 export * from './lib/dados-casa';
 
+export * from './lib/dados-experiencias-imersivas';
+
+export * from './lib/dados-blocos-experiencia-imersiva';
+
+export * from './lib/dados-recursos-experiencia-imersiva';
+
+export * from './lib/dados-acoes-bloco-experiencia-imersiva';
+
+export * from './lib/dados-experiencia-imersiva-publica';

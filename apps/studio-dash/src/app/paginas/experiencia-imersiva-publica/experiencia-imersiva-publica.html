@@ -1,0 +1,129 @@
+<main class="leitor" [class.modo-teste]="modoTeste()">
+  @if (dados.carregando()) {
+    <section class="estado-leitor">
+      <span class="carregador" aria-hidden="true"></span>
+      <p>Abrindo publicação...</p>
+    </section>
+  } @else if (dados.erro()) {
+    <section class="estado-leitor erro">
+      <span>404</span>
+      <h1>Experiência indisponível</h1>
+      <p>{{ dados.erro() }}</p>
+      <button type="button" (click)="carregar()">Tentar novamente</button>
+    </section>
+  } @else if (dados.experiencia(); as experiencia) {
+    <header class="barra-leitor">
+      <a href="/" class="marca">FLEIVA</a>
+      <span>{{ modoTeste() ? 'MODO DE TESTE' : leituraSimples() ? 'LEITURA' : motor.iniciado() ? 'EM CURSO' : 'EXPERIÊNCIA' }}</span>
+    </header>
+
+    @if (modoTeste()) {
+      <aside class="painel-teste" aria-label="Estado do teste da experiência">
+        <span class="rotulo-painel">TESTE</span>
+        <div>
+          <small>EM TELA</small>
+          <strong>{{ numeroCena(blocoEmFocoId()) ?? '—' }}/{{ experiencia.blocos.length }}</strong>
+        </div>
+        <div>
+          <small>ÁUDIO</small>
+          <strong>{{ numeroCena(blocoSonoroId()) ?? '—' }}/{{ experiencia.blocos.length }}</strong>
+        </div>
+        <nav class="navegacao-cenas-teste" aria-label="Pular para cena">
+          @for (bloco of experiencia.blocos; track bloco.id) {
+            <button
+              type="button"
+              [disabled]="!motor.iniciado()"
+              [class.em-tela]="blocoEmFocoId() === bloco.id"
+              [class.com-audio]="blocoSonoroId() === bloco.id"
+              [attr.aria-label]="'Ir para cena ' + bloco.ordem"
+              (click)="irParaCenaTeste(bloco.id)"
+            >
+              {{ bloco.ordem }}
+            </button>
+          }
+        </nav>
+        <button
+          type="button"
+          [disabled]="!motor.iniciado() || !blocoSonoroId()"
+          (click)="repetirCenaTeste()"
+        >
+          Repetir cena
+        </button>
+        <button type="button" (click)="reiniciarTeste()">Reiniciar</button>
+      </aside>
+    }
+
+    @if (!motor.iniciado() && !leituraSimples()) {
+      <section class="abertura">
+        <p class="rotulo">{{ modoTeste() ? 'TESTE DA EXPERIÊNCIA' : 'PUBLICAÇÃO MULTIMÍDIA' }}</p>
+        <h1>{{ experiencia.nome }}</h1>
+        <p class="introducao">
+          O texto conduz uma composição sonora. Role no seu ritmo.
+        </p>
+        <div class="acoes-abertura">
+          <button type="button" class="iniciar" [disabled]="motor.carregando()" (click)="iniciar()">
+            {{ motor.carregando() ? 'Preparando áudio...' : modoTeste() ? 'Iniciar teste' : 'Iniciar experiência' }}
+          </button>
+          <button type="button" class="ler" (click)="lerSemExperiencia()">
+            Ler sem áudio
+          </button>
+        </div>
+        @if (motor.erro()) {
+          <p class="mensagem-erro" role="alert">{{ motor.erro() }}</p>
+        }
+      </section>
+    } @else {
+      <article class="publicacao">
+        <header class="titulo-publicacao">
+          <p class="rotulo">{{ leituraSimples() ? 'LEITURA SEM ÁUDIO' : 'EXPERIÊNCIA EM CURSO' }}</p>
+          <h1>{{ experiencia.nome }}</h1>
+        </header>
+
+        @if (erroExecucao()) {
+          <p class="mensagem-erro" role="alert">{{ erroExecucao() }}</p>
+        }
+
+        <div class="blocos-leitura">
+          @for (bloco of experiencia.blocos; track bloco.id) {
+            <section
+              #blocoExperiencia
+              class="bloco-leitura"
+              [attr.data-bloco-id]="bloco.id"
+              [class.em-foco]="blocoEmFocoId() === bloco.id"
+            >
+              @if (modoTeste()) {
+                <span
+                  class="marcador-cena-teste"
+                  [class.visual-ativa]="blocoEmFocoId() === bloco.id"
+                  [class.sonora-ativa]="blocoSonoroId() === bloco.id"
+                >
+                  CENA {{ bloco.ordem }}
+                  @if (blocoSonoroId() === bloco.id) {
+                    · ÁUDIO
+                  } @else if (blocoEmFocoId() === bloco.id) {
+                    · EM TELA
+                  }
+                </span>
+              }
+              @if (bloco.imagem_url) {
+                <figure class="imagem-cena">
+                  <img [src]="bloco.imagem_url" alt="" loading="lazy" />
+                </figure>
+              }
+              @if (bloco.conteudo) {
+                <pre>{{ bloco.conteudo }}</pre>
+              }
+            </section>
+          } @empty {
+            <p class="sem-conteudo">Esta publicação ainda não possui conteúdo.</p>
+          }
+        </div>
+
+        <footer class="fim-publicacao">
+          <span>FIM</span>
+          <strong>{{ experiencia.nome }}</strong>
+        </footer>
+      </article>
+    }
+  }
+</main>
