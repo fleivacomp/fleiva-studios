@@ -7,8 +7,11 @@ import {
   inject,
   signal,
 } from "@angular/core";
+
 import { ActivatedRoute, RouterLink } from "@angular/router";
+
 import {
+  ClienteSupabase,
   DadosAlbuns,
   DadosEstudio,
   DadosFaixas,
@@ -34,21 +37,33 @@ export class ProjetoDetalhe implements OnInit {
   readonly dadosEstudio = inject(DadosEstudio);
   readonly dadosVersoes = inject(DadosVersoesFaixa);
 
+  private readonly clienteSupabase = inject(ClienteSupabase);
   private readonly rota = inject(ActivatedRoute);
 
   @ViewChild("reprodutor")
   private reprodutor?: ElementRef<HTMLAudioElement>;
 
   readonly projetoId = signal("");
+
   readonly carregandoPagina = signal(true);
+
   readonly versaoReproduzindo = signal<VersaoFaixa | null>(null);
+
   readonly urlReproducao = signal<string | null>(null);
+
   readonly carregandoReproducaoId = signal<string | null>(null);
+
   readonly erroReproducao = signal<string | null>(null);
+
   readonly audioTocando = signal(false);
+
   readonly tempoAtualAudio = signal(0);
+
   readonly duracaoAudio = signal(0);
+
   readonly volumeAudio = signal(1);
+
+  readonly usuarioId = signal<string | null>(null);
 
   readonly projeto = computed(
     () =>
@@ -57,6 +72,30 @@ export class ProjetoDetalhe implements OnInit {
         .find((projeto) => projeto.id === this.projetoId()) ?? null,
   );
 
+  readonly modoEstudio = computed(
+    () =>
+      this.projeto()?.estudio_id ===
+      this.dadosEstudio.estudio()?.id,
+  );
+
+readonly membroLogado = computed(() =>
+  this.projeto()?.membros.find(
+    (membro) =>
+      membro.contato?.auth_user_id === this.usuarioId(),
+  ) ?? null,
+);
+
+readonly podeEnviar = computed(
+  () =>
+    this.modoEstudio() ||
+    this.membroLogado()?.pode_enviar === true,
+);
+
+readonly podeComentar = computed(
+  () =>
+    this.modoEstudio() ||
+    this.membroLogado()?.pode_comentar === true,
+);
   readonly faixas = computed(() =>
     this.dadosFaixas
       .faixas()
@@ -68,9 +107,8 @@ export class ProjetoDetalhe implements OnInit {
       .albuns()
       .filter(
         (album) =>
-          album.projeto_id === this.projetoId()
-)
-
+          album.projeto_id === this.projetoId(),
+      ),
   );
 
   readonly envios = computed(() =>
@@ -85,7 +123,8 @@ export class ProjetoDetalhe implements OnInit {
 
   readonly totalVersoes = computed(() =>
     this.faixas().reduce(
-      (total, faixa) => total + this.versoesDaFaixa(faixa.id).length,
+      (total, faixa) =>
+        total + this.versoesDaFaixa(faixa.id).length,
       0,
     ),
   );
@@ -94,37 +133,51 @@ export class ProjetoDetalhe implements OnInit {
     const versao = this.versaoReproduzindo();
 
     return versao
-      ? this.faixas().find((faixa) => faixa.id === versao.faixa_id) ?? null
+      ? this.faixas().find(
+          (faixa) => faixa.id === versao.faixa_id,
+        ) ?? null
       : null;
   });
 
   readonly membrosAtivos = computed(
-    () => this.projeto()?.membros.filter((membro) => membro.ativo) ?? [],
+    () =>
+      this.projeto()?.membros.filter(
+        (membro) => membro.ativo,
+      ) ?? [],
   );
 
   readonly faixasSemVersao = computed(() =>
-    this.faixas().filter((faixa) => this.versoesDaFaixa(faixa.id).length === 0),
+    this.faixas().filter(
+      (faixa) =>
+        this.versoesDaFaixa(faixa.id).length === 0,
+    ),
   );
 
   readonly trabalhosPublicados = computed(() =>
-    this.trabalhos().filter((trabalho) => trabalho.publico_na_landing),
+    this.trabalhos().filter(
+      (trabalho) => trabalho.publico_na_landing,
+    ),
   );
 
   readonly trabalhosNaCasa = computed(() =>
-    this.trabalhos().filter((trabalho) => trabalho.publico_na_casa),
+    this.trabalhos().filter(
+      (trabalho) => trabalho.publico_na_casa,
+    ),
   );
 
   readonly trabalhosComLink = computed(() =>
     this.trabalhos().filter(
       (trabalho) =>
-        !trabalho.publico_na_landing && Boolean(trabalho.token_compartilhamento),
+        !trabalho.publico_na_landing &&
+        Boolean(trabalho.token_compartilhamento),
     ),
   );
 
   readonly trabalhosPrivados = computed(() =>
     this.trabalhos().filter(
       (trabalho) =>
-        !trabalho.publico_na_landing && !trabalho.token_compartilhamento,
+        !trabalho.publico_na_landing &&
+        !trabalho.token_compartilhamento,
     ),
   );
 
@@ -137,20 +190,13 @@ export class ProjetoDetalhe implements OnInit {
   );
 
   async ngOnInit(): Promise<void> {
-    this.projetoId.set(this.rota.snapshot.paramMap.get("id")?.trim() ?? "");
+    this.projetoId.set(
+      this.rota.snapshot.paramMap.get("id")?.trim() ?? "",
+    );
 
     try {
-      const carregarEstudio = this.dadosEstudio.estudio()
-        ? Promise.resolve()
-        : this.dadosEstudio.carregar();
+      await this.carregarDados();
 
-      await Promise.all([
-        this.dadosProjetos.listar(),
-        this.dadosFaixas.listar(),
-        this.dadosAlbuns.listar(),
-        this.dadosVersoes.listar(),
-        carregarEstudio,
-      ]);
     } finally {
       this.carregandoPagina.set(false);
     }
@@ -160,20 +206,64 @@ export class ProjetoDetalhe implements OnInit {
     this.carregandoPagina.set(true);
 
     try {
-      const carregarEstudio = this.dadosEstudio.estudio()
-        ? Promise.resolve()
-        : this.dadosEstudio.carregar();
+      await this.carregarDados();
 
-      await Promise.all([
-        this.dadosProjetos.listar(),
-        this.dadosFaixas.listar(),
-        this.dadosAlbuns.listar(),
-        this.dadosVersoes.listar(),
-        carregarEstudio,
-      ]);
     } finally {
       this.carregandoPagina.set(false);
     }
+  }
+
+  private async carregarDados(): Promise<void> {
+    const {
+      data: { user },
+    } = await this.clienteSupabase.cliente.auth.getUser();
+    this.usuarioId.set(user?.id ?? null);
+
+    let carregarEstudio = Promise.resolve();
+
+    if (user) {
+      const { data: estudio } =
+        await this.clienteSupabase.cliente
+          .from("estudios")
+          .select("id")
+          .eq("id", user.id)
+          .maybeSingle();
+
+      if (estudio) {
+        carregarEstudio = this.dadosEstudio.estudio()
+          ? Promise.resolve()
+          : this.dadosEstudio.carregar();
+      }
+    }
+
+   await Promise.all([
+
+  this.dadosProjetos.listar(),
+
+  this.dadosFaixas.listar(),
+
+  this.dadosAlbuns.listar(),
+
+  this.dadosVersoes.listar(),
+
+  carregarEstudio,
+
+]);
+
+console.log(
+  'PROJETO ABERTO:',
+  this.projetoId(),
+);
+
+console.log(
+  'TODAS AS FAIXAS:',
+  this.dadosFaixas.faixas(),
+);
+
+console.log(
+  'FAIXAS DESTE PROJETO:',
+  this.faixas(),
+);
   }
 
   versoesDaFaixa(faixaId: string): VersaoFaixa[] {
@@ -184,18 +274,29 @@ export class ProjetoDetalhe implements OnInit {
     const versoes = this.versoesDaFaixa(faixa.id);
 
     return (
-      versoes.find((versao) => versao.id === faixa.versao_principal_id) ??
+      versoes.find(
+        (versao) =>
+          versao.id === faixa.versao_principal_id,
+      ) ??
       versoes[0] ??
       null
     );
   }
 
-  async reproduzirVersao(versao: VersaoFaixa): Promise<void> {
-    if (this.carregandoReproducaoId() || !this.podeReproduzir(versao)) {
+  async reproduzirVersao(
+    versao: VersaoFaixa,
+  ): Promise<void> {
+    if (
+      this.carregandoReproducaoId() ||
+      !this.podeReproduzir(versao)
+    ) {
       return;
     }
 
-    if (this.versaoReproduzindo()?.id === versao.id && this.urlReproducao()) {
+    if (
+      this.versaoReproduzindo()?.id === versao.id &&
+      this.urlReproducao()
+    ) {
       await this.alternarReproducao();
       return;
     }
@@ -204,7 +305,10 @@ export class ProjetoDetalhe implements OnInit {
     this.erroReproducao.set(null);
 
     try {
-      const arquivo = await this.dadosVersoes.obterReproducao(versao.id);
+      const arquivo =
+        await this.dadosVersoes.obterReproducao(
+          versao.id,
+        );
 
       this.versaoReproduzindo.set(versao);
       this.urlReproducao.set(arquivo.url);
@@ -212,8 +316,12 @@ export class ProjetoDetalhe implements OnInit {
       window.setTimeout(() => {
         void this.tentarIniciarReproducao();
       });
+
     } catch (erro) {
-      this.erroReproducao.set(this.obterMensagemErro(erro));
+      this.erroReproducao.set(
+        this.obterMensagemErro(erro),
+      );
+
     } finally {
       this.carregandoReproducaoId.set(null);
     }
@@ -256,6 +364,7 @@ export class ProjetoDetalhe implements OnInit {
 
   registrarErroReproducao(): void {
     this.audioTocando.set(false);
+
     this.erroReproducao.set(
       "Não foi possível reproduzir este formato no navegador.",
     );
@@ -269,9 +378,16 @@ export class ProjetoDetalhe implements OnInit {
     const audio = evento.target as HTMLAudioElement;
 
     this.tempoAtualAudio.set(
-      Number.isFinite(audio.currentTime) ? audio.currentTime : 0,
+      Number.isFinite(audio.currentTime)
+        ? audio.currentTime
+        : 0,
     );
-    this.duracaoAudio.set(Number.isFinite(audio.duration) ? audio.duration : 0);
+
+    this.duracaoAudio.set(
+      Number.isFinite(audio.duration)
+        ? audio.duration
+        : 0,
+    );
   }
 
   buscarNaFaixa(evento: Event): void {
@@ -297,14 +413,19 @@ export class ProjetoDetalhe implements OnInit {
   }
 
   formatarTempoAudio(segundos: number): string {
-    if (!Number.isFinite(segundos) || segundos < 0) {
+    if (
+      !Number.isFinite(segundos) ||
+      segundos < 0
+    ) {
       return "0:00";
     }
 
     const minutosInteiros = Math.floor(segundos / 60);
     const segundosInteiros = Math.floor(segundos % 60);
 
-    return `${minutosInteiros}:${String(segundosInteiros).padStart(2, "0")}`;
+    return `${minutosInteiros}:${String(
+      segundosInteiros,
+    ).padStart(2, "0")}`;
   }
 
   podeReproduzir(versao: VersaoFaixa): boolean {
@@ -312,13 +433,17 @@ export class ProjetoDetalhe implements OnInit {
       return true;
     }
 
-    return /\.(aac|flac|m4a|mp3|ogg|wav)$/i.test(versao.nome_arquivo);
+    return /\.(aac|flac|m4a|mp3|ogg|wav)$/i.test(
+      versao.nome_arquivo,
+    );
   }
 
   formatarStatus(status: string): string {
     return status
       .replace(/_/g, " ")
-      .replace(/^./, (inicio: string) => inicio.toLocaleUpperCase("pt-BR"));
+      .replace(/^./, (inicio: string) =>
+        inicio.toLocaleUpperCase("pt-BR"),
+      );
   }
 
   formatarOrdem(indice: number): string {
@@ -332,13 +457,17 @@ export class ProjetoDetalhe implements OnInit {
   totalFaixasTrabalho(album: AlbumCompleto): string {
     const total = album.faixas.length;
 
-    return total === 1 ? "1 faixa" : `${total} faixas`;
+    return total === 1
+      ? "1 faixa"
+      : `${total} faixas`;
   }
 
   totalArquivosEnvio(envio: AlbumCompleto): string {
     const total = envio.faixas.length;
 
-    return total === 1 ? "1 arquivo" : `${total} arquivos`;
+    return total === 1
+      ? "1 arquivo"
+      : `${total} arquivos`;
   }
 
   situacaoEnvio(envio: AlbumCompleto): string {
@@ -391,7 +520,10 @@ export class ProjetoDetalhe implements OnInit {
       return `https://play.fleiva.com.br/${slugSeguro}/trabalho/${albumIdSeguro}`;
     }
 
-    const origem = window.location.origin.replace(/\/$/, "");
+    const origem = window.location.origin.replace(
+      /\/$/,
+      "",
+    );
 
     return `${origem}/estudio/${slugSeguro}/trabalho/${albumIdSeguro}`;
   }
@@ -401,9 +533,15 @@ export class ProjetoDetalhe implements OnInit {
       return false;
     }
 
-    const hostname = window.location.hostname.trim().toLocaleLowerCase();
+    const hostname =
+      window.location.hostname
+        .trim()
+        .toLocaleLowerCase();
 
-    return hostname === "fleiva.com.br" || hostname.endsWith(".fleiva.com.br");
+    return (
+      hostname === "fleiva.com.br" ||
+      hostname.endsWith(".fleiva.com.br")
+    );
   }
 
   private async tentarIniciarReproducao(): Promise<void> {
@@ -415,14 +553,21 @@ export class ProjetoDetalhe implements OnInit {
   }
 
   private obterMensagemErro(erro: unknown): string {
-    if (typeof erro === "object" && erro !== null && "message" in erro) {
+    if (
+      typeof erro === "object" &&
+      erro !== null &&
+      "message" in erro
+    ) {
       return String(erro.message);
     }
 
     return "Não foi possível concluir a operação.";
   }
 
-  identificarFaixa(_indice: number, faixa: FaixaCompleta): string {
+  identificarFaixa(
+    _indice: number,
+    faixa: FaixaCompleta,
+  ): string {
     return faixa.id;
   }
 }

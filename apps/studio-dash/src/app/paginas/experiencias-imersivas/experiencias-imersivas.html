@@ -110,14 +110,13 @@
       </div>
 
       <div class="acoes-experiencia">
-        <a
+        <button
+          type="button"
           class="botao-neutro"
-          [routerLink]="['/experiencia', experienciaAtual.id]"
-          [queryParams]="{ teste: 1 }"
-          target="_blank"
+          (click)="abrirTesteLeitura()"
         >
-          Testar experiência ↗
-        </a>
+          Testar leitura
+        </button>
         <button
           type="button"
           class="botao-principal"
@@ -273,15 +272,19 @@
                       <div>
                         <span>{{ rotuloModo(acao.acao) }}</span>
                         <strong>{{ recursoNome(acao.recurso_id) }}</strong>
-                        <small>{{ trechoAcao(acao) }}</small>
+                        <small>{{ resumoAcao(acao) }}</small>
                       </div>
                       <button type="button" class="acao-textual" (click)="editarAcao(acao)">Editar</button>
                       <button type="button" class="acao-textual perigo" (click)="excluirAcao(acao)">Excluir</button>
                     </article>
                   } @empty {
                     <button type="button" class="sem-som" (click)="abrirNovaAcao(bloco.id)">
-                      <span>＋</span>
-                      Definir o que toca nesta cena
+                      <i>＋</i>
+                      <span>
+                        <strong>Nenhuma camada entra nesta cena</strong>
+                        <small>Ela pode ficar assim. O som anterior ainda obedece à passagem configurada na cena anterior.</small>
+                      </span>
+                      <b>Adicionar camada</b>
                     </button>
                   }
 
@@ -334,22 +337,57 @@
 
                     @if (blocoEditandoTransicaoId() === bloco.id) {
                       <div class="editor-passagem">
-                        <div class="opcoes-transicao">
-                          <button type="button" [class.ativo]="transicaoAudio() === 'terminar-loop'" (click)="transicaoAudio.set('terminar-loop')">
-                            Fecha o ciclo
-                          </button>
-                          <button type="button" [class.ativo]="transicaoAudio() === 'corte'" (click)="transicaoAudio.set('corte')">
-                            Corte
-                          </button>
-                          <button type="button" [class.ativo]="transicaoAudio() === 'crossfade'" (click)="transicaoAudio.set('crossfade')">
-                            Crossfade
-                          </button>
-                          <button type="button" [class.ativo]="transicaoAudio() === 'silencio'" (click)="transicaoAudio.set('silencio')">
-                            Silêncio
-                          </button>
+                        <div class="grupo-passagem">
+                          <span>1 · Quando o som sai</span>
+                          <div class="opcoes-transicao" role="group" aria-label="Comportamento do som atual">
+                            <button type="button" [class.ativo]="transicaoAudio() === 'terminar-loop'" [attr.aria-pressed]="transicaoAudio() === 'terminar-loop'" (click)="transicaoAudio.set('terminar-loop')">
+                              <b>Terminar ciclo</b>
+                              <small>espera o trecho chegar ao OUT antes de sair</small>
+                            </button>
+                            <button type="button" [class.ativo]="transicaoAudio() === 'corte'" [attr.aria-pressed]="transicaoAudio() === 'corte'" (click)="transicaoAudio.set('corte')">
+                              <b>Cortar agora</b>
+                              <small>começa a saída assim que a próxima cena entra</small>
+                            </button>
+                            <button type="button" [class.ativo]="transicaoAudio() === 'continuar'" [attr.aria-pressed]="transicaoAudio() === 'continuar'" (click)="transicaoAudio.set('continuar')">
+                              <b>Continuar som</b>
+                              <small>mantém esta camada tocando sobre a próxima cena</small>
+                            </button>
+                            <button type="button" [class.ativo]="transicaoAudio() === 'cauda'" [attr.aria-pressed]="transicaoAudio() === 'cauda'" (click)="transicaoAudio.set('cauda')">
+                              <b>Liberar cauda</b>
+                              <small>para de repetir e deixa o restante do áudio soar</small>
+                            </button>
+                          </div>
                         </div>
 
-                        @if (transicaoAudio() === 'crossfade') {
+                        <div class="grupo-passagem">
+                          <span>2 · Como a saída soa</span>
+                          <small class="dica-combinacao">Esta escolha funciona junto com a opção acima.</small>
+                          <div class="opcoes-transicao" role="group" aria-label="Acabamento da passagem">
+                            <button type="button" [class.ativo]="acabamentoAudio() === 'direto'" [attr.aria-pressed]="acabamentoAudio() === 'direto'" (click)="acabamentoAudio.set('direto')">
+                              <b>Direto</b>
+                              <small>sem curva adicional de volume</small>
+                            </button>
+                            <button type="button" [class.ativo]="acabamentoAudio() === 'fade-out'" [attr.aria-pressed]="acabamentoAudio() === 'fade-out'" (click)="acabamentoAudio.set('fade-out')">
+                              <b>Fade-out</b>
+                              <small>abaixa esta camada durante a saída</small>
+                            </button>
+                            <button type="button" [class.ativo]="acabamentoAudio() === 'crossfade'" [attr.aria-pressed]="acabamentoAudio() === 'crossfade'" (click)="acabamentoAudio.set('crossfade')">
+                              <b>Crossfade</b>
+                              <small>mistura a saída com a entrada da próxima cena</small>
+                            </button>
+                          </div>
+                        </div>
+
+                        @if (acabamentoAudio() === 'fade-out') {
+                          <div class="controle-duracao">
+                            <span>Duração do fade-out</span>
+                            <button type="button" (click)="ajustarDuracaoFadeOut(-0.5)">−</button>
+                            <strong>{{ duracaoFadeOut().toFixed(1) }}s</strong>
+                            <button type="button" (click)="ajustarDuracaoFadeOut(0.5)">+</button>
+                          </div>
+                        }
+
+                        @if (acabamentoAudio() === 'crossfade') {
                           <div class="controle-duracao">
                             <span>Duração do crossfade</span>
                             <button type="button" (click)="ajustarDuracaoCrossfade(-0.5)">−</button>
@@ -424,15 +462,15 @@
                         <span class="numero-etapa">2</span>
                         <div>
                           <strong>Escolha como toca</strong>
-                          <div class="opcoes-som">
-                            <button type="button" [class.ativo]="modoAudio() === 'loop'" (click)="definirModo('loop')">
-                              <b>Loop</b><small>repete enquanto a cena estiver ativa</small>
+                          <div class="opcoes-som" role="group" aria-label="Modo de reprodução da camada">
+                            <button type="button" [class.ativo]="modoAudio() === 'loop'" [attr.aria-pressed]="modoAudio() === 'loop'" (click)="definirModo('loop')">
+                              <b>Loop</b><small>repete o recorte enquanto a cena estiver ativa</small>
                             </button>
-                            <button type="button" [class.ativo]="modoAudio() === 'tocar'" (click)="definirModo('tocar')">
-                              <b>Tocar uma vez</b><small>segue até o fim do trecho</small>
+                            <button type="button" [class.ativo]="modoAudio() === 'tocar'" [attr.aria-pressed]="modoAudio() === 'tocar'" (click)="definirModo('tocar')">
+                              <b>Tocar uma vez</b><small>linha, frase ou textura tocada uma vez</small>
                             </button>
-                            <button type="button" [class.ativo]="modoAudio() === 'one-shot'" (click)="definirModo('one-shot')">
-                              <b>One-shot</b><small>efeito curto sobre a cena</small>
+                            <button type="button" [class.ativo]="modoAudio() === 'one-shot'" [attr.aria-pressed]="modoAudio() === 'one-shot'" (click)="definirModo('one-shot')">
+                              <b>One-shot</b><small>hit ou efeito curto disparado na entrada</small>
                             </button>
                           </div>
                         </div>
@@ -601,6 +639,20 @@
                     </div>
 
                     <div class="entrada-audio">
+                      <div class="controle-duracao controle-volume">
+                        <span>Volume da camada</span>
+                        <input
+                          type="range"
+                          min="-60"
+                          max="12"
+                          step="0.5"
+                          [value]="volumeDb()"
+                          aria-label="Volume da camada em decibéis"
+                          (input)="definirVolumeDb($event)"
+                        />
+                        <strong>{{ rotuloVolumeDb() }}</strong>
+                      </div>
+
                       <button
                         type="button"
                         class="interruptor"
@@ -858,14 +910,13 @@
             >
               {{ excluindoExperiencia() ? 'Excluindo...' : 'Excluir experiência' }}
             </button>
-            <a
+            <button
+              type="button"
               class="botao-neutro"
-              [routerLink]="['/experiencia', experienciaAtual.id]"
-              [queryParams]="{ teste: 1 }"
-              target="_blank"
+              (click)="abrirTesteLeitura()"
             >
-              Testar experiência ↗
-            </a>
+              Testar leitura
+            </button>
             <button type="button" class="botao-principal" [disabled]="alterandoPublicacao()" (click)="alternarPublicacao()">
               {{ experienciaAtual.publicada_em ? 'Retirar publicação' : 'Publicar experiência' }}
             </button>
@@ -878,3 +929,30 @@
     }
   }
 </main>
+
+@if (testandoLeitura() && experiencia(); as experienciaEmTeste) {
+  <section
+    class="teste-leitura-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Teste da experiência"
+  >
+    <header class="barra-teste-leitura">
+      <div>
+        <span>MODO DE TESTE</span>
+        <strong>{{ experienciaEmTeste.nome }}</strong>
+      </div>
+      <button type="button" (click)="fecharTesteLeitura()">
+        Voltar à edição
+      </button>
+    </header>
+
+    <div class="leitor-teste-integrado">
+      <app-experiencia-imersiva-publica
+        [experienciaIdEntrada]="experienciaEmTeste.id"
+        [modoTesteEntrada]="true"
+        [integrado]="true"
+      />
+    </div>
+  </section>
+}

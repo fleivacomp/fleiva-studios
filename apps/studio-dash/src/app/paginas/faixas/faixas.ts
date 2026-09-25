@@ -15,6 +15,8 @@ import {
   DadosAlbuns,
   DadosFaixas,
   DadosVersoesFaixa,
+  DadosProjetosArtisticos,
+  DadosContatos,
   TIPO_PUBLICO_ENVIO,
   type AlbumCompleto,
   type CadastroEnvio,
@@ -59,9 +61,25 @@ export class Faixas implements OnInit {
 
   private readonly rota = inject(ActivatedRoute);
   private readonly destruirRef = inject(DestroyRef);
+  private quadroAnimacaoTrocaFaixa: number | null = null;
 
   @ViewChild("reprodutor")
   private reprodutor?: ElementRef<HTMLAudioElement>;
+
+  @ViewChild("capaHero")
+  private capaHero?: ElementRef<HTMLElement>;
+
+  @ViewChild("informacoesHero")
+  private informacoesHero?: ElementRef<HTMLElement>;
+
+  @ViewChild("acoesHero")
+  private acoesHero?: ElementRef<HTMLElement>;
+
+  @ViewChild("rastroHero")
+  private rastroHero?: ElementRef<HTMLElement>;
+
+  @ViewChild("conteudoFaixa")
+  private conteudoFaixa?: ElementRef<HTMLElement>;
 
   readonly salvando = signal(false);
   readonly excluindoId = signal<string | null>(null);
@@ -95,6 +113,9 @@ export class Faixas implements OnInit {
   readonly erroEnvio = signal<string | null>(null);
   readonly linkEnvioCriado = signal<string | null>(null);
   readonly envioEditandoId = signal<string | null>(null);
+  readonly dadosProjetos = inject(DadosProjetosArtisticos);
+readonly dadosContatos = inject(DadosContatos);
+readonly participanteExpandidoId = signal<string | null>(null);
 
   readonly faixasVisiveis = computed(() => {
     const termo = this.termoBusca().trim().toLocaleLowerCase("pt-BR");
@@ -141,6 +162,81 @@ export class Faixas implements OnInit {
 
     return faixa ? this.dadosVersoes.versoesDaFaixa(faixa.id) : [];
   });
+  readonly participantesDaFaixa = computed(() => {
+  const faixa = this.faixaSelecionada();
+  if (!faixa) {
+    return [];
+  }
+
+  const projeto = this.dadosProjetos
+    .projetos()
+    .find((item) => item.id === faixa.projeto_id);
+
+  if (!projeto) {
+    return [];
+  }
+
+  const versoes = this.dadosVersoes.versoesDaFaixa(faixa.id);
+
+  return projeto.membros.map((membro) => {
+    const contato = this.dadosContatos
+      .contatos()
+      .find((item) => item.id === membro.contato_id);
+
+    const versoesDoParticipante = versoes.filter(
+      (versao) => versao.criado_por === contato?.auth_user_id,
+    );
+
+    return {
+      membro,
+      contato,
+      versoes: versoesDoParticipante,
+    };
+  });
+});
+  nomeRemetenteVersao(versao: VersaoFaixa): string {
+
+    const contato = this.dadosContatos
+
+      .contatos()
+
+      .find(
+        (item) => item.auth_user_id === versao.criado_por,
+      );
+
+    if (contato) {
+
+      return contato.nome;
+
+    }
+
+    const faixa = this.dadosFaixas
+
+      .faixas()
+
+      .find((item) => item.id === versao.faixa_id);
+
+    if (!faixa) {
+
+      return "Estúdio";
+
+    }
+
+    const projeto = this.dadosProjetos
+
+      .projetos()
+
+      .find((item) => item.id === faixa.projeto_id);
+
+    if (projeto?.estudio_id === versao.criado_por) {
+
+      return "Estúdio";
+
+    }
+
+    return "Estúdio";
+
+  }
 
   readonly versaoPrincipalSelecionada = computed(() => {
     const faixa = this.faixaSelecionada();
@@ -154,6 +250,16 @@ export class Faixas implements OnInit {
       versoes.find((versao) => versao.id === faixa.versao_principal_id) ??
       versoes[0] ??
       null
+    );
+  });
+
+  readonly versaoPrincipalEstaTocando = computed(() => {
+    const versaoPrincipal = this.versaoPrincipalSelecionada();
+
+    return (
+      versaoPrincipal !== null &&
+      this.versaoReproduzindo()?.id === versaoPrincipal.id &&
+      this.audioTocando()
     );
   });
 
@@ -312,8 +418,22 @@ export class Faixas implements OnInit {
     descricao_publica: this.construtorFormulario.control<string | null>(null),
     download_publico: this.construtorFormulario.nonNullable.control(false),
   });
+  alternarParticipante(participanteId: string): void {
+  this.participanteExpandidoId.update((id) =>
+    id === participanteId ? null : participanteId,
+  );
+}
 
   ngOnInit(): void {
+    this.destruirRef.onDestroy(() => {
+      if (
+        typeof window !== "undefined" &&
+        this.quadroAnimacaoTrocaFaixa !== null
+      ) {
+        window.cancelAnimationFrame(this.quadroAnimacaoTrocaFaixa);
+      }
+    });
+
     void this.inicializar();
   }
 
@@ -387,13 +507,15 @@ export class Faixas implements OnInit {
     this.faixaSelecionadaId.set(primeiraFaixa?.id ?? null);
   }
 
-  async carregarDados(): Promise<void> {
-    await Promise.all([
-      this.dadosFaixas.listar(),
-      this.dadosVersoes.listar(),
-      this.dadosAlbuns.listar(),
-    ]);
-  }
+ async carregarDados(): Promise<void> {
+  await Promise.all([
+    this.dadosFaixas.listar(),
+    this.dadosVersoes.listar(),
+    this.dadosAlbuns.listar(),
+    this.dadosProjetos.listar(),
+    this.dadosContatos.listar(),
+  ]);
+}
 
   abrirMontadorEnvio(envio?: AlbumCompleto): void {
     const faixa = this.faixaSelecionada();
@@ -584,11 +706,134 @@ export class Faixas implements OnInit {
   }
 
   selecionarFaixa(faixaId: string): void {
-    this.faixaSelecionadaId.set(faixaId);
+    if (this.faixaSelecionada()?.id !== faixaId) {
+      this.faixaSelecionadaId.set(faixaId);
+      this.agendarAnimacaoTrocaFaixa();
+    }
+
     this.erroUpload.set(null);
     this.erroFormulario.set(null);
     this.erroVersaoPrincipal.set(null);
     this.limparRetornoCompartilhamento();
+  }
+
+  private agendarAnimacaoTrocaFaixa(): void {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    if (this.quadroAnimacaoTrocaFaixa !== null) {
+      window.cancelAnimationFrame(this.quadroAnimacaoTrocaFaixa);
+    }
+
+    this.quadroAnimacaoTrocaFaixa = window.requestAnimationFrame(() => {
+      this.quadroAnimacaoTrocaFaixa = window.requestAnimationFrame(() => {
+        this.quadroAnimacaoTrocaFaixa = null;
+        this.executarAnimacaoTrocaFaixa();
+      });
+    });
+  }
+
+  private executarAnimacaoTrocaFaixa(): void {
+    const reduzirMovimento = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    const escalaDuracao = reduzirMovimento ? 0.45 : 1;
+    const deslocamento = reduzirMovimento ? "0.12rem" : "0.48rem";
+    const escalaInicial = reduzirMovimento ? 0.99 : 0.96;
+    const curva = "cubic-bezier(0.16, 0.78, 0.22, 1)";
+
+    const animar = (
+      elemento: HTMLElement | undefined,
+      quadros: Keyframe[],
+      duracao: number,
+      atraso = 0,
+    ): void => {
+      if (!elemento) {
+        return;
+      }
+
+      elemento.getAnimations().forEach((animacao) => animacao.cancel());
+      elemento.animate(quadros, {
+        duration: Math.round(duracao * escalaDuracao),
+        delay: Math.round(atraso * escalaDuracao),
+        easing: curva,
+        fill: "both",
+      });
+    };
+
+    animar(
+      this.capaHero?.nativeElement,
+      [
+        {
+          opacity: 0.5,
+          filter: "saturate(0.72)",
+          transform: `translate3d(-${deslocamento}, ${deslocamento}, 0) scale(${escalaInicial})`,
+        },
+        {
+          opacity: 1,
+          filter: "saturate(1)",
+          transform: "translate3d(0, 0, 0) scale(1)",
+        },
+      ],
+      360,
+    );
+
+    const elementosInformacao = Array.from(
+      this.informacoesHero?.nativeElement.children ?? [],
+    );
+
+    elementosInformacao.forEach((elemento, indice) => {
+      if (!(elemento instanceof HTMLElement)) {
+        return;
+      }
+
+      animar(
+        elemento,
+        [
+          { opacity: 0, transform: `translate3d(0, ${deslocamento}, 0)` },
+          { opacity: 1, transform: "translate3d(0, 0, 0)" },
+        ],
+        280,
+        indice * 35,
+      );
+    });
+
+    animar(
+      this.acoesHero?.nativeElement,
+      [
+        { opacity: 0, transform: `translate3d(${deslocamento}, 0, 0)` },
+        { opacity: 1, transform: "translate3d(0, 0, 0)" },
+      ],
+      280,
+      80,
+    );
+
+    animar(
+      this.conteudoFaixa?.nativeElement,
+      [
+        { opacity: 0.55, transform: `translate3d(0, ${deslocamento}, 0)` },
+        { opacity: 1, transform: "translate3d(0, 0, 0)" },
+      ],
+      300,
+      110,
+    );
+
+    animar(
+      this.rastroHero?.nativeElement,
+      [
+        {
+          opacity: 0,
+          transform: "skewX(-10deg) translate3d(-120%, 0, 0)",
+        },
+        { opacity: 0.68, offset: 0.24 },
+        {
+          opacity: 0,
+          transform: "skewX(-10deg) translate3d(780%, 0, 0)",
+        },
+      ],
+      520,
+    );
   }
 
   abrirNovaFaixa(projetoId = ""): void {
@@ -673,40 +918,32 @@ export class Faixas implements OnInit {
     this.fecharEditor();
   }
 
-  async excluir(faixa: FaixaCompleta): Promise<void> {
-    if (this.temVersoes(faixa.id)) {
-      this.erroFormulario.set(
-        "A faixa possui versões armazenadas e não pode ser excluída diretamente.",
-      );
+ async excluir(faixa: FaixaCompleta): Promise<void> {
+  const confirmou = window.confirm(`Excluir a faixa "${faixa.titulo}"?`);
 
-      return;
-    }
-
-    const confirmou = window.confirm(`Excluir a faixa "${faixa.titulo}"?`);
-
-    if (!confirmou) {
-      return;
-    }
-
-    this.excluindoId.set(faixa.id);
-    this.erroFormulario.set(null);
-
-    try {
-      await this.dadosFaixas.excluir(faixa.id);
-
-      if (this.faixaSelecionadaId() === faixa.id) {
-        this.faixaSelecionadaId.set(null);
-      }
-
-      if (this.faixaEditandoId() === faixa.id) {
-        this.limparFormulario();
-      }
-    } catch (erro) {
-      this.erroFormulario.set(this.obterMensagemErro(erro));
-    } finally {
-      this.excluindoId.set(null);
-    }
+  if (!confirmou) {
+    return;
   }
+
+  this.excluindoId.set(faixa.id);
+  this.erroFormulario.set(null);
+
+  try {
+    await this.dadosFaixas.excluir(faixa.id);
+
+    if (this.faixaSelecionadaId() === faixa.id) {
+      this.faixaSelecionadaId.set(null);
+    }
+
+    if (this.faixaEditandoId() === faixa.id) {
+      this.limparFormulario();
+    }
+  } catch (erro) {
+    this.erroFormulario.set(this.obterMensagemErro(erro));
+  } finally {
+    this.excluindoId.set(null);
+  }
+}
 
   abrirUpload(faixaId: string): void {
     if (this.faixaUploadId() === faixaId) {
@@ -736,45 +973,66 @@ export class Faixas implements OnInit {
     this.erroUpload.set(null);
   }
 
-  async enviarVersao(faixaId: string): Promise<void> {
-    if (this.formularioUpload.invalid) {
-      this.formularioUpload.markAllAsTouched();
-      return;
-    }
 
-    const valor = this.formularioUpload.getRawValue();
+async enviarVersao(faixaId: string): Promise<void> {
 
-    if (!valor.arquivo) {
-      this.formularioUpload.controls.arquivo.setErrors({
-        required: true,
-      });
-      return;
-    }
+  if (this.formularioUpload.invalid) {
 
-    if (valor.arquivo.size > this.dadosVersoes.espacoDisponivelBytes()) {
-      this.erroUpload.set("O arquivo é maior que o espaço disponível.");
-      return;
-    }
+    this.formularioUpload.markAllAsTouched();
 
-    this.enviandoFaixaId.set(faixaId);
-    this.erroUpload.set(null);
+    return;
 
-    try {
-      await this.dadosVersoes.enviar({
-        faixa_id: faixaId,
-        versao: valor.versao,
-        observacoes: this.normalizarTextoOpcional(valor.observacoes),
-        arquivo: valor.arquivo,
-      });
-
-      this.faixaUploadId.set(null);
-      this.limparFormularioUpload();
-    } catch (erro) {
-      this.erroUpload.set(this.obterMensagemErro(erro));
-    } finally {
-      this.enviandoFaixaId.set(null);
-    }
   }
+
+  const valor = this.formularioUpload.getRawValue();
+
+  if (!valor.arquivo) {
+
+    this.formularioUpload.controls.arquivo.setErrors({
+
+      required: true,
+
+    });
+
+    return;
+
+  }
+
+  this.enviandoFaixaId.set(faixaId);
+
+  this.erroUpload.set(null);
+
+  try {
+
+    await this.dadosVersoes.enviar({
+
+      faixa_id: faixaId,
+
+      versao: valor.versao,
+
+      observacoes: this.normalizarTextoOpcional(valor.observacoes),
+
+      arquivo: valor.arquivo,
+
+    });
+
+    this.faixaUploadId.set(null);
+
+    this.limparFormularioUpload();
+
+  } catch (erro) {
+
+    this.erroUpload.set(this.obterMensagemErro(erro));
+
+  } finally {
+
+    this.enviandoFaixaId.set(null);
+
+  }
+
+}
+
+
   async baixarVersao(versao: VersaoFaixa): Promise<void> {
     if (this.baixandoVersaoId()) {
       return;

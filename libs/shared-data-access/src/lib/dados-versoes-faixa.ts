@@ -4,7 +4,9 @@ import {
   Injectable,
   signal,
 } from '@angular/core';
+
 import { ClienteSupabase } from './cliente-supabase';
+
 import type { Database } from './tipos-banco';
 
 export type VersaoFaixa =
@@ -19,6 +21,7 @@ export interface UploadVersaoFaixa {
   observacoes: string | null;
   arquivo: File;
 }
+
 export interface DownloadVersaoFaixa {
   url: string;
   nome_arquivo: string;
@@ -41,6 +44,7 @@ interface RespostaConfirmarUpload {
   providedIn: 'root',
 })
 export class DadosVersoesFaixa {
+
   private readonly clienteSupabase =
     inject(ClienteSupabase);
 
@@ -48,7 +52,9 @@ export class DadosVersoesFaixa {
     signal<VersaoFaixa[]>([]);
 
   private readonly limiteBytesInterno = signal(0);
+
   private readonly carregandoInterno = signal(false);
+
   private readonly erroInterno =
     signal<string | null>(null);
 
@@ -60,7 +66,8 @@ export class DadosVersoesFaixa {
   readonly carregando =
     this.carregandoInterno.asReadonly();
 
-  readonly erro = this.erroInterno.asReadonly();
+  readonly erro =
+    this.erroInterno.asReadonly();
 
   readonly versoesConfirmadas = computed(() =>
     this.listaInterna().filter(
@@ -84,61 +91,103 @@ export class DadosVersoesFaixa {
   );
 
   async listar(): Promise<void> {
+
     this.carregandoInterno.set(true);
+
     this.erroInterno.set(null);
 
     try {
-      const estudioId = await this.obterEstudioId();
 
-      const [
-        respostaVersoes,
-        respostaArmazenamento,
-      ] = await Promise.all([
-        this.clienteSupabase.cliente
+      const {
+        data: { user },
+        error: erroUsuario,
+      } =
+        await this.clienteSupabase.cliente.auth.getUser();
+
+      if (erroUsuario || !user) {
+        throw new Error('Usuário não autenticado.');
+      }
+
+      const { data: estudio } =
+        await this.clienteSupabase.cliente
+          .from('estudios')
+          .select('id')
+          .eq('id', user.id)
+          .maybeSingle();
+
+      const respostaVersoes =
+        await this.clienteSupabase.cliente
           .from('versoes_faixa')
           .select('*')
-          .eq('estudio_id', estudioId)
           .order('criado_em', {
             ascending: false,
-          }),
+          });
 
-        this.clienteSupabase.cliente
-          .from('armazenamento_estudios')
-          .select('*')
-          .eq('estudio_id', estudioId)
-          .single(),
-      ]);
+      if (estudio) {
+
+        const {
+          data: armazenamento,
+          error: erroArmazenamento,
+        } =
+          await this.clienteSupabase.cliente
+            .from('armazenamento_estudios')
+            .select('*')
+            .eq('estudio_id', estudio.id)
+            .maybeSingle();
+
+        if (erroArmazenamento) {
+          throw erroArmazenamento;
+        }
+
+        this.limiteBytesInterno.set(
+          armazenamento?.limite_bytes ?? 0,
+        );
+
+      } else {
+
+        this.limiteBytesInterno.set(0);
+
+      }
 
       if (respostaVersoes.error) {
         throw respostaVersoes.error;
       }
 
-      if (respostaArmazenamento.error) {
-        throw respostaArmazenamento.error;
-      }
-
-      this.listaInterna.set(
+      console.log(
+        'VERSÕES - dados:',
         respostaVersoes.data,
       );
 
-      this.limiteBytesInterno.set(
-        respostaArmazenamento.data.limite_bytes,
+      console.log(
+        'VERSÕES - erro:',
+        respostaVersoes.error,
       );
+
+      this.listaInterna.set(
+        respostaVersoes.data ?? [],
+      );
+
     } catch (erro) {
+
       this.erroInterno.set(
         this.obterMensagemErro(
           erro,
           'Não foi possível carregar as versões das faixas.',
         ),
       );
+
     } finally {
+
       this.carregandoInterno.set(false);
+
     }
+
   }
 
   async enviar(
     dados: UploadVersaoFaixa,
   ): Promise<VersaoFaixa> {
+
     const arquivo = dados.arquivo;
 
     const { data, error } =
@@ -160,10 +209,12 @@ export class DadosVersoesFaixa {
       );
 
     if (error) {
+
       throw await this.criarErroFuncao(
         error,
         'Não foi possível iniciar o upload.',
       );
+
     }
 
     const inicio = data as
@@ -174,14 +225,17 @@ export class DadosVersoesFaixa {
       !inicio?.versao_id ||
       !inicio.upload_url
     ) {
+
       throw new Error(
         'A resposta de início do upload é inválida.',
       );
+
     }
 
     let respostaUpload: Response;
 
     try {
+
       respostaUpload = await fetch(
         inicio.upload_url,
         {
@@ -190,13 +244,17 @@ export class DadosVersoesFaixa {
           body: arquivo,
         },
       );
+
     } catch {
+
       return this.recuperarConfirmacao(
         inicio.versao_id,
       );
+
     }
 
     if (!respostaUpload.ok) {
+
       await this.cancelarReserva(
         inicio.versao_id,
       );
@@ -204,6 +262,7 @@ export class DadosVersoesFaixa {
       throw new Error(
         'O armazenamento recusou o envio do arquivo.',
       );
+
     }
 
     const versaoConfirmada =
@@ -214,30 +273,36 @@ export class DadosVersoesFaixa {
     await this.listar();
 
     return versaoConfirmada;
+
   }
 
   async obterDownload(
     versaoId: string,
   ): Promise<DownloadVersaoFaixa> {
+
     return this.obterAcessoArquivo(
       versaoId,
       'download',
     );
+
   }
 
   async obterReproducao(
     versaoId: string,
   ): Promise<DownloadVersaoFaixa> {
+
     return this.obterAcessoArquivo(
       versaoId,
       'reproducao',
     );
+
   }
 
   private async obterAcessoArquivo(
     versaoId: string,
     modo: 'download' | 'reproducao',
   ): Promise<DownloadVersaoFaixa> {
+
     const { data, error } =
       await this.clienteSupabase.cliente.functions.invoke(
         'baixar-versao-faixa',
@@ -250,12 +315,14 @@ export class DadosVersoesFaixa {
       );
 
     if (error) {
+
       throw await this.criarErroFuncao(
         error,
         modo === 'reproducao'
           ? 'Não foi possível preparar a reprodução.'
           : 'Não foi possível preparar o download.',
       );
+
     }
 
     const resposta = data as
@@ -267,16 +334,21 @@ export class DadosVersoesFaixa {
       !resposta.nome_arquivo ||
       !resposta.expira_em
     ) {
+
       throw new Error(
         'A resposta de acesso ao arquivo é inválida.',
       );
+
     }
 
     return resposta;
+
   }
+
   async criarLinkCompartilhamento(
     versaoId: string,
   ): Promise<string> {
+
     const { data, error } =
       await this.clienteSupabase.cliente.rpc(
         'criar_link_compartilhamento_faixa',
@@ -286,16 +358,20 @@ export class DadosVersoesFaixa {
       );
 
     if (error) {
+
       throw await this.criarErroFuncao(
         error,
         'Não foi possível criar o link.',
       );
+
     }
 
     if (typeof data !== 'string') {
+
       throw new Error(
         'A resposta de compartilhamento é inválida.',
       );
+
     }
 
     this.listaInterna.update((versoes) =>
@@ -310,11 +386,13 @@ export class DadosVersoesFaixa {
     );
 
     return data;
+
   }
 
   async revogarLinkCompartilhamento(
     versaoId: string,
   ): Promise<void> {
+
     const { error } =
       await this.clienteSupabase.cliente.rpc(
         'revogar_link_compartilhamento_faixa',
@@ -324,10 +402,12 @@ export class DadosVersoesFaixa {
       );
 
     if (error) {
+
       throw await this.criarErroFuncao(
         error,
         'Não foi possível revogar o link.',
       );
+
     }
 
     this.listaInterna.update((versoes) =>
@@ -340,38 +420,55 @@ export class DadosVersoesFaixa {
           : versao,
       ),
     );
+
   }
+
   versoesDaFaixa(
     faixaId: string,
   ): VersaoFaixa[] {
+
     return this.versoesConfirmadas().filter(
-      (versao) => versao.faixa_id === faixaId,
+      (versao) =>
+        versao.faixa_id === faixaId,
     );
+
   }
 
   private async recuperarConfirmacao(
     versaoId: string,
   ): Promise<VersaoFaixa> {
+
     try {
+
       const versao =
         await this.confirmarUpload(versaoId);
 
       await this.listar();
 
       return versao;
+
     } catch {
+
       throw new Error(
         'A conexão foi interrompida durante o upload. Tente novamente.',
       );
+
     }
+
   }
 
   private async confirmarUpload(
     versaoId: string,
   ): Promise<VersaoFaixa> {
+
     let ultimoErro: unknown = null;
 
-    for (let tentativa = 0; tentativa < 2; tentativa += 1) {
+    for (
+      let tentativa = 0;
+      tentativa < 2;
+      tentativa += 1
+    ) {
+
       const { data, error } =
         await this.clienteSupabase.cliente.functions.invoke(
           'confirmar-upload-faixa',
@@ -383,31 +480,38 @@ export class DadosVersoesFaixa {
         );
 
       if (!error) {
+
         const resposta = data as
           | RespostaConfirmarUpload
           | null;
 
         if (!resposta?.versao) {
+
           throw new Error(
             'A confirmação do upload é inválida.',
           );
+
         }
 
         return resposta.versao;
+
       }
 
       ultimoErro = error;
+
     }
 
     throw await this.criarErroFuncao(
       ultimoErro,
       'Não foi possível confirmar o upload.',
     );
+
   }
 
   private async cancelarReserva(
     versaoId: string,
   ): Promise<void> {
+
     const { error } =
       await this.clienteSupabase.cliente.rpc(
         'cancelar_reserva_upload_faixa',
@@ -417,14 +521,18 @@ export class DadosVersoesFaixa {
       );
 
     if (error) {
+
       console.error(
         'Não foi possível cancelar a reserva de upload.',
         error,
       );
+
     }
+
   }
 
   private async obterEstudioId(): Promise<string> {
+
     const {
       data: { user },
       error,
@@ -432,16 +540,20 @@ export class DadosVersoesFaixa {
       await this.clienteSupabase.cliente.auth.getUser();
 
     if (error || !user) {
+
       throw new Error('Usuário não autenticado.');
+
     }
 
     return user.id;
+
   }
 
   private async criarErroFuncao(
     erro: unknown,
     mensagemPadrao: string,
   ): Promise<Error> {
+
     const mensagemResposta =
       await this.obterMensagemRespostaFuncao(
         erro,
@@ -454,21 +566,26 @@ export class DadosVersoesFaixa {
           mensagemPadrao,
         ),
     );
+
   }
 
   private async obterMensagemRespostaFuncao(
     erro: unknown,
   ): Promise<string | null> {
+
     if (
       typeof erro !== 'object' ||
       erro === null ||
       !('context' in erro) ||
       !(erro.context instanceof Response)
     ) {
+
       return null;
+
     }
 
     try {
+
       const corpo = await erro.context
         .clone()
         .json() as {
@@ -478,23 +595,32 @@ export class DadosVersoesFaixa {
       return typeof corpo.erro === 'string'
         ? corpo.erro
         : null;
+
     } catch {
+
       return null;
+
     }
+
   }
 
   private obterMensagemErro(
     erro: unknown,
     mensagemPadrao: string,
   ): string {
+
     if (
       typeof erro === 'object' &&
       erro !== null &&
       'message' in erro
     ) {
+
       return String(erro.message);
+
     }
 
     return mensagemPadrao;
+
   }
+
 }

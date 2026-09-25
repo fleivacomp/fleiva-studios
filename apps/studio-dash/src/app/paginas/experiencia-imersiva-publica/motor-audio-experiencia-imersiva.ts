@@ -6,25 +6,49 @@ import type {
 export type TransicaoBlocoAudio =
   | 'terminar-loop'
   | 'corte'
+  | 'continuar'
+  | 'cauda'
+  | 'fade-out'
   | 'crossfade'
   | 'silencio';
 
+export interface ConfiguracaoTransicaoBlocoAudio {
+  duracaoCrossfadeSegundos?: number;
+  duracaoFadeOutSegundos?: number;
+  duracaoCaudaSegundos?: number | null;
+}
+
 export interface ComandoBlocoAudio {
+  acaoId: string;
+  blocoId: string;
   recursoId: string;
   inicioTrechoSegundos: number;
   fimTrechoSegundos: number | null;
   repetir: boolean;
   fadeInSegundos: number;
+  volumeDb?: number;
+}
+
+export interface ResultadoTransicaoBlocoAudio {
+  inicioCenaContexto: number;
 }
 
 interface FonteAtiva {
+  acaoId: string;
+  blocoId: string;
   recursoId: string;
   fonte: AudioBufferSourceNode;
+  ganhoVolume: GainNode;
   ganho: GainNode;
   inicioContexto: number;
   inicioLoop: number;
   fimLoop: number;
   repetir: boolean;
+  duracaoBuffer: number;
+  fimNaturalContexto: number | null;
+  paradaAgendadaContexto: number | null;
+  emSaida: boolean;
+  encerrada: boolean;
 }
 
 @Injectable()
@@ -34,6 +58,7 @@ export class MotorAudioExperienciaImersiva {
   private readonly fontesAtivas = new Set<FonteAtiva>();
   private controladorAbort: AbortController | null = null;
   private inicializacao: Promise<void> | null = null;
+  private sequenciaManual = 0;
 
   private readonly iniciadoInterno = signal(false);
   private readonly carregandoInterno = signal(false);
@@ -62,8 +87,11 @@ export class MotorAudioExperienciaImersiva {
   }
 
   reproduzir(recursoId: string): AudioBufferSourceNode {
+    const id = `manual-${++this.sequenciaManual}`;
     return this.iniciarComando(
       {
+        acaoId: id,
+        blocoId: 'manual',
         recursoId,
         inicioTrechoSegundos: 0,
         fimTrechoSegundos: null,
@@ -81,8 +109,11 @@ export class MotorAudioExperienciaImersiva {
     fimLoopSegundos: number,
   ): AudioBufferSourceNode {
     const contexto = this.exigirContexto();
+    const id = `manual-${++this.sequenciaManual}`;
     return this.iniciarComando(
       {
+        acaoId: id,
+        blocoId: 'manual',
         recursoId,
         inicioTrechoSegundos: inicioLoopSegundos,
         fimTrechoSegundos: fimLoopSegundos,
@@ -96,11 +127,17 @@ export class MotorAudioExperienciaImersiva {
   transicionar(
     comandos: ComandoBlocoAudio[],
     transicaoAnterior: TransicaoBlocoAudio,
-    duracaoCrossfadeSegundos = 0,
-  ): void {
+    configuracao: ConfiguracaoTransicaoBlocoAudio = {},
+    blocoSaidaId: string | null = null,
+    blocoEntradaId: string | null = comandos[0]?.blocoId ?? null,
+  ): ResultadoTransicaoBlocoAudio {
     const contexto = this.exigirContexto();
     const agora = contexto.currentTime;
     const ativas = [...this.fontesAtivas];
+
+    for (const comando of comandos) {
+      this.validarComando(comando);
+    }
 
     for (const ativa of ativas) {
       if (ativa.inicioContexto > agora) {
@@ -109,47 +146,91 @@ export class MotorAudioExperienciaImersiva {
     }
 
     const fontesEmCurso = ativas.filter(
-      (ativa) => ativa.inicioContexto <= agora,
+      (ativa) =>
+        ativa.inicioContexto <= agora &&
+        !ativa.encerrada &&
+        !ativa.emSaida &&
+        (blocoSaidaId === null || ativa.blocoId === blocoSaidaId) &&
+        (
+          ativa.paradaAgendadaContexto === null ||
+          ativa.paradaAgendadaContexto > agora
+        ),
     );
     let inicioProximo = agora;
+    const transicaoBase =
+      transicaoAnterior === 'fade-out' || transicaoAnterior === 'crossfade'
+        ? 'corte'
+        : transicaoAnterior;
+    const crossfade = this.duracaoValida(
+      configuracao.duracaoCrossfadeSegundos,
+    );
+    const fadeOut = crossfade > 0
+      ? 0
+      : this.duracaoValida(configuracao.duracaoFadeOutSegundos);
+    const duracaoSaida = crossfade > 0 ? crossfade : fadeOut;
+    const finaisSaida = new Map<FonteAtiva, number>();
 
-    if (transicaoAnterior === 'terminar-loop') {
-      const loopPrincipal = fontesEmCurso.find((item) => item.repetir);
-      if (loopPrincipal) {
-        const duracaoLoop = loopPrincipal.fimLoop - loopPrincipal.inicioLoop;
-        const decorrido = Math.max(0, agora - loopPrincipal.inicioContexto);
-        const ciclos = Math.ceil(decorrido / duracaoLoop);
-        inicioProximo = Math.max(
+    if (transicaoBase === 'terminar-loop') {
+      for (const ativa of fontesEmCurso) {
+        // Sem repetição, fechar o ciclo significa concluir o trecho atual.
+        const fimCiclo = ativa.repetir
+          ? this.proximoFimCiclo(ativa, agora)
+          : Math.max(agora, ativa.fimNaturalContexto ?? agora);
+        const parada =
+          ativa.paradaAgendadaContexto !== null &&
+          ativa.paradaAgendadaContexto > agora
+            ? Math.min(ativa.paradaAgendadaContexto, fimCiclo)
+            : fimCiclo;
+
+        this.pararFonte(ativa, parada);
+        finaisSaida.set(ativa, parada);
+        inicioProximo = Math.max(inicioProximo, parada);
+      }
+    } else if (transicaoBase === 'continuar') {
+      this.transferirFontes(fontesEmCurso, blocoEntradaId);
+    } else if (transicaoBase === 'cauda') {
+      for (const ativa of fontesEmCurso) {
+        this.iniciarCauda(
+          ativa,
           agora,
-          loopPrincipal.inicioContexto + ciclos * duracaoLoop,
+          configuracao.duracaoCaudaSegundos ?? null,
+          blocoEntradaId,
         );
       }
-    }
-
-    const crossfade =
-      transicaoAnterior === 'crossfade'
-        ? Math.max(0, duracaoCrossfadeSegundos)
-        : 0;
-
-    if (transicaoAnterior === 'silencio') {
+    } else if (duracaoSaida <= 0) {
       for (const ativa of fontesEmCurso) {
         this.pararFonte(ativa, agora);
       }
-      return;
     }
 
-    if (crossfade > 0) {
+    if (duracaoSaida > 0) {
       for (const ativa of fontesEmCurso) {
-        ativa.ganho.gain.cancelScheduledValues(agora);
-        ativa.ganho.gain.setValueAtTime(ativa.ganho.gain.value, agora);
-        ativa.ganho.gain.linearRampToValueAtTime(0, agora + crossfade);
-        this.pararFonte(ativa, agora + crossfade);
-      }
-    } else {
-      for (const ativa of fontesEmCurso) {
-        this.pararFonte(ativa, inicioProximo);
+        if (!finaisSaida.has(ativa)) {
+          const limiteEfeito = agora + duracaoSaida;
+          const fimDisponivel = ativa.paradaAgendadaContexto !== null
+            ? ativa.paradaAgendadaContexto
+            : ativa.fimNaturalContexto;
+          const parada = fimDisponivel !== null
+            ? Math.min(limiteEfeito, fimDisponivel)
+            : limiteEfeito;
+
+          this.pararFonte(ativa, parada);
+          finaisSaida.set(ativa, parada);
+        }
+
+        const fimSaida = finaisSaida.get(ativa)!;
+        this.agendarFadeSaida(
+          ativa,
+          Math.max(agora, fimSaida - duracaoSaida),
+          fimSaida,
+        );
+        ativa.emSaida = true;
       }
     }
+
+    const inicioEntrada = crossfade > 0
+      ? Math.max(agora, inicioProximo - crossfade)
+      : inicioProximo;
 
     for (const comando of comandos) {
       this.iniciarComando(
@@ -157,9 +238,13 @@ export class MotorAudioExperienciaImersiva {
           ...comando,
           fadeInSegundos: Math.max(comando.fadeInSegundos, crossfade),
         },
-        crossfade > 0 ? agora : inicioProximo,
+        inicioEntrada,
       );
     }
+
+    return {
+      inicioCenaContexto: inicioEntrada,
+    };
   }
 
   pararRecurso(recursoId: string): void {
@@ -192,6 +277,120 @@ export class MotorAudioExperienciaImersiva {
     quando: number,
   ): FonteAtiva {
     const contexto = this.exigirContexto();
+    const { buffer, inicio, fim } = this.validarComando(comando);
+
+    const fonte = contexto.createBufferSource();
+    const ganhoVolume = contexto.createGain();
+    const ganho = contexto.createGain();
+    fonte.buffer = buffer;
+    fonte.loop = comando.repetir;
+    fonte.loopStart = inicio;
+    fonte.loopEnd = fim;
+    fonte.connect(ganhoVolume);
+    ganhoVolume.connect(ganho);
+    ganho.connect(contexto.destination);
+
+    ganhoVolume.gain.setValueAtTime(
+      this.dbParaGanho(comando.volumeDb ?? 0),
+      quando,
+    );
+
+    const fade = Math.max(0, comando.fadeInSegundos);
+    ganho.gain.setValueAtTime(fade > 0 ? 0 : 1, quando);
+    if (fade > 0) ganho.gain.linearRampToValueAtTime(1, quando + fade);
+
+    const ativa: FonteAtiva = {
+      acaoId: comando.acaoId,
+      blocoId: comando.blocoId,
+      recursoId: comando.recursoId,
+      fonte,
+      ganhoVolume,
+      ganho,
+      inicioContexto: quando,
+      inicioLoop: inicio,
+      fimLoop: fim,
+      repetir: comando.repetir,
+      duracaoBuffer: buffer.duration,
+      fimNaturalContexto: comando.repetir
+        ? null
+        : quando + (fim - inicio),
+      paradaAgendadaContexto: null,
+      emSaida: false,
+      encerrada: false,
+    };
+
+    this.fontesAtivas.add(ativa);
+    fonte.addEventListener('ended', () => this.removerFonte(ativa), {
+      once: true,
+    });
+
+    fonte.start(quando, inicio);
+    if (!comando.repetir && ativa.fimNaturalContexto !== null) {
+      this.pararFonte(ativa, ativa.fimNaturalContexto);
+    }
+
+    return ativa;
+  }
+
+  private pararFonte(
+    ativa: FonteAtiva,
+    quando?: number,
+    permitirAdiar = false,
+  ): void {
+    if (ativa.encerrada) return;
+
+    const contexto = this.contexto;
+    const instante = Math.max(
+      contexto?.currentTime ?? 0,
+      quando ?? contexto?.currentTime ?? 0,
+    );
+
+    if (
+      ativa.paradaAgendadaContexto !== null &&
+      ativa.paradaAgendadaContexto <= instante &&
+      !permitirAdiar
+    ) {
+      return;
+    }
+
+    try {
+      ativa.fonte.stop(instante);
+      ativa.paradaAgendadaContexto = instante;
+    } catch {
+      this.removerFonte(ativa);
+    }
+  }
+
+  private removerFonte(ativa: FonteAtiva): void {
+    if (ativa.encerrada) return;
+    ativa.encerrada = true;
+
+    try {
+      ativa.fonte.disconnect();
+    } catch {
+      // A fonte já estava desconectada.
+    }
+
+    try {
+      ativa.ganhoVolume.disconnect();
+    } catch {
+      // O ganho de volume já estava desconectado.
+    }
+
+    try {
+      ativa.ganho.disconnect();
+    } catch {
+      // O ganho já estava desconectado.
+    }
+
+    this.fontesAtivas.delete(ativa);
+  }
+
+  private validarComando(comando: ComandoBlocoAudio): {
+    buffer: AudioBuffer;
+    inicio: number;
+    fim: number;
+  } {
     const buffer = this.buffers.get(comando.recursoId);
 
     if (!buffer) throw new Error('O recurso sonoro não está disponível.');
@@ -212,52 +411,122 @@ export class MotorAudioExperienciaImersiva {
       throw new Error('O trecho escolhido não cabe no recurso sonoro.');
     }
 
-    const fonte = contexto.createBufferSource();
-    const ganho = contexto.createGain();
-    fonte.buffer = buffer;
-    fonte.loop = comando.repetir;
-    fonte.loopStart = inicio;
-    fonte.loopEnd = fim;
-    fonte.connect(ganho);
-    ganho.connect(contexto.destination);
-
-    const fade = Math.max(0, comando.fadeInSegundos);
-    ganho.gain.setValueAtTime(fade > 0 ? 0 : 1, quando);
-    if (fade > 0) ganho.gain.linearRampToValueAtTime(1, quando + fade);
-
-    const ativa: FonteAtiva = {
-      recursoId: comando.recursoId,
-      fonte,
-      ganho,
-      inicioContexto: quando,
-      inicioLoop: inicio,
-      fimLoop: fim,
-      repetir: comando.repetir,
-    };
-
-    this.fontesAtivas.add(ativa);
-    fonte.addEventListener('ended', () => this.removerFonte(ativa), {
-      once: true,
-    });
-
-    if (comando.repetir) fonte.start(quando, inicio);
-    else fonte.start(quando, inicio, fim - inicio);
-
-    return ativa;
+    return { buffer, inicio, fim };
   }
 
-  private pararFonte(ativa: FonteAtiva, quando?: number): void {
-    try {
-      ativa.fonte.stop(quando);
-    } catch {
-      this.removerFonte(ativa);
+  private proximoFimCiclo(ativa: FonteAtiva, agora: number): number {
+    const duracaoLoop = ativa.fimLoop - ativa.inicioLoop;
+
+    if (!Number.isFinite(duracaoLoop) || duracaoLoop <= 0) {
+      return agora;
+    }
+
+    const decorrido = Math.max(0, agora - ativa.inicioContexto);
+    const ciclosCompletos = Math.floor(decorrido / duracaoLoop);
+    const fimAtual =
+      ativa.inicioContexto + (ciclosCompletos + 1) * duracaoLoop;
+
+    return Math.max(agora, fimAtual);
+  }
+
+  private transferirFontes(
+    fontes: FonteAtiva[],
+    blocoEntradaId: string | null,
+  ): void {
+    if (!blocoEntradaId) return;
+
+    for (const fonte of fontes) {
+      fonte.blocoId = blocoEntradaId;
     }
   }
 
-  private removerFonte(ativa: FonteAtiva): void {
-    ativa.fonte.disconnect();
-    ativa.ganho.disconnect();
-    this.fontesAtivas.delete(ativa);
+  private iniciarCauda(
+    ativa: FonteAtiva,
+    agora: number,
+    duracaoLimite: number | null,
+    blocoEntradaId: string | null,
+  ): void {
+    if (ativa.repetir) {
+      const posicao = this.posicaoAtualFonte(ativa, agora);
+      ativa.fonte.loop = false;
+      ativa.repetir = false;
+      ativa.fimNaturalContexto =
+        agora + Math.max(0, ativa.duracaoBuffer - posicao);
+    } else {
+      ativa.fimNaturalContexto =
+        ativa.inicioContexto +
+        Math.max(0, ativa.duracaoBuffer - ativa.inicioLoop);
+    }
+
+    if (blocoEntradaId) ativa.blocoId = blocoEntradaId;
+
+    const parada = duracaoLimite === null
+      ? ativa.fimNaturalContexto
+      : Math.min(
+          agora + duracaoLimite,
+          ativa.fimNaturalContexto ?? agora + duracaoLimite,
+        );
+
+    if (parada !== null) this.pararFonte(ativa, parada, true);
+  }
+
+  private posicaoAtualFonte(ativa: FonteAtiva, agora: number): number {
+    const decorrido = Math.max(0, agora - ativa.inicioContexto);
+
+    if (!ativa.repetir) {
+      return Math.min(
+        ativa.duracaoBuffer,
+        ativa.inicioLoop + decorrido,
+      );
+    }
+
+    const duracaoLoop = ativa.fimLoop - ativa.inicioLoop;
+    if (duracaoLoop <= 0) return ativa.inicioLoop;
+
+    return ativa.inicioLoop + decorrido % duracaoLoop;
+  }
+
+  private duracaoValida(valor: number | undefined): number {
+    return typeof valor === 'number' && Number.isFinite(valor)
+      ? Math.max(0, valor)
+      : 0;
+  }
+
+  private dbParaGanho(valor: number): number {
+    const db = Number.isFinite(valor)
+      ? Math.min(12, Math.max(-60, valor))
+      : 0;
+    return Math.pow(10, db / 20);
+  }
+
+  private agendarFadeSaida(
+    ativa: FonteAtiva,
+    inicio: number,
+    fim: number,
+  ): void {
+    if (fim <= inicio) return;
+
+    const parametro = ativa.ganho.gain;
+    const agora = this.contexto?.currentTime ?? inicio;
+
+    if (inicio <= agora) {
+      this.fixarGanhoAtual(parametro, agora);
+    } else {
+      parametro.cancelScheduledValues(inicio);
+      parametro.setValueAtTime(1, inicio);
+    }
+
+    parametro.linearRampToValueAtTime(0, fim);
+  }
+
+  private fixarGanhoAtual(parametro: AudioParam, agora: number): void {
+    try {
+      parametro.cancelAndHoldAtTime(agora);
+    } catch {
+      const valorAtual = parametro.value;
+      parametro.cancelScheduledValues(agora);
+      parametro.setValueAtTime(valorAtual, agora);
+    }
   }
 
   private exigirContexto(): AudioContext {

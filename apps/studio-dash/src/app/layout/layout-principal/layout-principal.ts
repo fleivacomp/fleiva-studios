@@ -13,6 +13,7 @@ import {
 } from '@angular/router';
 import {
   Autenticacao,
+  ClienteSupabase,
   DadosEstudio,
 } from '@fleiva-studios/shared-data-access';
 
@@ -35,6 +36,8 @@ const CHAVE_MODO_NOTURNO_ANTIGA =
 export class LayoutPrincipal implements OnInit {
   readonly autenticacao = inject(Autenticacao);
   readonly dadosEstudio = inject(DadosEstudio);
+readonly temAcessoComoContato = signal(false);
+readonly clienteSupabase = inject(ClienteSupabase);
 
   private readonly roteador = inject(Router);
 
@@ -63,28 +66,43 @@ export class LayoutPrincipal implements OnInit {
         .toLocaleUpperCase('pt-BR') || 'F',
   );
 readonly destinoInicial = computed(() => {
-  if (this.dadosEstudio.possuiModulo('agenda')) {
-    return '/agendamentos';
+  if (this.dadosEstudio.estudio()) {
+    if (this.dadosEstudio.possuiModulo('agenda')) {
+      return '/agendamentos';
+    }
+
+    if (this.dadosEstudio.possuiModulo('artistas')) {
+      return '/projetos';
+    }
+
+    if (this.dadosEstudio.possuiModulo('faixas')) {
+      return '/faixas';
+    }
+
+    if (this.dadosEstudio.possuiModulo('financeiro')) {
+      return '/acertos';
+    }
+
+    return '/perfil';
   }
 
-  if (this.dadosEstudio.possuiModulo('artistas')) {
-    return '/projetos';
-  }
-
-  if (this.dadosEstudio.possuiModulo('faixas')) {
-    return '/faixas';
-  }
-
-  if (this.dadosEstudio.possuiModulo('financeiro')) {
-    return '/acertos';
-  }
-
-  return '/perfil';
+  return '/projetos';
 });
-  ngOnInit(): void {
+async ngOnInit(): Promise<void> {
+
   if (!this.dadosEstudio.estudio()) {
-    void this.dadosEstudio.carregar();
+    await this.dadosEstudio.carregar();
   }
+
+  const { data, error } =
+    await this.clienteSupabase.cliente.rpc(
+      'usuario_tem_acesso_como_contato',
+    );
+
+  this.temAcessoComoContato.set(
+    !error && data === true,
+  );
+
 }
 
   alternarMenu(): void {

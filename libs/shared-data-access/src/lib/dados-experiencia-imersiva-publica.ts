@@ -1,9 +1,15 @@
 import {
   inject,
   Injectable,
+  computed,
   signal,
 } from '@angular/core';
 import { ClienteSupabase } from './cliente-supabase';
+import {
+  COR_PADRAO_ESTUDIO,
+  normalizarCorEstudio,
+  obterCorContrasteEstudio,
+} from './dados-estudio';
 import type { Json } from './tipos-banco';
 
 export interface AcaoExperienciaImersivaPublica {
@@ -38,11 +44,18 @@ export interface RecursoExperienciaImersivaPublica {
   reproducao_expira_em: string;
 }
 
+export interface EstudioExperienciaImersivaPublica {
+  nome: string;
+  slug: string;
+  cor_principal: string | null;
+}
+
 export interface ExperienciaImersivaPublica {
   id: string;
   album_id: string | null;
   nome: string;
   publicada_em: string | null;
+  estudio: EstudioExperienciaImersivaPublica | null;
   blocos: BlocoExperienciaImersivaPublica[];
   recursos: RecursoExperienciaImersivaPublica[];
 }
@@ -72,6 +85,16 @@ export class DadosExperienciaImersivaPublica {
     this.carregandoInterno.asReadonly();
 
   readonly erro = this.erroInterno.asReadonly();
+
+  readonly corPrincipal = computed(() =>
+    normalizarCorEstudio(
+      this.experienciaInterna()?.estudio?.cor_principal,
+    ) ?? COR_PADRAO_ESTUDIO,
+  );
+
+  readonly corContraste = computed(() =>
+    obterCorContrasteEstudio(this.corPrincipal()),
+  );
 
   async carregar(experienciaId: string): Promise<void> {
     this.carregandoInterno.set(true);

@@ -110,20 +110,24 @@ Deno.serve(async (requisicao) => {
 
     const modo = corpo.modo ?? 'download';
 
-    const { data: versao, error: erroVersao } =
-      await clienteSupabase
-        .from('versoes_faixa')
-        .select(`
-          id,
-          chave_objeto,
-          nome_arquivo,
-          tipo_mime,
-          confirmado_em
-        `)
-        .eq('id', versaoId)
-        .eq('estudio_id', user.id)
-        .not('confirmado_em', 'is', null)
-        .maybeSingle();
+   const { data: versao, error: erroVersao } =
+  await clienteSupabase
+
+    .from('versoes_faixa')
+
+    .select(`
+      id,
+      chave_objeto,
+      nome_arquivo,
+      tipo_mime,
+      confirmado_em
+    `)
+
+    .eq('id', versaoId)
+
+    .not('confirmado_em', 'is', null)
+
+    .maybeSingle();
 
     if (erroVersao) {
       throw erroVersao;

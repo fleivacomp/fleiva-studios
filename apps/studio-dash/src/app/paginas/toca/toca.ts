@@ -12,6 +12,7 @@ import {
 import {
   DadosPaginaEstudio,
   type AlbumPaginaPublica,
+  type ExperienciaPaginaPublica,
 } from '@fleiva-studios/shared-data-access';
 
 @Component({
@@ -63,6 +64,10 @@ export class Toca implements OnInit {
       : ['/'];
   }
 
+  rotaExperiencia(experienciaId: string): string[] {
+    return ['/experiencia', experienciaId];
+  }
+
   urlCasa(): string {
     const slug = this.slug();
 
@@ -81,6 +86,12 @@ export class Toca implements OnInit {
 
   inicialAlbum(album: AlbumPaginaPublica): string {
     return album.nome.trim().charAt(0).toUpperCase() || 'A';
+  }
+
+  inicialExperiencia(
+    experiencia: ExperienciaPaginaPublica,
+  ): string {
+    return experiencia.nome.trim().charAt(0).toUpperCase() || 'E';
   }
 
   quantidadeFaixas(album: AlbumPaginaPublica): string {

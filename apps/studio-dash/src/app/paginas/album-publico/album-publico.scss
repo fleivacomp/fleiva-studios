@@ -1,43 +1,15 @@
 :host {
   display: block;
   min-height: 100dvh;
-  color: var(--text);
-
 }
 
 .pagina-album {
-  --cor-estudio: #1ed760;
-  --contraste-estudio: #07130c;
-  --fundo: #0b0d0c;
-  --superficie: #141714;
-  --superficie-elevada: #1a1e1a;
-  --texto: #f3f5f1;
-  --texto-suave: #aeb4ae;
-  --texto-fraco: #737a74;
-  --borda: rgb(255 255 255 / 10%);
-  --borda-forte: rgb(255 255 255 / 18%);
-
   position: relative;
   min-height: 100dvh;
   overflow: hidden;
   padding-bottom: 2rem;
-  background:
-    radial-gradient(
-      circle at 78% 4%,
-      color-mix(
-        in srgb,
-        var(--cor-estudio) 12%,
-        transparent
-      ),
-      transparent 30rem
-    ),
-    linear-gradient(
-      180deg,
-      rgb(255 255 255 / 2%),
-      transparent 18rem
-    ),
-    var(--fundo);
-  color: var(--texto);
+  background: color-mix(in oklab, var(--studio-brand) 8%, var(--app-surface));
+  color: var(--app-text);
 }
 
 .pagina-album::before {
@@ -75,7 +47,7 @@ audio {
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
-  border-bottom: 0.0625rem solid var(--borda);
+  border-bottom: 0.0625rem solid var(--app-border);
 }
 
 .marca {
@@ -92,7 +64,7 @@ audio {
 
   strong {
     overflow: hidden;
-    color: var(--texto);
+    color: var(--app-text);
     font-size: 0.76rem;
     letter-spacing: 0.05em;
     text-overflow: ellipsis;
@@ -101,7 +73,7 @@ audio {
   }
 
   small {
-    color: var(--texto-fraco);
+    color: var(--app-text-muted);
     font-size: 0.57rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -115,8 +87,8 @@ audio {
   flex: 0 0 auto;
   place-items: center;
   overflow: hidden;
-  color: var(--cor-estudio);
-  border: 0.0625rem solid var(--borda-forte);
+  color: var(--studio-brand);
+  border: 0.0625rem solid var(--app-border-strong);
   border-radius: 0.3rem;
   font-weight: 800;
 
@@ -129,7 +101,7 @@ audio {
 }
 
 .selo-publico {
-  color: var(--texto-fraco);
+  color: var(--app-text-muted);
   font-family: var(--font-mono, monospace);
   font-size: 0.56rem;
   letter-spacing: 0.12em;
@@ -152,16 +124,16 @@ audio {
   overflow: hidden;
   background: color-mix(
     in srgb,
-    var(--cor-estudio) 55%,
+    var(--studio-brand) 55%,
     #171a17
   );
-  color: var(--contraste-estudio);
-  border: 0.0625rem solid var(--borda-forte);
+  color: var(--studio-on-brand);
+  border: 0.0625rem solid var(--app-border-strong);
   box-shadow:
     1.2rem 1.2rem 0
       color-mix(
         in srgb,
-        var(--cor-estudio) 11%,
+        var(--studio-brand) 11%,
         transparent
       ),
     0 2rem 5rem rgb(0 0 0 / 35%);
@@ -200,7 +172,7 @@ audio {
     max-width: 12ch;
     margin: 1rem 0 0.6rem;
     overflow-wrap: anywhere;
-    color: var(--texto);
+    color: var(--app-text);
     font-size: clamp(3.2rem, 8vw, 7rem);
     font-weight: 760;
     line-height: 0.88;
@@ -209,7 +181,7 @@ audio {
 
   > h2 {
     margin: 0;
-    color: var(--texto-suave);
+    color: var(--app-text-soft);
     font-size: clamp(1rem, 2vw, 1.35rem);
     font-weight: 600;
   }
@@ -217,7 +189,7 @@ audio {
   > p {
     max-width: 42rem;
     margin: 1.5rem 0 0;
-    color: var(--texto-suave);
+    color: var(--app-text-soft);
     font-size: 0.93rem;
     line-height: 1.7;
     white-space: pre-wrap;
@@ -229,7 +201,7 @@ audio {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.55rem;
-  color: var(--cor-estudio);
+  color: var(--studio-brand);
   font-family: var(--font-mono, monospace);
   font-size: 0.58rem;
   font-weight: 700;
@@ -256,8 +228,8 @@ audio {
     align-items: center;
     gap: 0.45rem;
     padding: 0.3rem 0.55rem;
-    color: var(--texto-suave);
-    border: 0.0625rem solid var(--borda-forte);
+    color: var(--app-text-soft);
+    border: 0.0625rem solid var(--app-border-strong);
     border-radius: 999rem;
     font-size: 0.57rem;
     text-transform: uppercase;
@@ -266,7 +238,7 @@ audio {
   i {
     width: 0.35rem;
     height: 0.35rem;
-    background: var(--cor-estudio);
+    background: var(--studio-brand);
     border-radius: 50%;
   }
 }
@@ -275,16 +247,16 @@ audio {
   margin-top: -1rem;
   margin-bottom: 2rem;
   padding: 0.8rem 1rem;
-  background: rgb(180 58 51 / 12%);
-  color: #ffaaa5;
-  border: 0.0625rem solid rgb(221 177 174 / 30%);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  border: 0.0625rem solid var(--color-danger-border);
   border-radius: 0.35rem;
   font-size: 0.72rem;
 }
 
 .sequencia {
   padding: clamp(3.5rem, 7vw, 6rem) 0;
-  border-top: 0.0625rem solid var(--borda);
+  border-top: 0.0625rem solid var(--app-border);
 }
 
 .cabecalho-sequencia {
@@ -296,7 +268,7 @@ audio {
 
   p {
     margin: 0 0 0.35rem;
-    color: var(--cor-estudio);
+    color: var(--studio-brand);
     font-family: var(--font-mono, monospace);
     font-size: 0.56rem;
     font-weight: 700;
@@ -315,8 +287,8 @@ audio {
     min-width: 2rem;
     min-height: 2rem;
     place-items: center;
-    background: var(--cor-estudio);
-    color: var(--contraste-estudio);
+    background: var(--studio-brand);
+    color: var(--studio-on-brand);
     border-radius: 50%;
     font-size: 0.62rem;
     font-weight: 800;
@@ -326,7 +298,7 @@ audio {
 .lista-faixas {
   margin: 0;
   padding: 0;
-  border-top: 0.0625rem solid var(--borda);
+  border-top: 0.0625rem solid var(--app-border);
   list-style: none;
 
   li {
@@ -336,20 +308,16 @@ audio {
     align-items: center;
     gap: 0.8rem;
     padding: 0.65rem 0.9rem;
-    border-bottom: 0.0625rem solid var(--borda);
+    border-bottom: 0.0625rem solid var(--app-border);
     transition: background-color 140ms ease;
 
     &:hover,
     &.faixa-ativa {
-      background: color-mix(
-        in srgb,
-        var(--cor-estudio) 5%,
-        var(--superficie)
-      );
+      background: var(--studio-brand-soft);
     }
 
     &.faixa-ativa {
-      box-shadow: inset 0.15rem 0 var(--cor-estudio);
+      box-shadow: inset 0.15rem 0 var(--studio-brand);
     }
   }
 }
@@ -359,7 +327,7 @@ audio {
   place-items: center;
 
   > span {
-    color: var(--texto-fraco);
+    color: var(--app-text-muted);
   }
 
   button {
@@ -369,15 +337,15 @@ audio {
     place-items: center;
     padding: 0;
     background: transparent;
-    color: var(--texto);
-    border: 0.0625rem solid var(--borda-forte);
+    color: var(--app-text);
+    border: 0.0625rem solid var(--app-border-strong);
     border-radius: 50%;
     font-size: 0.58rem;
 
     &:hover:not(:disabled) {
-      background: var(--cor-estudio);
-      color: var(--contraste-estudio);
-      border-color: var(--cor-estudio);
+      background: var(--studio-brand);
+      color: var(--studio-on-brand);
+      border-color: var(--studio-brand);
     }
   }
 }
@@ -393,7 +361,7 @@ audio {
 
 .ordem-faixa,
 .tamanho-faixa {
-  color: var(--texto-fraco);
+  color: var(--app-text-muted);
   font-family: var(--font-mono, monospace);
   font-size: 0.6rem;
 }
@@ -415,7 +383,7 @@ audio {
   }
 
   span {
-    color: var(--texto-fraco);
+    color: var(--app-text-muted);
     font-size: 0.6rem;
   }
 }
@@ -424,27 +392,23 @@ audio {
   min-height: 2.2rem;
   padding: 0.4rem 0.65rem;
   background: transparent;
-  color: var(--texto-suave);
-  border: 0.0625rem solid var(--borda-forte);
+  color: var(--app-text-soft);
+  border: 0.0625rem solid var(--app-border-strong);
   border-radius: 0.25rem;
   font-size: 0.6rem;
 
   &:hover:not(:disabled) {
-    color: var(--cor-estudio);
-    border-color: color-mix(
-      in srgb,
-      var(--cor-estudio) 45%,
-      var(--borda)
-    );
+    color: var(--studio-brand);
+    border-color: var(--studio-brand-border);
   }
 }
 
 .sequencia-vazia {
   margin: 0;
   padding: 3rem 1rem;
-  color: var(--texto-fraco);
-  border-top: 0.0625rem solid var(--borda);
-  border-bottom: 0.0625rem solid var(--borda);
+  color: var(--app-text-muted);
+  border-top: 0.0625rem solid var(--app-border);
+  border-bottom: 0.0625rem solid var(--app-border);
   text-align: center;
 }
 
@@ -461,7 +425,7 @@ audio {
   margin: 0 auto 1rem;
   padding: 0.75rem 1rem;
   background: rgb(22 25 22 / 94%);
-  border: 0.0625rem solid var(--borda-forte);
+  border: 0.0625rem solid var(--app-border-strong);
   border-radius: 0.5rem;
   box-shadow: 0 1rem 4rem rgb(0 0 0 / 45%);
   backdrop-filter: blur(1rem);
@@ -473,8 +437,8 @@ audio {
   height: 2.7rem;
   place-items: center;
   padding: 0;
-  background: var(--cor-estudio);
-  color: var(--contraste-estudio);
+  background: var(--studio-brand);
+  color: var(--studio-on-brand);
   border: 0;
   border-radius: 50%;
   font-size: 0.65rem;
@@ -497,7 +461,7 @@ audio {
   }
 
   span {
-    color: var(--texto-fraco);
+    color: var(--app-text-muted);
     font-size: 0.58rem;
   }
 }
@@ -509,7 +473,7 @@ audio {
   gap: 0.6rem;
 
   span {
-    color: var(--texto-fraco);
+    color: var(--app-text-muted);
     font-family: var(--font-mono, monospace);
     font-size: 0.55rem;
     text-align: center;
@@ -517,7 +481,7 @@ audio {
 
   input {
     width: 100%;
-    accent-color: var(--cor-estudio);
+    accent-color: var(--studio-brand);
   }
 }
 
@@ -527,15 +491,15 @@ audio {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  border-top: 0.0625rem solid var(--borda);
-  color: var(--texto-fraco);
+  border-top: 0.0625rem solid var(--app-border);
+  color: var(--app-text-muted);
   font-family: var(--font-mono, monospace);
   font-size: 0.57rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 
   a:hover {
-    color: var(--cor-estudio);
+    color: var(--studio-brand);
   }
 }
 
@@ -555,14 +519,14 @@ audio {
   }
 
   p {
-    color: var(--texto-suave);
+    color: var(--app-text-soft);
   }
 
   button {
     min-height: 2.6rem;
     padding: 0 0.9rem;
-    background: var(--cor-estudio);
-    color: var(--contraste-estudio);
+    background: var(--studio-brand);
+    color: var(--studio-on-brand);
     border: 0;
     border-radius: 0.3rem;
     font-size: 0.7rem;
@@ -571,7 +535,7 @@ audio {
 }
 
 .codigo-estado {
-  color: var(--cor-estudio);
+  color: var(--studio-brand);
   font-family: var(--font-mono, monospace);
   font-size: 0.62rem;
   letter-spacing: 0.14em;
@@ -584,8 +548,8 @@ audio {
 .carregador {
   width: 1.8rem;
   height: 1.8rem;
-  border: 0.14rem solid var(--borda);
-  border-top-color: var(--cor-estudio);
+  border: 0.14rem solid var(--app-border);
+  border-top-color: var(--studio-brand);
   border-radius: 50%;
   animation: girar 700ms linear infinite;
 }
@@ -599,14 +563,8 @@ audio {
   white-space: nowrap;
 }
 
-button {
-  font: inherit;
-  cursor: pointer;
-
-  &:disabled {
-    cursor: wait;
-    opacity: 0.55;
-  }
+button:disabled {
+  opacity: 0.55;
 }
 
 @keyframes girar {
@@ -705,7 +663,7 @@ button {
   align-items: center;
   gap: 0.55rem;
   margin: 2.5rem auto 0;
-  color: var(--text-muted, #747a74);
+  color: var(--app-text-muted);
   font-size: 0.62rem;
 }
 
@@ -726,9 +684,6 @@ button {
 }
 
 .assinatura-fleiva:hover .assinatura-wordmark {
-  color: var(
-    --studio-brand,
-    var(--fleiva-verde, #5e886f)
-  );
+  color: var(--studio-brand);
   opacity: 1;
 }

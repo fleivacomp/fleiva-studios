@@ -112,8 +112,30 @@ Deno.serve(async (requisicao) => {
       );
     }
 
+    let corpo: RequisicaoRemoverCapa;
+
+    try {
+      corpo =
+        (await requisicao.json()) as RequisicaoRemoverCapa;
+    } catch {
+      return responderJson(
+        {
+          erro: 'A requisição é inválida.',
+        },
+        400,
+      );
+    }
+
+    if (corpo.acao === 'excluir_projeto') {
+      return await excluirProjeto(
+        corpo,
+        clienteSupabase,
+        user.id,
+      );
+    }
+
     return await removerCapa(
-      requisicao,
+      corpo,
       clienteSupabase,
       user.id,
     );
@@ -274,24 +296,10 @@ async function enviarCapa(
 }
 
 async function removerCapa(
-  requisicao: Request,
+  corpo: RequisicaoRemoverCapa,
   clienteSupabase: ReturnType<typeof createClient>,
   estudioId: string,
 ): Promise<Response> {
-  let corpo: RequisicaoRemoverCapa;
-
-  try {
-    corpo =
-      (await requisicao.json()) as RequisicaoRemoverCapa;
-  } catch {
-    return responderJson(
-      {
-        erro: 'A requisição é inválida.',
-      },
-      400,
-    );
-  }
-
   const projetoId = corpo.projeto_id?.trim();
 
   if (
@@ -364,6 +372,106 @@ async function removerCapa(
 
   return responderJson({
     projeto: data,
+  });
+}
+
+async function excluirProjeto(
+  corpo: RequisicaoRemoverCapa,
+  clienteSupabase: ReturnType<typeof createClient>,
+  estudioId: string,
+): Promise<Response> {
+  const projetoId = corpo.projeto_id?.trim();
+
+  if (!projetoId || !uuidValido(projetoId)) {
+    return responderJson(
+      {
+        erro: 'Informe um projeto válido.',
+      },
+      400,
+    );
+  }
+
+  const projeto = await obterProjeto(
+    clienteSupabase,
+    projetoId,
+    estudioId,
+  );
+
+  if (!projeto) {
+    return responderJson(
+      {
+        erro: 'Projeto não encontrado.',
+      },
+      404,
+    );
+  }
+
+  // MVP: só permite excluir se não houver faixas no projeto.
+  const { count, error: erroFaixas } =
+    await clienteSupabase
+      .from('faixas')
+      .select('id', { count: 'exact', head: true })
+      .eq('projeto_id', projetoId);
+
+  if (erroFaixas) {
+    throw erroFaixas;
+  }
+
+  if ((count ?? 0) > 0) {
+    return responderJson(
+      {
+        erro:
+          'Não é possível excluir um projeto que ainda tem faixas. ' +
+          'Remova as faixas antes.',
+      },
+      400,
+    );
+  }
+
+  // Remove a capa do R2 (best-effort).
+  if (projeto.capa_caminho) {
+    const prefixo = criarPrefixoProjeto(
+      estudioId,
+      projetoId,
+    );
+
+    if (projeto.capa_caminho.startsWith(prefixo)) {
+      const clienteR2 = criarClienteR2();
+      const bucket = obterVariavelObrigatoria(
+        'R2_IMAGES_BUCKET_NAME',
+      );
+
+      await excluirObjetoSemFalhar(
+        clienteR2,
+        bucket,
+        projeto.capa_caminho,
+      );
+    }
+  }
+
+  // Apaga membros antes (evita FK).
+  const { error: erroMembros } = await clienteSupabase
+    .from('membros_projeto')
+    .delete()
+    .eq('projeto_id', projetoId)
+    .eq('estudio_id', estudioId);
+
+  if (erroMembros) {
+    throw erroMembros;
+  }
+
+  const { error: erroProjeto } = await clienteSupabase
+    .from('projetos_artisticos')
+    .delete()
+    .eq('id', projetoId)
+    .eq('estudio_id', estudioId);
+
+  if (erroProjeto) {
+    throw erroProjeto;
+  }
+
+  return responderJson({
+    excluido: true,
   });
 }
 

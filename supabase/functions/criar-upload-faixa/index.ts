@@ -151,10 +151,22 @@ Deno.serve(async (requisicao) => {
     });
   }
 
-  const extensao = obterExtensaoSegura(nomeArquivo);
-  const chaveObjeto =
-    `${user.id}/${faixaId}/${crypto.randomUUID()}${extensao}`;
+  const { data: faixa, error: erroFaixa } = await supabase
+  .from('faixas')
+  .select('estudio_id')
+  .eq('id', faixaId)
+  .single();
 
+if (erroFaixa || !faixa) {
+  return responder(404, {
+    erro: 'Faixa não encontrada.',
+  });
+}
+
+const extensao = obterExtensaoSegura(nomeArquivo);
+
+const chaveObjeto =
+  `${faixa.estudio_id}/${faixaId}/${crypto.randomUUID()}${extensao}`;
   const { data: reservaRecebida, error: erroReserva } =
     await supabase.rpc('reservar_upload_faixa', {
       p_faixa_id: faixaId,

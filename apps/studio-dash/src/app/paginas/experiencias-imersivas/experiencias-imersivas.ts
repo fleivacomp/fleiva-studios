@@ -13,7 +13,6 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import {
   type AcaoBlocoExperienciaImersiva,
   type BlocoExperienciaImersiva,
@@ -31,19 +30,28 @@ import {
   MotorAudioExperienciaImersiva,
   type TransicaoBlocoAudio,
 } from '../experiencia-imersiva-publica/motor-audio-experiencia-imersiva';
+import { ExperienciaImersivaPublica } from '../experiencia-imersiva-publica/experiencia-imersiva-publica';
 
 type ModoAudio = 'loop' | 'tocar' | 'one-shot';
-type TransicaoAudio =
+type TransicaoAudioSalva =
   | 'terminar-loop'
   | 'corte'
+  | 'continuar'
+  | 'cauda'
+  | 'fade-out'
   | 'crossfade'
   | 'silencio';
+type TransicaoAudio = Exclude<
+  TransicaoAudioSalva,
+  'fade-out' | 'crossfade'
+>;
+type AcabamentoAudio = 'direto' | 'fade-out' | 'crossfade';
 type MarcadorTrecho = 'inicio' | 'fim';
 
 @Component({
   selector: 'app-experiencias-imersivas',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, ExperienciaImersivaPublica],
   templateUrl: './experiencias-imersivas.html',
   styleUrl: './experiencias-imersivas.scss',
   providers: [MotorAudioExperienciaImersiva],
@@ -97,9 +105,13 @@ export class ExperienciasImersivas implements OnInit, OnDestroy {
   readonly recursoAcaoId = signal<string | null>(null);
   readonly modoAudio = signal<ModoAudio>('loop');
   readonly transicaoAudio = signal<TransicaoAudio>('terminar-loop');
+  readonly acabamentoAudio = signal<AcabamentoAudio>('direto');
   readonly fadeInAtivo = signal(false);
   readonly duracaoFadeIn = signal(2);
+  readonly volumeDb = signal(0);
   readonly duracaoCrossfade = signal(2);
+  readonly duracaoFadeOut = signal(2);
+  readonly duracaoCauda = signal<number | null>(null);
   readonly inicioTrecho = signal(0);
   readonly fimTrecho = signal(0);
   readonly tempoAtual = signal(0);
@@ -119,20 +131,35 @@ export class ExperienciasImersivas implements OnInit, OnDestroy {
   readonly preparandoPrevia = signal(false);
   readonly preparandoRecursosPrevia = signal(false);
   readonly erroPrevia = signal<string | null>(null);
+  readonly testandoLeitura = signal(false);
 
   private cargaFormaOndaAtual = 0;
   private picosFormaOndaCompletos: number[] = [];
   private contextoAudioEditor: AudioContext | null = null;
   private bufferAudioEditor: AudioBuffer | null = null;
   private fonteTesteTrecho: AudioBufferSourceNode | null = null;
+  private ganhoVolumeTesteTrecho: GainNode | null = null;
+  private ganhoEnvelopeTesteTrecho: GainNode | null = null;
   private quadroTempoTeste: number | null = null;
   private tempoBaseTeste = 0;
   private contextoBaseTeste = 0;
   private cargaRecursosPreviaAtual = 0;
   private recursosPrevia: RecursoExperienciaImersivaPublica[] = [];
+  private blocoTransicaoPreviaAtualId: string | null = null;
   private transicaoPreviaAtual: TransicaoBlocoAudio = 'corte';
   private duracaoCrossfadePreviaAtual = 0;
+  private duracaoFadeOutPreviaAtual = 0;
+  private duracaoCaudaPreviaAtual: number | null = null;
+  private transicaoPreviaPendente: {
+    inicioCenaContexto: number;
+    blocoId: string;
+    transicaoSaida: TransicaoBlocoAudio;
+    duracaoCrossfade: number;
+    duracaoFadeOut: number;
+    duracaoCauda: number | null;
+  } | null = null;
   private urlImagemBlocoLocal: string | null = null;
+  private overflowCorpoAntesTeste: string | null = null;
 
   readonly experiencia = computed(() =>
     this.dadosExperiencias
@@ -161,6 +188,7 @@ export class ExperienciasImersivas implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.restaurarRolagemDaPagina();
     this.liberarUrlImagemLocal();
     this.encerrarAudioEditor();
     void this.motorPrevia.encerrar();
@@ -738,6 +766,10 @@ export class ExperienciasImersivas implements OnInit, OnDestroy {
       this.motorPrevia.pararTodos();
       this.transicaoPreviaAtual = 'corte';
       this.duracaoCrossfadePreviaAtual = 0;
+      this.duracaoFadeOutPreviaAtual = 0;
+      this.duracaoCaudaPreviaAtual = null;
+      this.transicaoPreviaPendente = null;
+      this.blocoTransicaoPreviaAtualId = null;
       this.executarCenaPrevia(blocoId);
     } catch (erro) {
       this.pararPrevia();
@@ -778,14 +810,67 @@ export class ExperienciasImersivas implements OnInit, OnDestroy {
     this.cenaPreviaAlvoId.set(null);
     this.transicaoPreviaAtual = 'corte';
     this.duracaoCrossfadePreviaAtual = 0;
+    this.duracaoFadeOutPreviaAtual = 0;
+    this.duracaoCaudaPreviaAtual = null;
+    this.transicaoPreviaPendente = null;
+    this.blocoTransicaoPreviaAtualId = null;
+  }
+
+  abrirTesteLeitura(): void {
+    if (!this.experienciaSelecionadaId() || this.testandoLeitura()) return;
+
+    this.pararPrevia();
+    this.reprodutor()?.nativeElement.pause();
+    if (this.testandoTrecho()) this.pararTesteTrecho();
+
+    if (typeof document !== 'undefined') {
+      this.overflowCorpoAntesTeste = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+    }
+
+    this.testandoLeitura.set(true);
+  }
+
+  fecharTesteLeitura(): void {
+    this.testandoLeitura.set(false);
+    this.restaurarRolagemDaPagina();
   }
 
   async abrirNovaAcao(blocoId: string): Promise<void> {
+    const acaoPrincipal = this.acaoPrincipalDoBloco(blocoId);
+
     this.pararPrevia();
     this.cancelarEdicaoTransicao();
     this.blocoComEditorId.set(blocoId);
     this.acaoEditandoId.set(null);
     this.redefinirEditorAcao();
+
+    if (acaoPrincipal) {
+      this.transicaoAudio.set(
+        this.transicaoDosParametros(acaoPrincipal.parametros),
+      );
+      this.acabamentoAudio.set(
+        this.acabamentoDosParametros(acaoPrincipal.parametros),
+      );
+      this.duracaoCrossfade.set(
+        this.parametroNumero(
+          acaoPrincipal.parametros,
+          'duracao_crossfade_segundos',
+        ) ?? 2,
+      );
+      this.duracaoFadeOut.set(
+        this.parametroNumero(
+          acaoPrincipal.parametros,
+          'duracao_fade_out_segundos',
+        ) ?? 2,
+      );
+      this.duracaoCauda.set(
+        this.parametroNumero(
+          acaoPrincipal.parametros,
+          'duracao_cauda_segundos',
+        ),
+      );
+    }
 
     const primeiroRecurso = this.dadosRecursos.recursos()[0];
     if (primeiroRecurso) await this.selecionarRecurso(primeiroRecurso.id);
@@ -797,11 +882,8 @@ export class ExperienciasImersivas implements OnInit, OnDestroy {
     this.blocoComEditorId.set(acao.bloco_id);
     this.acaoEditandoId.set(acao.id);
     this.modoAudio.set(this.modoValido(acao.acao));
-    this.transicaoAudio.set(
-      this.transicaoValida(
-        this.parametroTexto(acao.parametros, 'transicao_saida'),
-      ),
-    );
+    this.transicaoAudio.set(this.transicaoDosParametros(acao.parametros));
+    this.acabamentoAudio.set(this.acabamentoDosParametros(acao.parametros));
     this.inicioTrecho.set(
       this.parametroNumero(acao.parametros, 'inicio_trecho_segundos') ?? 0,
     );
@@ -812,11 +894,25 @@ export class ExperienciasImersivas implements OnInit, OnDestroy {
       this.parametroNumero(acao.parametros, 'fade_in_segundos') ?? 0;
     this.fadeInAtivo.set(fade > 0);
     this.duracaoFadeIn.set(fade || 2);
+    this.volumeDb.set(
+      this.normalizarVolumeDb(
+        this.parametroNumero(acao.parametros, 'volume_db') ?? 0,
+      ),
+    );
     this.duracaoCrossfade.set(
       this.parametroNumero(
         acao.parametros,
         'duracao_crossfade_segundos',
       ) ?? 2,
+    );
+    this.duracaoFadeOut.set(
+      this.parametroNumero(
+        acao.parametros,
+        'duracao_fade_out_segundos',
+      ) ?? 2,
+    );
+    this.duracaoCauda.set(
+      this.parametroNumero(acao.parametros, 'duracao_cauda_segundos'),
     );
 
     if (acao.recurso_id) await this.selecionarRecurso(acao.recurso_id, true);
@@ -1093,13 +1189,32 @@ export class ExperienciasImersivas implements OnInit, OnDestroy {
       const inicio = this.inicioTrecho();
       const fim = this.fimTrecho();
       const fonte = contexto.createBufferSource();
+      const ganhoVolume = contexto.createGain();
+      const ganhoEnvelope = contexto.createGain();
+      const inicioContexto = contexto.currentTime;
+      const fade = this.fadeInAtivo()
+        ? Math.min(this.duracaoFadeIn(), fim - inicio)
+        : 0;
+
       fonte.buffer = buffer;
       fonte.loop = this.modoAudio() === 'loop';
       fonte.loopStart = inicio;
       fonte.loopEnd = fim;
-      fonte.connect(contexto.destination);
+      fonte.connect(ganhoVolume);
+      ganhoVolume.connect(ganhoEnvelope);
+      ganhoEnvelope.connect(contexto.destination);
+      ganhoVolume.gain.setValueAtTime(
+        this.ganhoPorDb(this.volumeDb()),
+        inicioContexto,
+      );
+      ganhoEnvelope.gain.setValueAtTime(fade > 0 ? 0 : 1, inicioContexto);
+      if (fade > 0) {
+        ganhoEnvelope.gain.linearRampToValueAtTime(1, inicioContexto + fade);
+      }
 
       this.fonteTesteTrecho = fonte;
+      this.ganhoVolumeTesteTrecho = ganhoVolume;
+      this.ganhoEnvelopeTesteTrecho = ganhoEnvelope;
       this.tempoBaseTeste = inicio;
       this.contextoBaseTeste = contexto.currentTime;
       this.tempoAtual.set(inicio);
@@ -1115,8 +1230,8 @@ export class ExperienciasImersivas implements OnInit, OnDestroy {
         { once: true },
       );
 
-      if (fonte.loop) fonte.start(0, inicio);
-      else fonte.start(0, inicio, fim - inicio);
+      if (fonte.loop) fonte.start(inicioContexto, inicio);
+      else fonte.start(inicioContexto, inicio, fim - inicio);
 
       this.atualizarTempoTeste();
     } catch (erro) {
@@ -1138,10 +1253,39 @@ export class ExperienciasImersivas implements OnInit, OnDestroy {
     );
   }
 
+  ajustarDuracaoFadeOut(delta: number): void {
+    this.duracaoFadeOut.set(
+      Math.max(0.1, Math.round((this.duracaoFadeOut() + delta) * 10) / 10),
+    );
+  }
+
   ajustarDuracaoFadeIn(delta: number): void {
     this.duracaoFadeIn.set(
       Math.max(0.1, Math.round((this.duracaoFadeIn() + delta) * 10) / 10),
     );
+  }
+
+  definirVolumeDb(evento: Event): void {
+    const alvo = evento.target;
+    if (!(alvo instanceof HTMLInputElement)) return;
+
+    const volume = this.normalizarVolumeDb(Number(alvo.value));
+    this.volumeDb.set(volume);
+
+    const contexto = this.contextoAudioEditor;
+    const ganho = this.ganhoVolumeTesteTrecho?.gain;
+    if (!contexto || !ganho || !this.testandoTrecho()) return;
+
+    ganho.setTargetAtTime(
+      this.ganhoPorDb(volume),
+      contexto.currentTime,
+      0.015,
+    );
+  }
+
+  rotuloVolumeDb(): string {
+    const volume = this.volumeDb();
+    return `${volume > 0 ? '+' : ''}${volume.toFixed(1)} dB`;
   }
 
   abrirEdicaoTransicao(blocoId: string): void {
@@ -1152,16 +1296,22 @@ export class ExperienciasImersivas implements OnInit, OnDestroy {
     this.fecharEditorAcao();
     this.blocoEditandoTransicaoId.set(blocoId);
     this.erroTransicao.set(null);
-    this.transicaoAudio.set(
-      this.transicaoValida(
-        this.parametroTexto(acao.parametros, 'transicao_saida'),
-      ),
-    );
+    this.transicaoAudio.set(this.transicaoDosParametros(acao.parametros));
+    this.acabamentoAudio.set(this.acabamentoDosParametros(acao.parametros));
     this.duracaoCrossfade.set(
       this.parametroNumero(
         acao.parametros,
         'duracao_crossfade_segundos',
       ) ?? 2,
+    );
+    this.duracaoFadeOut.set(
+      this.parametroNumero(
+        acao.parametros,
+        'duracao_fade_out_segundos',
+      ) ?? 2,
+    );
+    this.duracaoCauda.set(
+      this.parametroNumero(acao.parametros, 'duracao_cauda_segundos'),
     );
   }
 
@@ -1172,35 +1322,52 @@ export class ExperienciasImersivas implements OnInit, OnDestroy {
 
   async salvarTransicaoCena(): Promise<void> {
     const blocoId = this.blocoEditandoTransicaoId();
-    const acao = blocoId ? this.acaoPrincipalDoBloco(blocoId) : null;
-    if (!blocoId || !acao) return;
+    const acoes = blocoId
+      ? [...this.acoesDoBloco(blocoId)].sort(
+          (primeira, segunda) => primeira.ordem - segunda.ordem,
+        )
+      : [];
+    if (!blocoId || acoes.length === 0) return;
 
     this.salvandoTransicao.set(true);
     this.erroTransicao.set(null);
 
     try {
-      const parametrosAtuais = this.parametrosComoObjeto(acao.parametros);
-      const parametros: Json = {
-        ...parametrosAtuais,
-        transicao_saida: this.transicaoAudio(),
-        duracao_crossfade_segundos:
-          this.transicaoAudio() === 'crossfade'
-            ? this.duracaoCrossfade()
-            : 0,
-      };
+      const ordemDeAtualizacao = [...acoes.slice(1), acoes[0]];
 
-      await this.dadosAcoes.atualizar(
-        this.experienciaSelecionadaId(),
-        blocoId,
-        acao.id,
-        {
-          recurso_id: acao.recurso_id,
-          ordem: acao.ordem,
-          acao: acao.acao,
-          inicio_segundos: acao.inicio_segundos,
-          parametros,
-        },
-      );
+      for (const acao of ordemDeAtualizacao) {
+        const parametrosAtuais = this.parametrosComoObjeto(acao.parametros);
+        const parametros: Json = {
+          ...parametrosAtuais,
+          transicao_saida: this.transicaoAudio(),
+          acabamento_saida: this.acabamentoAudio(),
+          duracao_crossfade_segundos:
+            this.acabamentoAudio() === 'crossfade'
+              ? this.duracaoCrossfade()
+              : 0,
+          duracao_fade_out_segundos:
+            this.acabamentoAudio() === 'fade-out'
+              ? this.duracaoFadeOut()
+              : 0,
+          duracao_cauda_segundos:
+            this.transicaoAudio() === 'cauda'
+              ? this.duracaoCauda()
+              : null,
+        };
+
+        await this.dadosAcoes.atualizar(
+          this.experienciaSelecionadaId(),
+          blocoId,
+          acao.id,
+          {
+            recurso_id: acao.recurso_id,
+            ordem: acao.ordem,
+            acao: acao.acao,
+            inicio_segundos: acao.inicio_segundos,
+            parametros,
+          },
+        );
+      }
 
       await this.encerrarPrevia();
       void this.prepararRecursosPrevia().catch(() => undefined);
@@ -1240,15 +1407,29 @@ export class ExperienciasImersivas implements OnInit, OnDestroy {
       const acaoExistente = existentes.find(
         (acao) => acao.id === this.acaoEditandoId(),
       );
+      const parametrosAtuais = acaoExistente
+        ? this.parametrosComoObjeto(acaoExistente.parametros)
+        : {};
       const parametros: Json = {
+        ...parametrosAtuais,
         inicio_trecho_segundos: this.inicioTrecho(),
         fim_trecho_segundos: this.fimTrecho(),
         transicao_saida: this.transicaoAudio(),
+        acabamento_saida: this.acabamentoAudio(),
         fade_in_segundos: this.fadeInAtivo() ? this.duracaoFadeIn() : 0,
+        volume_db: this.volumeDb(),
         duracao_crossfade_segundos:
-          this.transicaoAudio() === 'crossfade'
+          this.acabamentoAudio() === 'crossfade'
             ? this.duracaoCrossfade()
             : 0,
+        duracao_fade_out_segundos:
+          this.acabamentoAudio() === 'fade-out'
+            ? this.duracaoFadeOut()
+            : 0,
+        duracao_cauda_segundos:
+          this.transicaoAudio() === 'cauda'
+            ? this.duracaoCauda()
+            : null,
       };
 
       const dados = {
@@ -1319,15 +1500,19 @@ export class ExperienciasImersivas implements OnInit, OnDestroy {
   }
 
   rotuloTransicao(parametros: Json): string {
-    const transicao = this.transicaoValida(
-      this.parametroTexto(parametros, 'transicao_saida'),
-    );
-    return {
+    const transicao = this.transicaoDosParametros(parametros);
+    const acabamento = this.acabamentoDosParametros(parametros);
+    const base = {
       'terminar-loop': 'fecha o ciclo',
       corte: 'corte direto',
-      crossfade: 'crossfade',
+      continuar: 'continua na próxima cena',
+      cauda: 'deixa a cauda seguir',
       silencio: 'termina em silêncio',
     }[transicao];
+
+    if (acabamento === 'fade-out') return `${base} + fade-out`;
+    if (acabamento === 'crossfade') return `${base} + crossfade`;
+    return base;
   }
 
   rotuloTransicaoCena(blocoId: string): string {
@@ -1339,17 +1524,34 @@ export class ExperienciasImersivas implements OnInit, OnDestroy {
     const acao = this.acaoPrincipalDoBloco(blocoId);
     if (!acao) return null;
 
-    const transicao = this.transicaoValida(
-      this.parametroTexto(acao.parametros, 'transicao_saida'),
-    );
-    if (transicao !== 'crossfade') return null;
+    const acabamento = this.acabamentoDosParametros(acao.parametros);
+    if (acabamento === 'crossfade') {
+      const duracao =
+        this.parametroNumero(
+          acao.parametros,
+          'duracao_crossfade_segundos',
+        ) ?? 0;
+      return `${duracao.toFixed(1)}s`;
+    }
 
-    const duracao =
-      this.parametroNumero(
+    if (acabamento === 'fade-out') {
+      const duracao =
+        this.parametroNumero(
+          acao.parametros,
+          'duracao_fade_out_segundos',
+        ) ?? 0;
+      return `${duracao.toFixed(1)}s`;
+    }
+
+    if (this.transicaoDosParametros(acao.parametros) === 'cauda') {
+      const duracao = this.parametroNumero(
         acao.parametros,
-        'duracao_crossfade_segundos',
-      ) ?? 0;
-    return `${duracao.toFixed(1)}s`;
+        'duracao_cauda_segundos',
+      );
+      return duracao === null ? 'até o fim' : `${duracao.toFixed(1)}s`;
+    }
+
+    return null;
   }
 
   trechoAcao(acao: AcaoBlocoExperienciaImersiva): string {
@@ -1362,6 +1564,24 @@ export class ExperienciasImersivas implements OnInit, OnDestroy {
     return fim === null
       ? `${this.formatarTempo(inicio)} → fim`
       : `${this.formatarTempo(inicio)} → ${this.formatarTempo(fim)}`;
+  }
+
+  resumoAcao(acao: AcaoBlocoExperienciaImersiva): string {
+    const volume = this.normalizarVolumeDb(
+      this.parametroNumero(acao.parametros, 'volume_db') ?? 0,
+    );
+    const fadeIn = Math.max(
+      0,
+      this.parametroNumero(acao.parametros, 'fade_in_segundos') ?? 0,
+    );
+    const partes = [
+      this.trechoAcao(acao),
+      `${volume > 0 ? '+' : ''}${volume.toFixed(1)} dB`,
+    ];
+
+    if (fadeIn > 0) partes.push(`fade-in ${fadeIn.toFixed(1)}s`);
+
+    return partes.join(' · ');
   }
 
   formatarTempo(segundos: number): string {
@@ -1387,9 +1607,13 @@ export class ExperienciasImersivas implements OnInit, OnDestroy {
     this.recursoAcaoId.set(null);
     this.modoAudio.set('loop');
     this.transicaoAudio.set('terminar-loop');
+    this.acabamentoAudio.set('direto');
     this.fadeInAtivo.set(false);
     this.duracaoFadeIn.set(2);
+    this.volumeDb.set(0);
     this.duracaoCrossfade.set(2);
+    this.duracaoFadeOut.set(2);
+    this.duracaoCauda.set(null);
     this.inicioTrecho.set(0);
     this.fimTrecho.set(0);
     this.tempoAtual.set(0);
@@ -1557,7 +1781,11 @@ export class ExperienciasImersivas implements OnInit, OnDestroy {
 
   private pararTesteTrecho(): void {
     const fonte = this.fonteTesteTrecho;
+    const ganhoVolume = this.ganhoVolumeTesteTrecho;
+    const ganhoEnvelope = this.ganhoEnvelopeTesteTrecho;
     this.fonteTesteTrecho = null;
+    this.ganhoVolumeTesteTrecho = null;
+    this.ganhoEnvelopeTesteTrecho = null;
 
     if (this.quadroTempoTeste !== null && typeof window !== 'undefined') {
       window.cancelAnimationFrame(this.quadroTempoTeste);
@@ -1570,16 +1798,25 @@ export class ExperienciasImersivas implements OnInit, OnDestroy {
       } catch {
         // A fonte já terminou.
       }
-      fonte.disconnect();
     }
+
+    this.desconectarNoAudio(fonte);
+    this.desconectarNoAudio(ganhoVolume);
+    this.desconectarNoAudio(ganhoEnvelope);
 
     this.testandoTrecho.set(false);
   }
 
   private finalizarTesteTrecho(): void {
     const fonte = this.fonteTesteTrecho;
+    const ganhoVolume = this.ganhoVolumeTesteTrecho;
+    const ganhoEnvelope = this.ganhoEnvelopeTesteTrecho;
     this.fonteTesteTrecho = null;
-    fonte?.disconnect();
+    this.ganhoVolumeTesteTrecho = null;
+    this.ganhoEnvelopeTesteTrecho = null;
+    this.desconectarNoAudio(fonte);
+    this.desconectarNoAudio(ganhoVolume);
+    this.desconectarNoAudio(ganhoEnvelope);
 
     if (this.quadroTempoTeste !== null && typeof window !== 'undefined') {
       window.cancelAnimationFrame(this.quadroTempoTeste);
@@ -1587,6 +1824,16 @@ export class ExperienciasImersivas implements OnInit, OnDestroy {
     }
 
     this.testandoTrecho.set(false);
+  }
+
+  private desconectarNoAudio(no: AudioNode | null): void {
+    if (!no) return;
+
+    try {
+      no.disconnect();
+    } catch {
+      // O nó já estava desconectado.
+    }
   }
 
   private encerrarAudioEditor(): void {
@@ -1746,7 +1993,11 @@ export class ExperienciasImersivas implements OnInit, OnDestroy {
     if (!bloco) return;
 
     try {
-      const acoes = this.acoesDoBloco(blocoId);
+      this.atualizarTransicaoPreviaPendente();
+
+      const acoes = [...this.acoesDoBloco(blocoId)].sort(
+        (primeira, segunda) => primeira.ordem - segunda.ordem,
+      );
       const comandos: ComandoBlocoAudio[] = acoes
         .filter((acao) =>
           ['loop', 'tocar', 'one-shot'].includes(
@@ -1776,34 +2027,69 @@ export class ExperienciasImersivas implements OnInit, OnDestroy {
               : bloco.teto_temporal_segundos - acao.inicio_segundos;
 
           return {
+            acaoId: acao.id,
+            blocoId: bloco.id,
             recursoId: acao.recurso_id,
             inicioTrechoSegundos: inicioConfigurado ?? inicioLegado,
             fimTrechoSegundos: fimConfigurado ?? fimLegado,
             repetir: acao.acao.trim().toLocaleLowerCase() === 'loop',
             fadeInSegundos:
               this.parametroNumero(acao.parametros, 'fade_in_segundos') ?? 0,
+            volumeDb: this.normalizarVolumeDb(
+              this.parametroNumero(acao.parametros, 'volume_db') ?? 0,
+            ),
           };
         });
 
-      this.motorPrevia.transicionar(
+      const resultado = this.motorPrevia.transicionar(
         comandos,
         this.transicaoPreviaAtual,
-        this.duracaoCrossfadePreviaAtual,
+        {
+          duracaoCrossfadeSegundos: this.duracaoCrossfadePreviaAtual,
+          duracaoFadeOutSegundos: this.duracaoFadeOutPreviaAtual,
+          duracaoCaudaSegundos: this.duracaoCaudaPreviaAtual,
+        },
+        this.blocoTransicaoPreviaAtualId,
+        bloco.id,
       );
       this.cenaEmPreviaId.set(blocoId);
 
       const principal = acoes[0];
-      this.transicaoPreviaAtual = principal
-        ? this.transicaoValida(
-            this.parametroTexto(principal.parametros, 'transicao_saida'),
-          )
+      const proximaTransicao = principal
+        ? this.transicaoDosParametros(principal.parametros)
         : 'silencio';
-      this.duracaoCrossfadePreviaAtual = principal
+      const proximoAcabamento = principal
+        ? this.acabamentoDosParametros(principal.parametros)
+        : 'direto';
+      const proximaDuracaoCrossfade =
+        principal && proximoAcabamento === 'crossfade'
         ? this.parametroNumero(
             principal.parametros,
             'duracao_crossfade_segundos',
           ) ?? 0
         : 0;
+      const proximaDuracaoFadeOut =
+        principal && proximoAcabamento === 'fade-out'
+        ? this.parametroNumero(
+            principal.parametros,
+            'duracao_fade_out_segundos',
+          ) ?? 0
+        : 0;
+      const proximaDuracaoCauda = principal
+        ? this.parametroNumero(
+            principal.parametros,
+            'duracao_cauda_segundos',
+          )
+        : null;
+      this.transicaoPreviaPendente = {
+        inicioCenaContexto: resultado.inicioCenaContexto,
+        blocoId: bloco.id,
+        transicaoSaida: proximaTransicao,
+        duracaoCrossfade: proximaDuracaoCrossfade,
+        duracaoFadeOut: proximaDuracaoFadeOut,
+        duracaoCauda: proximaDuracaoCauda,
+      };
+      this.atualizarTransicaoPreviaPendente();
       this.erroPrevia.set(null);
     } catch (erro) {
       this.pararPrevia();
@@ -1824,19 +2110,73 @@ export class ExperienciasImersivas implements OnInit, OnDestroy {
     this.erroPrevia.set(null);
     this.transicaoPreviaAtual = 'corte';
     this.duracaoCrossfadePreviaAtual = 0;
+    this.duracaoFadeOutPreviaAtual = 0;
+    this.duracaoCaudaPreviaAtual = null;
+    this.transicaoPreviaPendente = null;
+    this.blocoTransicaoPreviaAtualId = null;
     await this.motorPrevia.encerrar();
+  }
+
+  private atualizarTransicaoPreviaPendente(): void {
+    const pendente = this.transicaoPreviaPendente;
+    const contexto = this.motorPrevia.obterContexto();
+
+    if (
+      !pendente ||
+      !contexto ||
+      contexto.currentTime + 0.005 < pendente.inicioCenaContexto
+    ) {
+      return;
+    }
+
+    this.transicaoPreviaAtual = pendente.transicaoSaida;
+    this.duracaoCrossfadePreviaAtual = pendente.duracaoCrossfade;
+    this.duracaoFadeOutPreviaAtual = pendente.duracaoFadeOut;
+    this.duracaoCaudaPreviaAtual = pendente.duracaoCauda;
+    this.blocoTransicaoPreviaAtualId = pendente.blocoId;
+    this.transicaoPreviaPendente = null;
   }
 
   private modoValido(valor: string): ModoAudio {
     return valor === 'loop' || valor === 'one-shot' ? valor : 'tocar';
   }
 
-  private transicaoValida(valor: string | null): TransicaoAudio {
+  private transicaoValida(valor: string | null): TransicaoAudioSalva {
     return valor === 'corte' ||
+      valor === 'continuar' ||
+      valor === 'cauda' ||
+      valor === 'fade-out' ||
       valor === 'crossfade' ||
       valor === 'silencio'
       ? valor
       : 'terminar-loop';
+  }
+
+  private transicaoDosParametros(parametros: Json): TransicaoAudio {
+    const transicao = this.transicaoValida(
+      this.parametroTexto(parametros, 'transicao_saida'),
+    );
+    return transicao === 'fade-out' || transicao === 'crossfade'
+      ? 'corte'
+      : transicao;
+  }
+
+  private acabamentoDosParametros(parametros: Json): AcabamentoAudio {
+    const acabamento = this.parametroTexto(parametros, 'acabamento_saida');
+    if (
+      acabamento === 'direto' ||
+      acabamento === 'fade-out' ||
+      acabamento === 'crossfade'
+    ) {
+      return acabamento;
+    }
+
+    const transicaoLegada = this.transicaoValida(
+      this.parametroTexto(parametros, 'transicao_saida'),
+    );
+    return transicaoLegada === 'fade-out' || transicaoLegada === 'crossfade'
+      ? transicaoLegada
+      : 'direto';
   }
 
   private parametroNumero(parametros: Json, chave: string): number | null {
@@ -1851,6 +2191,15 @@ export class ExperienciasImersivas implements OnInit, OnDestroy {
     return typeof valor === 'number' && Number.isFinite(valor) ? valor : null;
   }
 
+  private normalizarVolumeDb(valor: number): number {
+    if (!Number.isFinite(valor)) return 0;
+    return Math.round(Math.min(12, Math.max(-60, valor)) * 10) / 10;
+  }
+
+  private ganhoPorDb(volumeDb: number): number {
+    return Math.pow(10, this.normalizarVolumeDb(volumeDb) / 20);
+  }
+
   private parametroTexto(parametros: Json, chave: string): string | null {
     if (
       !parametros ||
@@ -1861,6 +2210,15 @@ export class ExperienciasImersivas implements OnInit, OnDestroy {
     }
     const valor = parametros[chave];
     return typeof valor === 'string' ? valor : null;
+  }
+
+  private restaurarRolagemDaPagina(): void {
+    if (typeof document === 'undefined') return;
+
+    if (this.overflowCorpoAntesTeste !== null) {
+      document.body.style.overflow = this.overflowCorpoAntesTeste;
+      this.overflowCorpoAntesTeste = null;
+    }
   }
 
   private confirmar(mensagem: string): boolean {

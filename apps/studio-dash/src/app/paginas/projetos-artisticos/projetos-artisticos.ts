@@ -12,6 +12,7 @@ import { ActivatedRoute, RouterLink, type ParamMap } from "@angular/router";
 import {
   DadosContatos,
   DadosProjetosArtisticos,
+  ClienteSupabase,
   type CadastroMembroProjeto,
   type CadastroProjetoArtistico,
   type MembroProjetoCompleto,
@@ -28,7 +29,9 @@ import {
 export class ProjetosArtisticos implements OnInit {
   readonly dadosProjetos = inject(DadosProjetosArtisticos);
   readonly dadosContatos = inject(DadosContatos);
+  readonly modoEstudio = signal(false);
 
+  private readonly clienteSupabase = inject(ClienteSupabase);
   private readonly construtorFormulario = inject(FormBuilder);
   private readonly rota = inject(ActivatedRoute);
   private readonly destruirRef = inject(DestroyRef);
@@ -123,14 +126,30 @@ export class ProjetosArtisticos implements OnInit {
       });
     });
   }
+async carregarDados(): Promise<void> {
+  const {
+    data: { user },
+  } = await this.clienteSupabase.cliente.auth.getUser();
 
-  async carregarDados(): Promise<void> {
-    await Promise.all([
-      this.dadosProjetos.listar(),
-      this.dadosContatos.listar(),
-    ]);
+  if (!user) {
+    return;
   }
 
+  const { data: estudio } =
+    await this.clienteSupabase.cliente
+      .from('estudios')
+      .select('id')
+      .eq('id', user.id)
+      .maybeSingle();
+
+  this.modoEstudio.set(!!estudio);
+
+  await this.dadosProjetos.listar();
+
+  if (estudio) {
+    await this.dadosContatos.listar();
+  }
+}
   async salvarProjeto(): Promise<void> {
     if (this.formularioProjeto.invalid) {
       this.formularioProjeto.markAllAsTouched();

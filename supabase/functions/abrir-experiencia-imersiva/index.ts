@@ -17,6 +17,12 @@ interface ExperienciaConsultada {
   publicada_em: string | null;
 }
 
+interface EstudioConsultado {
+  nome: string;
+  slug: string;
+  cor_principal: string | null;
+}
+
 interface BlocoConsultado {
   id: string;
   ordem: number;
@@ -210,6 +216,7 @@ Deno.serve(async (requisicao) => {
       resultadoBlocos,
       resultadoAcoes,
       resultadoRecursos,
+      resultadoEstudio,
     ] = await Promise.all([
       clienteSupabase
         .from('blocos_experiencia_imersiva')
@@ -263,6 +270,17 @@ Deno.serve(async (requisicao) => {
         `)
         .eq('experiencia_id', experiencia.id)
         .eq('estudio_id', experiencia.estudio_id),
+
+      clienteSupabase
+        .from('estudios')
+        .select(`
+          nome,
+          slug,
+          cor_principal
+        `)
+        .eq('id', experiencia.estudio_id)
+        .eq('landing_publicada', true)
+        .maybeSingle(),
     ]);
 
     if (resultadoBlocos.error) {
@@ -276,6 +294,13 @@ Deno.serve(async (requisicao) => {
     if (resultadoRecursos.error) {
       throw resultadoRecursos.error;
     }
+
+    if (resultadoEstudio.error) {
+      throw resultadoEstudio.error;
+    }
+
+    const estudioPublico =
+      resultadoEstudio.data as EstudioConsultado | null;
 
     const blocosConsultados =
       resultadoBlocos.data as BlocoConsultado[];
@@ -437,6 +462,13 @@ Deno.serve(async (requisicao) => {
         album_id: experiencia.album_id,
         nome: experiencia.nome,
         publicada_em: experiencia.publicada_em,
+        estudio: estudioPublico
+          ? {
+              nome: estudioPublico.nome,
+              slug: estudioPublico.slug,
+              cor_principal: estudioPublico.cor_principal,
+            }
+          : null,
         blocos,
         recursos,
       },

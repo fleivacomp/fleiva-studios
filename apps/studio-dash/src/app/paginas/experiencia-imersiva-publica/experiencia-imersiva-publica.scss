@@ -1,21 +1,58 @@
 :host {
   display: block;
   min-height: 100vh;
-  background: #f2eee5;
-  color: #1b1816;
 }
 
-* {
+.leitor {
+  --public-brand: var(--accent, var(--app-text-soft, #505650));
+  --public-on-brand: var(--on-accent, var(--app-text-inverse, #f8f7f0));
+  --public-background: color-mix(
+    in oklab,
+    var(--public-brand) 2%,
+    var(--app-background, #edeee8)
+  );
+  --public-surface: color-mix(
+    in oklab,
+    var(--public-brand) 3%,
+    var(--app-surface, #fbfaf4)
+  );
+  --public-brand-muted: color-mix(
+    in oklab,
+    var(--public-brand) 20%,
+    var(--app-surface-strong, #dedfd5)
+  );
+  --public-brand-border: color-mix(
+    in oklab,
+    var(--public-brand) 26%,
+    var(--app-border, #d5d6cc)
+  );
+  --public-brand-dark: color-mix(
+    in oklab,
+    var(--public-brand) 68%,
+    #101310
+  );
+  --public-ink: var(--app-text, #171916);
+  --public-ink-soft: var(--app-text-soft, #505650);
+  --public-ink-muted: var(--app-text-muted, #767d76);
+  --public-paper: var(--app-surface, #fbfaf4);
+  --public-paper-inverse: var(--app-text-inverse, #f8f7f0);
+  --public-dark: var(--app-dark, #111411);
+  --public-danger-soft: var(--color-danger-soft, #f8edec);
+  --public-danger: var(--color-danger, #b43a33);
+
+  background: var(--public-background);
+  color: var(--public-ink);
+}
+
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
 button {
   font: inherit;
   cursor: pointer;
-}
-
-.leitor {
-  min-height: 100vh;
 }
 
 .painel-teste {
@@ -28,9 +65,9 @@ button {
   gap: 1rem;
   max-width: calc(100vw - 2rem);
   padding: 0.7rem;
-  background: #1b1816;
-  box-shadow: 0 0.5rem 2rem rgba(27, 24, 22, 0.24);
-  color: #f2eee5;
+  background: var(--public-dark);
+  box-shadow: var(--shadow-medium, 0 0.5rem 2rem rgb(15 19 15 / 12%));
+  color: var(--public-paper-inverse);
 }
 
 .painel-teste .rotulo-painel {
@@ -47,7 +84,7 @@ button {
 }
 
 .painel-teste small {
-  color: rgba(242, 238, 229, 0.62);
+  color: color-mix(in oklab, var(--public-paper-inverse) 62%, transparent);
   font-size: 0.48rem;
   font-weight: 760;
   letter-spacing: 0.12em;
@@ -62,7 +99,7 @@ button {
   min-height: 2.2rem;
   padding: 0.5rem 0.7rem;
   background: transparent;
-  border: 1px solid rgba(242, 238, 229, 0.4);
+  border: 1px solid color-mix(in oklab, var(--public-paper-inverse) 40%, transparent);
   color: inherit;
   font-size: 0.58rem;
   font-weight: 720;
@@ -79,7 +116,7 @@ button {
   gap: 0.25rem;
   overflow-x: auto;
   padding: 0.1rem 0 0.25rem;
-  scrollbar-color: rgba(242, 238, 229, 0.35) transparent;
+  scrollbar-color: color-mix(in oklab, var(--public-paper-inverse) 35%, transparent) transparent;
   scrollbar-width: thin;
 }
 
@@ -90,12 +127,13 @@ button {
 }
 
 .navegacao-cenas-teste button.em-tela {
-  border-color: #f2eee5;
+  border-color: var(--public-paper-inverse);
 }
 
 .navegacao-cenas-teste button.com-audio {
-  background: #f2eee5;
-  color: #1b1816;
+  background: var(--public-brand);
+  border-color: var(--public-brand);
+  color: var(--public-on-brand);
 }
 
 .barra-leitor {
@@ -107,13 +145,13 @@ button {
   align-items: center;
   justify-content: space-between;
   padding: 0 1.25rem;
-  background: rgba(242, 238, 229, 0.88);
-  border-bottom: 1px solid rgba(27, 24, 22, 0.16);
+  background: color-mix(in oklab, var(--public-surface) 92%, transparent);
+  border-bottom: 1px solid var(--public-brand-border);
   backdrop-filter: blur(0.75rem);
 }
 
 .barra-leitor a {
-  color: inherit;
+  color: var(--public-brand-dark);
   font-size: 0.65rem;
   font-weight: 850;
   letter-spacing: 0.14em;
@@ -122,6 +160,7 @@ button {
 
 .barra-leitor span,
 .rotulo {
+  color: var(--public-brand-dark);
   font-size: 0.54rem;
   font-weight: 760;
   letter-spacing: 0.16em;
@@ -150,7 +189,7 @@ button {
 .introducao {
   max-width: 28rem;
   margin: 0;
-  color: #716963;
+  color: var(--public-ink-soft);
   font-family: Georgia, 'Times New Roman', serif;
   font-size: 1rem;
   line-height: 1.6;
@@ -168,7 +207,7 @@ button {
 .estado-leitor button {
   min-height: 2.8rem;
   padding: 0.75rem 1rem;
-  border: 1px solid #1b1816;
+  border: 1px solid var(--public-brand-dark);
   border-radius: 0;
   font-size: 0.66rem;
   font-weight: 720;
@@ -176,13 +215,14 @@ button {
 
 .iniciar,
 .estado-leitor button {
-  background: #1b1816;
-  color: #f2eee5;
+  background: var(--public-brand);
+  border-color: var(--public-brand);
+  color: var(--public-on-brand);
 }
 
 .ler {
   background: transparent;
-  color: #1b1816;
+  color: var(--public-brand-dark);
 }
 
 .publicacao {
@@ -192,10 +232,10 @@ button {
 }
 
 .titulo-publicacao {
-  min-height: 60vh;
   display: grid;
+  min-height: 60vh;
   align-content: center;
-  border-bottom: 1px solid rgba(27, 24, 22, 0.2);
+  border-bottom: 1px solid var(--public-brand-border);
 }
 
 .titulo-publicacao h1 {
@@ -215,7 +255,7 @@ button {
   align-content: center;
   padding: 12vh clamp(0rem, 5vw, 4rem);
   opacity: 0.62;
-  border-bottom: 1px solid rgba(27, 24, 22, 0.13);
+  border-bottom: 1px solid var(--public-brand-border);
   transition: opacity 240ms ease;
 }
 
@@ -224,21 +264,21 @@ button {
   top: 1.25rem;
   left: 0;
   padding: 0.35rem 0.5rem;
-  background: rgba(27, 24, 22, 0.07);
-  color: #716963;
+  background: color-mix(in oklab, var(--public-brand) 7%, transparent);
+  color: var(--public-ink-soft);
   font-size: 0.5rem;
   font-weight: 780;
   letter-spacing: 0.12em;
 }
 
 .marcador-cena-teste.visual-ativa {
-  background: #d9cfc0;
-  color: #1b1816;
+  background: var(--public-brand-muted);
+  color: var(--public-ink);
 }
 
 .marcador-cena-teste.sonora-ativa {
-  background: #1b1816;
-  color: #f2eee5;
+  background: var(--public-brand);
+  color: var(--public-on-brand);
 }
 
 .bloco-leitura.em-foco {
@@ -277,6 +317,7 @@ button {
 }
 
 .fim-publicacao span {
+  color: var(--public-brand-dark);
   font-size: 0.52rem;
   font-weight: 760;
   letter-spacing: 0.2em;
@@ -292,8 +333,8 @@ button {
   max-width: 36rem;
   margin: 1rem auto;
   padding: 0.8rem;
-  background: #ead2ce;
-  color: #742f28;
+  background: var(--public-danger-soft);
+  color: var(--public-danger);
   font-size: 0.7rem;
   text-align: center;
 }
@@ -315,21 +356,23 @@ button {
 
 .estado-leitor p,
 .sem-conteudo {
-  color: #716963;
+  color: var(--public-ink-soft);
   font-size: 0.78rem;
 }
 
 .carregador {
   width: 1.25rem;
   height: 1.25rem;
-  border: 0.12rem solid rgba(27, 24, 22, 0.2);
-  border-top-color: #1b1816;
+  border: 0.12rem solid var(--public-brand-border);
+  border-top-color: var(--public-brand);
   border-radius: 50%;
   animation: girar 700ms linear infinite;
 }
 
 @keyframes girar {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 40rem) {

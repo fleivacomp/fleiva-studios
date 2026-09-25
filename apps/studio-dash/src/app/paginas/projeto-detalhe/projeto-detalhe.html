@@ -1,6 +1,10 @@
 <main class="pagina-projeto" [class.com-reprodutor]="urlReproducao() !== null">
   <nav class="voltar" aria-label="Navegação do projeto">
+    @if (modoEstudio()) {
     <a routerLink="/projetos">← Todos os projetos</a>
+    } @else {
+    <a routerLink="/projetos-externos">← Projetos externos</a>
+    }
   </nav>
 
   @if (carregandoPagina()) {
@@ -28,8 +32,13 @@
     </div>
 
     <div class="identidade-projeto">
-      <p class="sobretitulo">PROJETO ARTÍSTICO · {{ projetoAtual.tipo }}</p>
+      <p class="sobretitulo">
+        PROJETO ARTÍSTICO · {{ projetoAtual.tipo }}
+      </p>
+
       <h1>{{ projetoAtual.nome }}</h1>
+
+
 
       <div class="numeros-projeto" aria-label="Resumo do projeto">
         <span><strong>{{ faixas().length }}</strong> faixas</span>
@@ -37,6 +46,7 @@
         <span><strong>{{ trabalhos().length }}</strong> trabalhos</span>
       </div>
 
+      @if (modoEstudio()) {
       <div class="participantes-inline" aria-label="Participantes">
         @for (membro of projetoAtual.membros; track membro.id) {
         <a
@@ -47,6 +57,7 @@
           <span aria-hidden="true">
             {{ membro.contato.nome.charAt(0).toLocaleUpperCase('pt-BR') }}
           </span>
+
           <span>
             <strong>{{ membro.contato.nome }}</strong>
             <small>{{ membro.papel }}</small>
@@ -57,44 +68,73 @@
         <a
           class="adicionar-pessoa"
           routerLink="/projetos"
-          [queryParams]="{ projeto: projetoAtual.id, novoMembro: 1 }"
+          [queryParams]="{
+            projeto: projetoAtual.id,
+            novoMembro: 1
+          }"
         >
           + Participante
         </a>
       </div>
+      }
     </div>
 
+    @if (modoEstudio()) {
     <div class="acoes-projeto">
       <a
         routerLink="/faixas"
-        [queryParams]="{ projeto: projetoAtual.id, novo: 1 }"
+        [queryParams]="{
+          projeto: projetoAtual.id,
+          novo: 1
+        }"
       >
         + Nova faixa
       </a>
+
       <a
         class="acao-principal"
         routerLink="/albuns"
-        [queryParams]="{ projeto: projetoAtual.id, novo: 1 }"
+        [queryParams]="{
+          projeto: projetoAtual.id,
+          novo: 1
+        }"
       >
         Montar trabalho
       </a>
     </div>
+    }
   </header>
 
   <nav class="navegacao-projeto" aria-label="Áreas do projeto">
-    <a [routerLink]="[]" fragment="faixas">Faixas</a>
-    <a [routerLink]="[]" fragment="envios">Envios <span>{{ envios().length }}</span></a>
-    <a [routerLink]="[]" fragment="trabalhos">Trabalhos <span>{{ trabalhos().length }}</span></a>
+    <a [routerLink]="[]" fragment="faixas">
+      Faixas
+    </a>
+
+    <a [routerLink]="[]" fragment="envios">
+      Envios <span>{{ envios().length }}</span>
+    </a>
+
+    <a [routerLink]="[]" fragment="trabalhos">
+      Trabalhos <span>{{ trabalhos().length }}</span>
+    </a>
+
+    @if (modoEstudio()) {
     <a
       routerLink="/projetos"
-      [queryParams]="{ projeto: projetoAtual.id, editar: 1 }"
+      [queryParams]="{
+        projeto: projetoAtual.id,
+        editar: 1
+      }"
     >
       Identidade
     </a>
+    }
   </nav>
 
   @if (erroReproducao()) {
-  <p class="aviso-audio" role="alert">{{ erroReproducao() }}</p>
+  <p class="aviso-audio" role="alert">
+    {{ erroReproducao() }}
+  </p>
   }
 
   <section id="faixas" class="secao-projeto secao-faixas">
@@ -102,10 +142,15 @@
       <div>
         <p class="sobretitulo">EM PRODUÇÃO</p>
         <h2>Faixas</h2>
-        <span>Ouça a versão atual ou abra o histórico completo.</span>
+        <span>
+          Ouça a versão atual ou abra o histórico completo.
+        </span>
       </div>
 
-      <a routerLink="/faixas" [queryParams]="{ projeto: projetoAtual.id }">
+      <a
+        routerLink="/faixas"
+        [queryParams]="{ projeto: projetoAtual.id }"
+      >
         Abrir biblioteca →
       </a>
     </header>
@@ -113,18 +158,36 @@
     @if (faixas().length === 0) {
     <div class="estado-vazio">
       <strong>Este projeto ainda não tem faixas.</strong>
-      <p>Cadastre a primeira música para começar o histórico de produção.</p>
+
+      @if (modoEstudio()) {
+      <p>
+        Cadastre a primeira música para começar o histórico de produção.
+      </p>
+
       <a
         routerLink="/faixas"
-        [queryParams]="{ projeto: projetoAtual.id, novo: 1 }"
+        [queryParams]="{
+          projeto: projetoAtual.id,
+          novo: 1
+        }"
       >
         Criar primeira faixa
       </a>
+      } @else {
+      <p>
+        Ainda não há faixas disponíveis neste projeto.
+      </p>
+      }
     </div>
     } @else {
     <div class="tracklist" role="list">
-      @for (faixa of faixas(); track faixa.id; let indice = $index) {
+      @for (
+        faixa of faixas();
+        track faixa.id;
+        let indice = $index
+      ) {
       @let versaoAtual = versaoPrincipal(faixa);
+
       <article
         class="linha-faixa"
         role="listitem"
@@ -132,7 +195,9 @@
           versaoAtual?.id === versaoReproduzindo()?.id
         "
       >
-        <span class="numero-faixa">{{ formatarOrdem(indice) }}</span>
+        <span class="numero-faixa">
+          {{ formatarOrdem(indice) }}
+        </span>
 
         @if (versaoAtual && podeReproduzir(versaoAtual)) {
         <button
@@ -140,7 +205,8 @@
           class="reproduzir-faixa"
           [disabled]="carregandoReproducaoId() !== null"
           [attr.aria-label]="
-            versaoReproduzindo()?.id === versaoAtual.id && audioTocando()
+            versaoReproduzindo()?.id === versaoAtual.id &&
+            audioTocando()
               ? 'Pausar ' + faixa.titulo
               : 'Reproduzir ' + faixa.titulo
           "
@@ -149,7 +215,8 @@
           @if (carregandoReproducaoId() === versaoAtual.id) {
           <span class="carregador pequeno"></span>
           } @else if (
-            versaoReproduzindo()?.id === versaoAtual.id && audioTocando()
+            versaoReproduzindo()?.id === versaoAtual.id &&
+            audioTocando()
           ) {
           <span aria-hidden="true">Ⅱ</span>
           } @else {
@@ -157,15 +224,29 @@
           }
         </button>
         } @else {
-        <span class="reproduzir-faixa indisponivel" aria-hidden="true">—</span>
+        <span
+          class="reproduzir-faixa indisponivel"
+          aria-hidden="true"
+        >
+          —
+        </span>
         }
 
         <div class="nome-faixa">
           <h3>{{ faixa.titulo }}</h3>
+
           <p>
-            <span>{{ formatarStatus(faixa.status_producao) }}</span>
-            @if (faixa.bpm) { <span>{{ faixa.bpm }} BPM</span> }
-            @if (faixa.tom) { <span>{{ faixa.tom }}</span> }
+            <span>
+              {{ formatarStatus(faixa.status_producao) }}
+            </span>
+
+            @if (faixa.bpm) {
+            <span>{{ faixa.bpm }} BPM</span>
+            }
+
+            @if (faixa.tom) {
+            <span>{{ faixa.tom }}</span>
+            }
           </p>
         </div>
 
@@ -178,7 +259,9 @@
             MAIS RECENTE · PROVISÓRIA
             }
           </span>
+
           <strong>{{ versaoAtual.versao }}</strong>
+
           <small>{{ versaoAtual.nome_arquivo }}</small>
           } @else {
           <span>SEM ARQUIVO</span>
@@ -187,17 +270,26 @@
         </div>
 
         <div class="historico-faixa">
-          <strong>{{ versoesDaFaixa(faixa.id).length }}</strong>
+          <strong>
+            {{ versoesDaFaixa(faixa.id).length }}
+          </strong>
+
           <span>
-            @if (versoesDaFaixa(faixa.id).length === 1) { versão } @else {
-            versões }
+            @if (versoesDaFaixa(faixa.id).length === 1) {
+            versão
+            } @else {
+            versões
+            }
           </span>
         </div>
 
         <a
           class="abrir-faixa"
           routerLink="/faixas"
-          [queryParams]="{ projeto: projetoAtual.id, faixa: faixa.id }"
+          [queryParams]="{
+            projeto: projetoAtual.id,
+            faixa: faixa.id
+          }"
           [attr.aria-label]="'Abrir faixa ' + faixa.titulo"
         >
           →
@@ -213,41 +305,69 @@
       <div>
         <p class="sobretitulo">SAÍDA E APROVAÇÃO</p>
         <h2>Envios</h2>
-        <span>Links montados com versões deste projeto.</span>
+        <span>
+          Links montados com versões deste projeto.
+        </span>
       </div>
 
+      @if (modoEstudio()) {
       <a
         routerLink="/faixas"
-        [queryParams]="{ projeto: projetoAtual.id, novoEnvio: 1 }"
+        [queryParams]="{
+          projeto: projetoAtual.id,
+          novoEnvio: 1
+        }"
       >
         + Novo envio
       </a>
+      }
     </header>
 
     @if (envios().length === 0) {
-    <p class="linha-vazia">Nenhum envio montado para este projeto.</p>
+    <p class="linha-vazia">
+      Nenhum envio montado para este projeto.
+    </p>
     } @else {
     <div class="lista-envios">
-      @for (envio of envios(); track envio.id; let indice = $index) {
+      @for (
+        envio of envios();
+        track envio.id;
+        let indice = $index
+      ) {
       <article class="linha-envio">
-        <span class="codigo-envio">OUT {{ formatarOrdem(indice) }}</span>
+        <span class="codigo-envio">
+          OUT {{ formatarOrdem(indice) }}
+        </span>
+
         <div>
           <h3>{{ envio.nome }}</h3>
           <p>{{ totalArquivosEnvio(envio) }}</p>
         </div>
+
         <strong>{{ situacaoEnvio(envio) }}</strong>
+
         <div class="acoes-envio">
           @if (linkPublico(envio); as link) {
-          <a [href]="link" target="_blank" rel="noopener noreferrer">
+          <a
+            [href]="link"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             Página ↗
           </a>
           }
+
+          @if (modoEstudio()) {
           <a
             routerLink="/faixas"
-            [queryParams]="{ projeto: projetoAtual.id, envio: envio.id }"
+            [queryParams]="{
+              projeto: projetoAtual.id,
+              envio: envio.id
+            }"
           >
             Editar →
           </a>
+          }
         </div>
       </article>
       }
@@ -258,31 +378,56 @@
   <section id="trabalhos" class="secao-projeto secao-trabalhos">
     <header class="cabecalho-secao">
       <div>
-        <p class="sobretitulo">CATÁLOGO E PUBLICAÇÃO</p>
+        <p class="sobretitulo">
+          CATÁLOGO E PUBLICAÇÃO
+        </p>
+
         <h2>Trabalhos</h2>
+
         <span>
           {{ trabalhosPublicados().length }} publicados
+
           @if (trabalhosNaCasa().length > 0) {
           · {{ trabalhosNaCasa().length }} na Casa
           }
         </span>
       </div>
 
-      <a routerLink="/albuns" [queryParams]="{ projeto: projetoAtual.id }">
+      @if (modoEstudio()) {
+      <a
+        routerLink="/albuns"
+        [queryParams]="{
+          projeto: projetoAtual.id
+        }"
+      >
         Gerenciar catálogo →
       </a>
+      }
     </header>
 
     @if (trabalhos().length === 0) {
     <div class="estado-vazio trabalho-vazio">
       <strong>Nenhum trabalho montado.</strong>
-      <p>Reúna versões em um álbum, single, EP, mixtape ou pack.</p>
+
+      @if (modoEstudio()) {
+      <p>
+        Reúna versões em um álbum, single, EP, mixtape ou pack.
+      </p>
+
       <a
         routerLink="/albuns"
-        [queryParams]="{ projeto: projetoAtual.id, novo: 1 }"
+        [queryParams]="{
+          projeto: projetoAtual.id,
+          novo: 1
+        }"
       >
         Montar primeiro trabalho
       </a>
+      } @else {
+      <p>
+        Ainda não há trabalhos disponíveis neste projeto.
+      </p>
+      }
     </div>
     } @else {
     <div class="prateleira-trabalhos">
@@ -291,29 +436,48 @@
         <a
           class="capa-trabalho"
           routerLink="/albuns"
-          [queryParams]="{ projeto: projetoAtual.id, album: trabalho.id }"
+          [queryParams]="{
+            projeto: projetoAtual.id,
+            album: trabalho.id
+          }"
         >
           @if (dadosAlbuns.capaUrl(trabalho); as capaUrl) {
-          <img [src]="capaUrl" [alt]="'Capa de ' + trabalho.nome" />
+          <img
+            [src]="capaUrl"
+            [alt]="'Capa de ' + trabalho.nome"
+          />
           } @else {
-          <span>{{ trabalho.nome.charAt(0).toLocaleUpperCase('pt-BR') }}</span>
+          <span>
+            {{ trabalho.nome.charAt(0).toLocaleUpperCase('pt-BR') }}
+          </span>
           }
         </a>
 
         <p>{{ tipoTrabalho(trabalho) }}</p>
+
         <h3>{{ trabalho.nome }}</h3>
+
         <span>{{ totalFaixasTrabalho(trabalho) }}</span>
+
         <strong>{{ situacaoTrabalho(trabalho) }}</strong>
 
         <footer>
           @if (linkPublico(trabalho); as link) {
-          <a [href]="link" target="_blank" rel="noopener noreferrer">
+          <a
+            [href]="link"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             Ver página ↗
           </a>
           }
+
           <a
             routerLink="/albuns"
-            [queryParams]="{ projeto: projetoAtual.id, album: trabalho.id }"
+            [queryParams]="{
+              projeto: projetoAtual.id,
+              album: trabalho.id
+            }"
           >
             Abrir →
           </a>
@@ -326,9 +490,16 @@
   } @else {
   <section class="estado-pagina estado-erro">
     <p class="sobretitulo">PROJETO</p>
+
     <h1>Projeto não encontrado</h1>
-    <p>Este projeto não existe ou não está disponível para a sua conta.</p>
-    <a routerLink="/projetos">Voltar aos projetos</a>
+
+    <p>
+      Este projeto não existe ou não está disponível para a sua conta.
+    </p>
+
+    <a routerLink="/projetos">
+      Voltar aos projetos
+    </a>
   </section>
   }
 
@@ -340,12 +511,16 @@
       <span class="mini-capa-reprodutor">
         @if (projeto(); as projetoAtual) {
         @if (dadosProjetos.capaUrl(projetoAtual); as capaUrl) {
-        <img [src]="capaUrl" [alt]="'Capa de ' + projetoAtual.nome" />
+        <img
+          [src]="capaUrl"
+          [alt]="'Capa de ' + projetoAtual.nome"
+        />
         } @else {
         {{ faixa.titulo.charAt(0).toLocaleUpperCase('pt-BR') }}
         }
         }
       </span>
+
       <span>
         <strong>{{ faixa.titulo }}</strong>
         <small>{{ versao.versao }}</small>
@@ -357,15 +532,27 @@
       <button
         type="button"
         class="alternar-reproducao"
-        [attr.aria-label]="audioTocando() ? 'Pausar' : 'Reproduzir'"
+        [attr.aria-label]="
+          audioTocando() ? 'Pausar' : 'Reproduzir'
+        "
         (click)="alternarReproducao()"
       >
-        @if (audioTocando()) { Ⅱ } @else { ▶ }
+        @if (audioTocando()) {
+        Ⅱ
+        } @else {
+        ▶
+        }
       </button>
 
-      <span>{{ formatarTempoAudio(tempoAtualAudio()) }}</span>
+      <span>
+        {{ formatarTempoAudio(tempoAtualAudio()) }}
+      </span>
+
       <label>
-        <span class="sr-only">Posição da reprodução</span>
+        <span class="sr-only">
+          Posição da reprodução
+        </span>
+
         <input
           type="range"
           min="0"
@@ -375,12 +562,16 @@
           (input)="buscarNaFaixa($event)"
         />
       </label>
-      <span>{{ formatarTempoAudio(duracaoAudio()) }}</span>
+
+      <span>
+        {{ formatarTempoAudio(duracaoAudio()) }}
+      </span>
     </div>
 
     <div class="acoes-reprodutor">
       <label>
         <span class="sr-only">Volume</span>
+
         <input
           type="range"
           min="0"
@@ -390,7 +581,12 @@
           (input)="alterarVolume($event)"
         />
       </label>
-      <button type="button" aria-label="Fechar player" (click)="fecharReprodutor()">
+
+      <button
+        type="button"
+        aria-label="Fechar player"
+        (click)="fecharReprodutor()"
+      >
         ×
       </button>
     </div>

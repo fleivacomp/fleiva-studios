@@ -41,6 +41,14 @@
         >Projetos</a>
         }
 
+        @if (temAcessoComoContato()) {
+        <a
+          routerLink="/projetos-externos"
+          routerLinkActive="ativo"
+          (click)="fecharMenusFlutuantes()"
+        >Projetos externos</a>
+        }
+
         @if (dadosEstudio.possuiModulo('faixas')) {
         <a
           routerLink="/faixas"
@@ -52,6 +60,11 @@
           routerLinkActive="ativo"
           (click)="fecharMenusFlutuantes()"
         >Álbuns</a>
+         <a
+          routerLink="/experiencias"
+          routerLinkActive="ativo"
+          (click)="fecharMenusFlutuantes()"
+        >Experiências</a>
         }
 
         @if (
@@ -224,6 +237,16 @@
       </a>
       }
 
+      @if (temAcessoComoContato()) {
+      <a
+        routerLink="/projetos-externos"
+        routerLinkActive="ativo"
+        (click)="fecharMenu()"
+      >
+        Projetos externos
+      </a>
+      }
+
       @if (dadosEstudio.possuiModulo('faixas')) {
       <a routerLink="/faixas" routerLinkActive="ativo" (click)="fecharMenu()">
         Faixas
@@ -287,3 +310,4 @@
     </div>
   </main>
 </div>
+

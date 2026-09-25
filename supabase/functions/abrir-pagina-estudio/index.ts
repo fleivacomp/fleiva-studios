@@ -30,6 +30,11 @@ interface AlbumConsultado {
   faixas: ItemAlbumConsultado[] | null;
 }
 
+interface ExperienciaConsultada {
+  id: string;
+  nome: string;
+}
+
 type TemaPaginaPublica =
   | 'grafite'
   | 'creme'
@@ -138,6 +143,7 @@ Deno.serve(async (requisicao) => {
     const [
       resultadoServicos,
       resultadoAlbuns,
+      resultadoExperiencias,
     ] = await Promise.all([
       clienteSupabase
         .from('servicos')
@@ -177,6 +183,18 @@ Deno.serve(async (requisicao) => {
         .order('criado_em', {
           ascending: false,
         }),
+
+      clienteSupabase
+        .from('experiencias_imersivas')
+        .select(`
+          id,
+          nome
+        `)
+        .eq('estudio_id', estudio.id)
+        .not('publicada_em', 'is', null)
+        .order('publicada_em', {
+          ascending: false,
+        }),
     ]);
 
     if (resultadoServicos.error) {
@@ -185,6 +203,10 @@ Deno.serve(async (requisicao) => {
 
     if (resultadoAlbuns.error) {
       throw resultadoAlbuns.error;
+    }
+
+    if (resultadoExperiencias.error) {
+      throw resultadoExperiencias.error;
     }
 
     const albunsConsultados =
@@ -229,6 +251,10 @@ Deno.serve(async (requisicao) => {
         };
       })
       .filter(itemValido);
+
+    const experiencias =
+      (resultadoExperiencias.data ?? []) as
+        ExperienciaConsultada[];
 
     let logoUrl: string | null = null;
 
@@ -289,6 +315,7 @@ Deno.serve(async (requisicao) => {
 
       servicos,
       albuns,
+      experiencias,
       embeds,
     });
   } catch (erro) {

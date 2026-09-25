@@ -148,7 +148,17 @@ export class Contatos implements OnInit {
       this.salvando.set(false);
     }
   }
+async convidarContato(contato: Contato): Promise<void> {
+  this.erroFormulario.set(null);
 
+  try {
+    await this.dadosContatos.convidar(contato.id);
+
+    await this.dadosContatos.listar();
+  } catch (erro) {
+    this.erroFormulario.set(this.obterMensagemErro(erro));
+  }
+}
   editar(contato: Contato): void {
     this.contatoEditandoId.set(contato.id);
     this.erroFormulario.set(null);

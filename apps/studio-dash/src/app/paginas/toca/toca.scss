@@ -321,7 +321,8 @@
   aspect-ratio: 1;
   place-items: center;
   overflow: hidden;
-  background: var(--accent);
+  // background:color-mix(var(--accent) 5%, #f4efdd);
+  background-color: transparent;
   color: var(--on-accent);
 
   img {
@@ -350,13 +351,19 @@
   margin-bottom: 2rem;
 
   p {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.2rem;
     color: var(--accent);
     font-size: 0.58rem;
     font-weight: 850;
     letter-spacing: 0.14em;
   }
-
+  a {
+    margin-bottom: 0.5rem;
+    color: var(--soft);
+    font-size: 0.58rem;
+    font-weight: 850;
+    letter-spacing: 0.14em;
+  }
   h2 {
     margin: 0;
     font-size: clamp(2rem, 4vw, 3.5rem);
@@ -494,6 +501,65 @@
     color: var(--accent);
     font-size: 0.52rem;
     font-weight: 800;
+  }
+}
+
+.lista-experiencias {
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--border);
+  list-style: none;
+
+  li {
+    border-bottom: 1px solid var(--border);
+  }
+
+  a {
+    display: grid;
+    grid-template-columns: 2.5rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: clamp(1rem, 3vw, 2rem);
+    min-height: 5.5rem;
+    padding: 1rem;
+    color: inherit;
+    transition: background 150ms ease;
+  }
+
+  a:hover {
+    background:
+      color-mix(
+        in srgb,
+        var(--accent) 8%,
+        transparent
+      );
+  }
+
+  strong {
+    min-width: 0;
+    font-size: clamp(1.15rem, 2.4vw, 1.7rem);
+    letter-spacing: -0.025em;
+  }
+}
+
+.numero-experiencia {
+  color: var(--accent);
+  font-family: monospace;
+  font-size: 0.65rem;
+  font-weight: 850;
+}
+
+.abrir-experiencia {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--accent);
+  font-size: 0.62rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+
+  i {
+    font-size: 1rem;
+    font-style: normal;
   }
 }
 
@@ -665,6 +731,17 @@
 
   .grade-albuns {
     grid-template-columns: 1fr;
+  }
+
+  .lista-experiencias a {
+    grid-template-columns: 1.5rem minmax(0, 1fr) auto;
+    gap: 0.75rem;
+    min-height: 4.75rem;
+    padding-inline: 0.5rem;
+  }
+
+  .abrir-experiencia {
+    font-size: 0;
   }
 
   .rodape-estudio {

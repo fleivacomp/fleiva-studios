@@ -2,6 +2,8 @@ export * from './lib/autenticacao';
 
 export * from './lib/configuracao-supabase';
 
+export * from './lib/cliente-supabase';
+
 export * from './lib/exigir-autenticacao';
 
 export type { Database, Json } from './lib/tipos-banco';
@@ -43,3 +45,5 @@ export * from './lib/dados-recursos-experiencia-imersiva';
 export * from './lib/dados-acoes-bloco-experiencia-imersiva';
 
 export * from './lib/dados-experiencia-imersiva-publica';
+
+export * from './lib/dados-projetos-externos';

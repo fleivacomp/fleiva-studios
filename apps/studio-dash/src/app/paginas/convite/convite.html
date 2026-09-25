@@ -1,0 +1,161 @@
+<main class="pagina-convite">
+  <section class="cartao-convite">
+    <header class="cabecalho">
+      <div class="marca-fleiva">
+        <span
+          class="fleiva-wordmark"
+          role="img"
+          aria-label="Flêiva Studios"
+        >
+          <span
+            class="fleiva-camada fleiva-camada-clara"
+            aria-hidden="true"
+          ></span>
+
+          <span
+            class="fleiva-camada fleiva-camada-roxa"
+            aria-hidden="true"
+          ></span>
+
+          <span
+            class="fleiva-camada fleiva-camada-verde"
+            aria-hidden="true"
+          ></span>
+        </span>
+
+        <span class="marca-complemento">
+          STUDIOS
+        </span>
+      </div>
+
+      <span class="identificador">
+        FLV · 001
+      </span>
+    </header>
+
+    @if (concluido()) {
+      <section class="estado-sucesso">
+        <span class="icone-sucesso">
+          ✓
+        </span>
+
+        <p class="sobretitulo">
+          CONTA ATIVADA
+        </p>
+
+        <h1>
+          Tudo certo.
+        </h1>
+
+        <p>
+          Sua senha foi criada. Você será
+          direcionado para o Flêiva.
+        </p>
+      </section>
+    } @else {
+      <section class="conteudo">
+        <header class="cabecalho-formulario">
+          <p class="sobretitulo">
+            CONVITE
+          </p>
+
+          <h1>
+            Seu acesso ao Flêiva
+          </h1>
+
+          <p>
+            Você recebeu acesso a um projeto no
+            Flêiva Studios. Crie uma senha para
+            ativar sua conta.
+          </p>
+        </header>
+
+        <form
+          class="formulario"
+          [formGroup]="formulario"
+          (ngSubmit)="criarSenha()"
+        >
+          <div class="campo">
+            <label for="senha">
+              Nova senha
+            </label>
+
+            <input
+              id="senha"
+              type="password"
+              formControlName="senha"
+              autocomplete="new-password"
+              placeholder="Mínimo de 8 caracteres"
+            />
+
+            @if (
+              formulario.controls.senha.touched &&
+              formulario.controls.senha.invalid
+            ) {
+              <small>
+                A senha precisa ter pelo menos
+                8 caracteres.
+              </small>
+            }
+          </div>
+
+          <div class="campo">
+            <label for="confirmarSenha">
+              Confirmar senha
+            </label>
+
+            <input
+              id="confirmarSenha"
+              type="password"
+              formControlName="confirmarSenha"
+              autocomplete="new-password"
+              placeholder="Digite novamente"
+            />
+
+            @if (
+              formulario.controls.confirmarSenha.touched &&
+              formulario.hasError('senhasDiferentes')
+            ) {
+              <small>
+                As senhas precisam ser iguais.
+              </small>
+            }
+          </div>
+
+          @if (mensagemErro()) {
+            <p
+              class="erro"
+              role="alert"
+            >
+              <span aria-hidden="true">
+                !
+              </span>
+
+              {{ mensagemErro() }}
+            </p>
+          }
+
+          <button
+            type="submit"
+            class="botao"
+            [disabled]="
+              formulario.invalid ||
+              enviando()
+            "
+          >
+            @if (enviando()) {
+              Ativando conta...
+            } @else {
+              Ativar minha conta →
+            }
+          </button>
+        </form>
+      </section>
+    }
+
+    <footer class="rodape">
+      <span>FLÊIVA STUDIOS</span>
+      <span>SISTEMA SEGURO</span>
+    </footer>
+  </section>
+</main>

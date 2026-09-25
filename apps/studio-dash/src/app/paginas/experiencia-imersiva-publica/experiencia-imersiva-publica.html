@@ -1,4 +1,9 @@
-<main class="leitor" [class.modo-teste]="modoTeste()">
+<main
+  class="leitor"
+  [class.modo-teste]="modoTeste()"
+  [style.--accent]="dados.corPrincipal()"
+  [style.--on-accent]="dados.corContraste()"
+>
   @if (dados.carregando()) {
     <section class="estado-leitor">
       <span class="carregador" aria-hidden="true"></span>
@@ -7,13 +12,22 @@
   } @else if (dados.erro()) {
     <section class="estado-leitor erro">
       <span>404</span>
-      <h1>Experiência indisponível</h1>
+      <h1>Página indisponível</h1>
       <p>{{ dados.erro() }}</p>
       <button type="button" (click)="carregar()">Tentar novamente</button>
     </section>
   } @else if (dados.experiencia(); as experiencia) {
     <header class="barra-leitor">
-      <a href="/" class="marca">FLEIVA</a>
+      @if (experiencia.estudio; as estudio) {
+        <a
+          [routerLink]="['/', estudio.slug]"
+          class="marca"
+        >
+          {{ estudio.nome }}
+        </a>
+      } @else {
+        <a routerLink="/" class="marca">FLEIVA</a>
+      }
       <span>{{ modoTeste() ? 'MODO DE TESTE' : leituraSimples() ? 'LEITURA' : motor.iniciado() ? 'EM CURSO' : 'EXPERIÊNCIA' }}</span>
     </header>
 
@@ -55,10 +69,9 @@
 
     @if (!motor.iniciado() && !leituraSimples()) {
       <section class="abertura">
-        <p class="rotulo">{{ modoTeste() ? 'TESTE DA EXPERIÊNCIA' : 'PUBLICAÇÃO MULTIMÍDIA' }}</p>
+        <p class="rotulo">{{ modoTeste() ? 'MODO DE TESTE' : '' }}</p>
         <h1>{{ experiencia.nome }}</h1>
         <p class="introducao">
-          O texto conduz uma composição sonora. Role no seu ritmo.
         </p>
         <div class="acoes-abertura">
           <button type="button" class="iniciar" [disabled]="motor.carregando()" (click)="iniciar()">
@@ -75,7 +88,7 @@
     } @else {
       <article class="publicacao">
         <header class="titulo-publicacao">
-          <p class="rotulo">{{ leituraSimples() ? 'LEITURA SEM ÁUDIO' : 'EXPERIÊNCIA EM CURSO' }}</p>
+          <p class="rotulo">{{ leituraSimples() ? 'SEM ÁUDIO' : '' }}</p>
           <h1>{{ experiencia.nome }}</h1>
         </header>
 

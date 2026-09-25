@@ -1,7 +1,7 @@
 <main
-  class="pagina-album"
-  [style.--cor-estudio]="dados.corPrincipal()"
-  [style.--contraste-estudio]="dados.corContraste()"
+  class="pagina-album tema-claro tema-estudio"
+  [style.--studio-brand]="dados.corPrincipal()"
+  [style.--studio-on-brand]="dados.corContraste()"
 >
   <audio
     #audioPlayer
@@ -77,7 +77,7 @@
 
         <div class="identificacao-album">
           <div class="metadados-album">
-            <span>{{ album.tipo || 'Trabalho' }}</span>
+            <span>{{ ehEnvio() ? 'Processo' : (album.tipo || 'Trabalho') }}</span>
             <i></i>
             <span>
               {{ album.faixas.length }}
@@ -131,7 +131,7 @@
         <header class="cabecalho-sequencia">
           <div>
             <p>
-              @if (ehEnvio()) { PROCESSO PUBLICADO } @else { SEQUÊNCIA OFICIAL }
+              @if (ehEnvio()) {Ouça} @else { SEQUÊNCIA OFICIAL }
             </p>
             <h2>
               @if (ehEnvio()) { Versões e arquivos } @else { Faixas }
@@ -280,15 +280,15 @@
         >
           Ver página do estúdio
         </a>
-        <footer class="assinatura-fleiva">
-  <span>Publicado com</span>
+        <div class="assinatura-fleiva">
+          <span>Publicado com</span>
 
-  <span
-    class="assinatura-wordmark"
-    role="img"
-    aria-label="Flêiva"
-  ></span>
-</footer>
+          <span
+            class="assinatura-wordmark"
+            role="img"
+            aria-label="Flêiva"
+          ></span>
+        </div>
       </footer>
     }
   }

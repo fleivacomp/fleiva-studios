@@ -636,6 +636,7 @@ button:disabled {
 .acao-sonora small {
   color: var(--app-text-muted);
   font-size: 0.54rem;
+  line-height: 1.4;
 }
 
 .acao-textual,
@@ -654,8 +655,9 @@ button:disabled {
 }
 
 .sem-som {
-  display: flex;
+  display: grid;
   min-height: 3.8rem;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.65rem;
   padding: 0.65rem 0.75rem;
@@ -664,9 +666,10 @@ button:disabled {
   border: 0.0625rem dashed var(--app-border-strong);
   border-radius: var(--radius-small);
   font-size: 0.62rem;
+  text-align: left;
 }
 
-.sem-som span {
+.sem-som > i {
   display: grid;
   width: 2rem;
   height: 2rem;
@@ -675,6 +678,31 @@ button:disabled {
   color: var(--studio-brand);
   border-radius: 50%;
   font-size: 0.9rem;
+  font-style: normal;
+}
+
+.sem-som > span {
+  display: grid;
+  min-width: 0;
+  gap: 0.15rem;
+}
+
+.sem-som strong {
+  color: var(--app-text-soft);
+  font-size: 0.6rem;
+}
+
+.sem-som small {
+  max-width: 34rem;
+  color: var(--app-text-muted);
+  font-size: 0.5rem;
+  line-height: 1.4;
+}
+
+.sem-som > b {
+  color: var(--studio-brand);
+  font-size: 0.54rem;
+  white-space: nowrap;
 }
 
 .adicionar-camada {
@@ -746,16 +774,51 @@ button:disabled {
 
 .editor-passagem {
   display: grid;
-  gap: 0.75rem;
+  gap: 1rem;
   margin-top: 0.8rem;
   padding-top: 0.8rem;
   border-top: 0.0625rem solid var(--app-border);
 }
 
+.grupo-passagem {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.grupo-passagem > span {
+  color: var(--app-text);
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.grupo-passagem > .dica-combinacao {
+  margin-top: -0.2rem;
+  color: var(--app-text-muted);
+  font-size: 0.5rem;
+}
+
 .passagem-cena .opcoes-transicao button {
+  display: grid;
+  min-width: 10rem;
+  flex: 1 1 10rem;
+  gap: 0.18rem;
   background: var(--app-background);
   color: var(--app-text-soft);
   border-color: var(--app-border-strong);
+}
+
+.passagem-cena .opcoes-transicao b {
+  color: inherit;
+  font-size: 0.59rem;
+}
+
+.passagem-cena .opcoes-transicao small {
+  max-width: 15rem;
+  color: var(--app-text-muted);
+  font-size: 0.49rem;
+  line-height: 1.35;
 }
 
 .passagem-cena .opcoes-transicao button.ativo {
@@ -1831,11 +1894,19 @@ button:disabled {
   }
 
   .acao-sonora {
-    grid-template-columns: 2.4rem minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 
   .acao-sonora .perigo {
     display: none;
+  }
+
+  .sem-som {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .sem-som > b {
+    grid-column: 2;
   }
 
   .passagem-cena > header {
@@ -1918,6 +1989,89 @@ button:disabled {
   }
 }
 
+.teste-leitura-overlay {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--app-background);
+}
+
+.barra-teste-leitura {
+  position: sticky;
+  z-index: 10;
+  top: 0;
+  display: flex;
+  min-height: 3.75rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 1rem;
+  background: color-mix(in srgb, var(--app-background) 92%, transparent);
+  border-bottom: 0.0625rem solid var(--app-border);
+  backdrop-filter: blur(1rem);
+}
+
+.barra-teste-leitura > div {
+  display: grid;
+  min-width: 0;
+  gap: 0.12rem;
+}
+
+.barra-teste-leitura span {
+  color: var(--studio-brand);
+  font-size: 0.52rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.barra-teste-leitura strong {
+  overflow: hidden;
+  color: var(--app-text);
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.barra-teste-leitura button {
+  min-height: 2.35rem;
+  flex: 0 0 auto;
+  padding: 0.45rem 0.75rem;
+  background: var(--app-surface);
+  color: var(--app-text);
+  border: 0.0625rem solid var(--app-border-strong);
+  border-radius: var(--radius-small);
+  font-size: 0.62rem;
+  font-weight: 750;
+}
+
+.barra-teste-leitura button:hover {
+  border-color: var(--studio-brand);
+}
+
+.leitor-teste-integrado,
+.leitor-teste-integrado > app-experiencia-imersiva-publica {
+  display: block;
+  min-height: calc(100dvh - 3.75rem);
+}
+
+@media (max-width: 36rem) {
+  .barra-teste-leitura {
+    min-height: 3.35rem;
+    padding-inline: 0.75rem;
+  }
+
+  .barra-teste-leitura strong {
+    max-width: 52vw;
+  }
+
+  .barra-teste-leitura button {
+    min-height: 2.15rem;
+    padding-inline: 0.55rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -1925,3 +2079,4 @@ button:disabled {
     transition-duration: 0.01ms !important;
   }
 }
+

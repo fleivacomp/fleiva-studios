@@ -55,20 +55,8 @@
 
       <nav aria-label="Contato do estúdio">
         @if (embedsPublicos().length > 0) {
-          <a href="{{estudio.slug}}">
+          <a href="https://play.fleiva.com.br/{{estudio.slug}}">
             Ouvir
-          </a>
-        }
-
-        @if (dados.albuns().length > 0) {
-          <a href="#trabalhos">
-            Trabalhos
-          </a>
-        }
-
-        @if (dados.servicos().length > 0) {
-          <a href="#servicos">
-            Serviços
           </a>
         }
 
@@ -89,7 +77,7 @@
             target="_blank"
             rel="noopener noreferrer"
           >
-            Entrar em contato
+            Whatsapp
           </a>
         }
       </nav>
@@ -274,8 +262,12 @@
       >
         <header class="cabecalho-secao-publica">
           <div>
-            <p>TRABALHOS SELECIONADOS</p>
-            <h2>Catálogo</h2>
+
+            <p >TRABALHOS SELECIONADOS</p>
+
+             <h2 class="titulo-clicavel" >
+                        <a href="https://play.fleiva.com.br/{{estudio.slug}}">Catálogo</a>
+             </h2>
           </div>
 
           <span>
@@ -328,8 +320,13 @@
               <div class="conteudo-album-publico">
                 <header>
                   <div>
+
                     <p>
-                      {{ album.tipo || 'Trabalho' }}
+                     {{
+  album.tipo === 'Envio'
+    ? 'Processo'
+    : (album.tipo || 'Trabalho')
+}}
                     </p>
 
                     <h3>{{ album.nome }}</h3>

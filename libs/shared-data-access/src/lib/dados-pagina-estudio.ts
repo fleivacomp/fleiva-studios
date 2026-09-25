@@ -52,10 +52,16 @@ export interface AlbumPaginaPublica {
   download_publico: boolean;
 }
 
+export interface ExperienciaPaginaPublica {
+  id: string;
+  nome: string;
+}
+
 interface RespostaPaginaEstudio {
   estudio: EstudioPaginaPublica;
   servicos?: ServicoPaginaPublica[];
   albuns?: AlbumPaginaPublica[];
+  experiencias?: ExperienciaPaginaPublica[];
   embeds?: EmbedPaginaPublica[];
 }
 
@@ -75,6 +81,9 @@ export class DadosPaginaEstudio {
   private readonly albunsInternos =
     signal<AlbumPaginaPublica[]>([]);
 
+  private readonly experienciasInternas =
+    signal<ExperienciaPaginaPublica[]>([]);
+
   private readonly embedsInternos =
     signal<EmbedPaginaPublica[]>([]);
 
@@ -92,6 +101,9 @@ export class DadosPaginaEstudio {
 
   readonly albuns =
     this.albunsInternos.asReadonly();
+
+  readonly experiencias =
+    this.experienciasInternas.asReadonly();
 
   readonly embeds =
     this.embedsInternos.asReadonly();
@@ -129,6 +141,7 @@ export class DadosPaginaEstudio {
     this.estudioInterno.set(null);
     this.servicosInternos.set([]);
     this.albunsInternos.set([]);
+    this.experienciasInternas.set([]);
     this.embedsInternos.set([]);
 
     try {
@@ -175,6 +188,10 @@ export class DadosPaginaEstudio {
 
       this.albunsInternos.set(
         resposta.albuns ?? [],
+      );
+
+      this.experienciasInternas.set(
+        resposta.experiencias ?? [],
       );
 
       this.embedsInternos.set(

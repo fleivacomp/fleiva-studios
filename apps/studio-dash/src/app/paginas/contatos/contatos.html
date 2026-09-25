@@ -244,7 +244,14 @@
                 </a>
               }
             </div>
-
+<button
+  type="button"
+  class="secundario"
+  [disabled]="!contato.email"
+  (click)="convidarContato(contato)"
+>
+  Enviar convite
+</button>
             <div class="acoes acoes-contato">
               <button
                 type="button"
@@ -253,6 +260,7 @@
               >
                 Editar
               </button>
+
 
               <button
                 type="button"

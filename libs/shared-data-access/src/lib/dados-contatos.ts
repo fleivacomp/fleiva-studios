@@ -26,30 +26,30 @@ export class DadosContatos {
   readonly carregando = this.carregandoInterno.asReadonly();
   readonly erro = this.erroInterno.asReadonly();
 
-  async listar(): Promise<void> {
-    this.carregandoInterno.set(true);
-    this.erroInterno.set(null);
 
-    try {
-      const estudioId = await this.obterEstudioId();
+async listar(): Promise<void> {
+  this.carregandoInterno.set(true);
+  this.erroInterno.set(null);
 
-      const { data, error } = await this.clienteSupabase.cliente
-        .from('contatos')
-        .select('*')
-        .eq('estudio_id', estudioId)
-        .order('nome');
+  try {
+    const { data, error } = await this.clienteSupabase.cliente
+      .from('contatos')
+      .select('*')
+      .order('nome');
 
-      if (error) {
-        throw error;
-      }
-
-      this.listaInterna.set(data);
-    } catch (erro) {
-      this.erroInterno.set(this.obterMensagemErro(erro));
-    } finally {
-      this.carregandoInterno.set(false);
+    if (error) {
+      throw error;
     }
+
+    this.listaInterna.set(data);
+  } catch (erro) {
+    this.erroInterno.set(this.obterMensagemErro(erro));
+  } finally {
+    this.carregandoInterno.set(false);
   }
+}
+
+
 
   async cadastrar(dados: CadastroContato): Promise<Contato> {
     const estudioId = await this.obterEstudioId();
@@ -130,7 +130,60 @@ export class DadosContatos {
       contatos.filter((contato) => contato.id !== contatoId),
     );
   }
+async convidar(contatoId: string): Promise<void> {
+  console.log('1. Iniciando convite:', contatoId);
 
+  const inicio = Date.now();
+
+  const { data, error } =
+    await this.clienteSupabase.cliente.functions.invoke(
+      'convidar-contato',
+      {
+        body: {
+          contato_id: contatoId,
+        },
+      },
+    );
+
+  console.log(
+    '2. Edge Function respondeu em',
+    Date.now() - inicio,
+    'ms',
+  );
+
+  console.log('3. Data:', data);
+  console.log('4. Error:', error);
+
+  if (error) {
+    console.error(
+      'ERRO COMPLETO DO CONVITE:',
+      error,
+    );
+
+    try {
+      const resposta = await error.context?.json();
+
+      console.error(
+        'RESPOSTA DA EDGE FUNCTION:',
+        resposta,
+      );
+
+      if (resposta?.erro) {
+        throw new Error(resposta.erro);
+      }
+    } catch (erroResposta) {
+      if (erroResposta instanceof Error) {
+        throw erroResposta;
+      }
+    }
+
+    throw error;
+  }
+
+  if (data?.erro) {
+    throw new Error(data.erro);
+  }
+}
   private async obterEstudioId(): Promise<string> {
     const {
       data: { user },

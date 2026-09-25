@@ -5,11 +5,15 @@ import {
   OnInit,
   effect,
   inject,
+  input,
   signal,
   viewChildren,
 } from '@angular/core';
 import { Title } from '@angular/platform-browser';
-import { ActivatedRoute } from '@angular/router';
+import {
+  ActivatedRoute,
+  RouterLink,
+} from '@angular/router';
 import {
   DadosExperienciaImersivaPublica,
   type Json,
@@ -20,10 +24,12 @@ import {
   type TransicaoBlocoAudio,
 } from './motor-audio-experiencia-imersiva';
 
+type AcabamentoAudio = 'direto' | 'fade-out' | 'crossfade';
+
 @Component({
   selector: 'app-experiencia-imersiva-publica',
   standalone: true,
-  imports: [],
+  imports: [RouterLink],
   templateUrl: './experiencia-imersiva-publica.html',
   styleUrl: './experiencia-imersiva-publica.scss',
   providers: [MotorAudioExperienciaImersiva],
@@ -37,6 +43,9 @@ export class ExperienciaImersivaPublica
 
   readonly leituraSimples = signal(false);
   readonly modoTeste = signal(false);
+  readonly experienciaIdEntrada = input<string | null>(null);
+  readonly modoTesteEntrada = input(false);
+  readonly integrado = input(false);
 
   readonly blocoEmFocoId = signal<string | null>(null);
   readonly blocoSonoroId = signal<string | null>(null);
@@ -54,15 +63,28 @@ export class ExperienciaImersivaPublica
     );
 
   private observador: IntersectionObserver | null = null;
-  private readonly proporcoesVisiveis =
-    new Map<Element, number>();
+  private readonly blocosNaLinhaDeLeitura =
+    new Set<Element>();
   private maiorOrdemSonora: number | null = null;
   private experienciaId = '';
+  private blocoTransicaoAtualId: string | null = null;
   private transicaoSaidaAtual: TransicaoBlocoAudio = 'corte';
   private duracaoCrossfadeAtual = 0;
+  private duracaoFadeOutAtual = 0;
+  private duracaoCaudaAtual: number | null = null;
+  private transicaoPendente: {
+    inicioCenaContexto: number;
+    blocoId: string;
+    transicaoSaida: TransicaoBlocoAudio;
+    duracaoCrossfade: number;
+    duracaoFadeOut: number;
+    duracaoCauda: number | null;
+  } | null = null;
 
   constructor() {
     effect(() => {
+      if (this.integrado()) return;
+
       const experiencia = this.dados.experiencia();
 
       this.tituloPagina.setTitle(
@@ -101,13 +123,14 @@ export class ExperienciaImersivaPublica
 
   ngOnInit(): void {
     this.modoTeste.set(
-      this.rota.snapshot.queryParamMap.get('teste') === '1',
+      this.modoTesteEntrada() ||
+        this.rota.snapshot.queryParamMap.get('teste') === '1',
     );
 
     this.experienciaId =
-      this.rota.snapshot.paramMap.get(
-        'experienciaId',
-      ) ?? '';
+      this.experienciaIdEntrada()?.trim() ||
+      this.rota.snapshot.paramMap.get('experienciaId') ||
+      '';
 
     void this.carregar();
   }
@@ -193,6 +216,11 @@ export class ExperienciaImersivaPublica
 
     this.transicaoSaidaAtual = 'corte';
     this.duracaoCrossfadeAtual = 0;
+    this.duracaoFadeOutAtual = 0;
+    this.duracaoCaudaAtual = null;
+    this.transicaoPendente = null;
+    this.motor.pararTodos();
+    this.blocoTransicaoAtualId = null;
     this.maiorOrdemSonora = bloco.ordem;
     this.blocoEmFocoId.set(bloco.id);
 
@@ -217,6 +245,11 @@ export class ExperienciaImersivaPublica
 
     this.transicaoSaidaAtual = 'corte';
     this.duracaoCrossfadeAtual = 0;
+    this.duracaoFadeOutAtual = 0;
+    this.duracaoCaudaAtual = null;
+    this.transicaoPendente = null;
+    this.motor.pararTodos();
+    this.blocoTransicaoAtualId = null;
     this.executarBloco(blocoId);
   }
 
@@ -236,30 +269,27 @@ export class ExperienciaImersivaPublica
       (entradas) => {
         for (const entrada of entradas) {
           if (entrada.isIntersecting) {
-            this.proporcoesVisiveis.set(
-              entrada.target,
-              entrada.intersectionRatio,
-            );
+            this.blocosNaLinhaDeLeitura.add(entrada.target);
           } else {
-            this.proporcoesVisiveis.delete(
-              entrada.target,
-            );
+            this.blocosNaLinhaDeLeitura.delete(entrada.target);
           }
         }
 
         const elementoEmFoco =
-          [...this.proporcoesVisiveis.entries()]
+          [...this.blocosNaLinhaDeLeitura]
             .sort(
               (primeiro, segundo) =>
-                segundo[1] - primeiro[1],
-            )[0]?.[0] as HTMLElement | undefined;
+                this.distanciaDaLinhaDeLeitura(primeiro) -
+                this.distanciaDaLinhaDeLeitura(segundo),
+            )[0] as HTMLElement | undefined;
 
         if (elementoEmFoco) {
           this.assumirFoco(elementoEmFoco);
         }
       },
       {
-        threshold: [0.35, 0.6, 0.85],
+        rootMargin: '-45% 0px -45% 0px',
+        threshold: 0,
       },
     );
 
@@ -302,9 +332,13 @@ export class ExperienciaImersivaPublica
     this.blocoSonoroId.set(null);
     this.erroExecucao.set(null);
     this.maiorOrdemSonora = null;
+    this.blocoTransicaoAtualId = null;
     this.transicaoSaidaAtual = 'corte';
     this.duracaoCrossfadeAtual = 0;
-    this.proporcoesVisiveis.clear();
+    this.duracaoFadeOutAtual = 0;
+    this.duracaoCaudaAtual = null;
+    this.transicaoPendente = null;
+    this.blocosNaLinhaDeLeitura.clear();
   }
 
   private executarBloco(blocoId: string): void {
@@ -320,7 +354,12 @@ export class ExperienciaImersivaPublica
     this.erroExecucao.set(null);
 
     try {
-      const comandos: ComandoBlocoAudio[] = bloco.acoes
+      this.atualizarTransicaoPendente();
+
+      const acoesOrdenadas = [...bloco.acoes].sort(
+        (primeira, segunda) => primeira.ordem - segunda.ordem,
+      );
+      const comandos: ComandoBlocoAudio[] = acoesOrdenadas
         .filter((acao) =>
           ['loop', 'tocar', 'one-shot'].includes(
             acao.acao.trim().toLocaleLowerCase(),
@@ -351,38 +390,77 @@ export class ExperienciaImersivaPublica
               : bloco.teto_temporal_segundos - acao.inicio_segundos;
 
           return {
+            acaoId: acao.id,
+            blocoId: bloco.id,
             recursoId: acao.recurso_id,
             inicioTrechoSegundos: inicioConfigurado ?? inicioLegado,
             fimTrechoSegundos: fimConfigurado ?? fimLegado,
             repetir: acao.acao.trim().toLocaleLowerCase() === 'loop',
             fadeInSegundos:
               this.parametroNumero(acao.parametros, 'fade_in_segundos') ?? 0,
+            volumeDb: this.normalizarVolumeDb(
+              this.parametroNumero(acao.parametros, 'volume_db') ?? 0,
+            ),
           };
         });
 
-      this.motor.transicionar(
+      const resultado = this.motor.transicionar(
         comandos,
         this.transicaoSaidaAtual,
-        this.duracaoCrossfadeAtual,
+        {
+          duracaoCrossfadeSegundos: this.duracaoCrossfadeAtual,
+          duracaoFadeOutSegundos: this.duracaoFadeOutAtual,
+          duracaoCaudaSegundos: this.duracaoCaudaAtual,
+        },
+        this.blocoTransicaoAtualId,
+        bloco.id,
       );
 
-      const acaoPrincipal = bloco.acoes[0];
-      this.transicaoSaidaAtual = acaoPrincipal
-        ? this.transicaoValida(
-            this.parametroTexto(
-              acaoPrincipal.parametros,
-              'transicao_saida',
-            ),
-          )
+      const acaoPrincipal = acoesOrdenadas[0];
+      const proximaTransicao = acaoPrincipal
+        ? this.transicaoDosParametros(acaoPrincipal.parametros)
         : 'silencio';
-      this.duracaoCrossfadeAtual = acaoPrincipal
+      const proximoAcabamento = acaoPrincipal
+        ? this.acabamentoDosParametros(acaoPrincipal.parametros)
+        : 'direto';
+      const proximaDuracaoCrossfade =
+        acaoPrincipal && proximoAcabamento === 'crossfade'
         ? this.parametroNumero(
             acaoPrincipal.parametros,
             'duracao_crossfade_segundos',
           ) ?? 0
         : 0;
+      const proximaDuracaoFadeOut =
+        acaoPrincipal && proximoAcabamento === 'fade-out'
+        ? this.parametroNumero(
+            acaoPrincipal.parametros,
+            'duracao_fade_out_segundos',
+          ) ?? 0
+        : 0;
+      const proximaDuracaoCauda = acaoPrincipal
+        ? this.parametroNumero(
+            acaoPrincipal.parametros,
+            'duracao_cauda_segundos',
+          )
+        : null;
+
+      this.transicaoPendente = {
+        inicioCenaContexto: resultado.inicioCenaContexto,
+        blocoId: bloco.id,
+        transicaoSaida: proximaTransicao,
+        duracaoCrossfade: proximaDuracaoCrossfade,
+        duracaoFadeOut: proximaDuracaoFadeOut,
+        duracaoCauda: proximaDuracaoCauda,
+      };
+      this.atualizarTransicaoPendente();
     } catch (erro) {
       this.motor.pararTodos();
+      this.blocoTransicaoAtualId = null;
+      this.transicaoPendente = null;
+      this.transicaoSaidaAtual = 'corte';
+      this.duracaoCrossfadeAtual = 0;
+      this.duracaoFadeOutAtual = 0;
+      this.duracaoCaudaAtual = null;
       this.erroExecucao.set(
         this.obterMensagemErroExecucao(erro),
       );
@@ -391,10 +469,40 @@ export class ExperienciaImersivaPublica
 
   private transicaoValida(valor: string | null): TransicaoBlocoAudio {
     return valor === 'terminar-loop' ||
+      valor === 'continuar' ||
+      valor === 'cauda' ||
+      valor === 'fade-out' ||
       valor === 'crossfade' ||
       valor === 'silencio'
       ? valor
-      : 'corte';
+      : 'terminar-loop';
+  }
+
+  private transicaoDosParametros(parametros: Json): TransicaoBlocoAudio {
+    const transicao = this.transicaoValida(
+      this.parametroTexto(parametros, 'transicao_saida'),
+    );
+    return transicao === 'fade-out' || transicao === 'crossfade'
+      ? 'corte'
+      : transicao;
+  }
+
+  private acabamentoDosParametros(parametros: Json): AcabamentoAudio {
+    const acabamento = this.parametroTexto(parametros, 'acabamento_saida');
+    if (
+      acabamento === 'direto' ||
+      acabamento === 'fade-out' ||
+      acabamento === 'crossfade'
+    ) {
+      return acabamento;
+    }
+
+    const transicaoLegada = this.transicaoValida(
+      this.parametroTexto(parametros, 'transicao_saida'),
+    );
+    return transicaoLegada === 'fade-out' || transicaoLegada === 'crossfade'
+      ? transicaoLegada
+      : 'direto';
   }
 
   private parametroNumero(parametros: Json, chave: string): number | null {
@@ -410,6 +518,11 @@ export class ExperienciaImersivaPublica
     return typeof valor === 'number' && Number.isFinite(valor)
       ? valor
       : null;
+  }
+
+  private normalizarVolumeDb(valor: number): number {
+    if (!Number.isFinite(valor)) return 0;
+    return Math.min(12, Math.max(-60, valor));
   }
 
   private parametroTexto(parametros: Json, chave: string): string | null {
@@ -442,6 +555,36 @@ export class ExperienciaImersivaPublica
   private desligarObservador(): void {
     this.observador?.disconnect();
     this.observador = null;
-    this.proporcoesVisiveis.clear();
+    this.blocosNaLinhaDeLeitura.clear();
+  }
+
+  private atualizarTransicaoPendente(): void {
+    const pendente = this.transicaoPendente;
+    const contexto = this.motor.obterContexto();
+
+    if (
+      !pendente ||
+      !contexto ||
+      contexto.currentTime + 0.005 < pendente.inicioCenaContexto
+    ) {
+      return;
+    }
+
+    this.transicaoSaidaAtual = pendente.transicaoSaida;
+    this.duracaoCrossfadeAtual = pendente.duracaoCrossfade;
+    this.duracaoFadeOutAtual = pendente.duracaoFadeOut;
+    this.duracaoCaudaAtual = pendente.duracaoCauda;
+    this.blocoTransicaoAtualId = pendente.blocoId;
+    this.transicaoPendente = null;
+  }
+
+  private distanciaDaLinhaDeLeitura(elemento: Element): number {
+    const limites = elemento.getBoundingClientRect();
+    const centroElemento = limites.top + limites.height / 2;
+    const centroJanela = typeof window === 'undefined'
+      ? 0
+      : window.innerHeight / 2;
+
+    return Math.abs(centroElemento - centroJanela);
   }
 }

@@ -1,11 +1,15 @@
 import { inject } from "@angular/core";
+
 import {
   Router,
   type CanActivateChildFn,
   type CanActivateFn,
   type Routes,
 } from "@angular/router";
+
 import {
+  Autenticacao,
+  ClienteSupabase,
   DadosEstudio,
   exigirAutenticacao,
 } from "@fleiva-studios/shared-data-access";
@@ -39,7 +43,9 @@ const carregarArquivoCompartilhado = () =>
 const carregarAlbumCompartilhado = () =>
   import("./paginas/album-compartilhado/album-compartilhado").then(
     (modulo) => modulo.AlbumCompartilhado,
-  );const carregarExperienciaImersivaPublica = () =>
+  );
+
+const carregarExperienciaImersivaPublica = () =>
   import(
     "./paginas/experiencia-imersiva-publica/experiencia-imersiva-publica"
   ).then(
@@ -48,10 +54,12 @@ const carregarAlbumCompartilhado = () =>
 
 const encaminharTrabalhoParaToca: CanActivateFn = (rota) => {
   const slug = rota.paramMap.get("slug");
+
   const albumId = rota.paramMap.get("albumId");
 
   if (typeof window !== "undefined" && slug && albumId) {
     const slugSeguro = encodeURIComponent(slug);
+
     const albumIdSeguro = encodeURIComponent(albumId);
 
     window.location.replace(
@@ -64,36 +72,72 @@ const encaminharTrabalhoParaToca: CanActivateFn = (rota) => {
 
 const MODULO_POR_ROTA = {
   agendamentos: "agenda",
+
   contatos: "agenda",
+
   servicos: "agenda",
+
   projetos: "artistas",
+
   "projetos/:id": "artistas",
+
   faixas: "faixas",
+
   albuns: "faixas",
+
   acertos: "financeiro",
 } as const;
 
 const exigirAcessoAoModulo: CanActivateChildFn = async (rota) => {
   const dadosEstudio = inject(DadosEstudio);
+
+  const clienteSupabase = inject(ClienteSupabase);
+
   const roteador = inject(Router);
 
   const caminho = rota.routeConfig?.path ?? "";
 
-  const modulo = MODULO_POR_ROTA[caminho as keyof typeof MODULO_POR_ROTA];
+  const modulo =
+    MODULO_POR_ROTA[
+      caminho as keyof typeof MODULO_POR_ROTA
+    ];
 
   if (!modulo) {
     return true;
   }
 
-  if (!dadosEstudio.estudio()) {
-    await dadosEstudio.carregar();
-  }
+  await dadosEstudio.carregar();
 
-  if (dadosEstudio.possuiModulo(modulo)) {
+  // Acesso como dono do estúdio
+
+  if (
+    dadosEstudio.estudio() &&
+    dadosEstudio.possuiModulo(modulo)
+  ) {
     return true;
   }
 
-  return roteador.parseUrl(obterDestinoPermitido(dadosEstudio));
+  // Acesso como contato
+
+  const { data, error } =
+    await clienteSupabase.cliente.rpc(
+      "usuario_tem_acesso_como_contato",
+    );
+
+  if (!error && data === true) {
+    return true;
+  }
+
+  // É dono, mas não possui o módulo e também não é
+  // contato com acesso.
+
+  if (dadosEstudio.estudio()) {
+    return roteador.parseUrl(
+      obterDestinoPermitido(dadosEstudio),
+    );
+  }
+
+  return roteador.parseUrl("/login");
 };
 
 function obterDestinoPermitido(dadosEstudio: DadosEstudio): string {
@@ -121,33 +165,49 @@ function obterDestinoPermitido(dadosEstudio: DadosEstudio): string {
  *
  * Mantém a Casa antiga e os Cards públicos.
  */
+
 const rotasCard: Routes = [
   {
     path: "",
+
     pathMatch: "full",
+
     loadComponent: carregarCasa,
   },
+
   {
     path: "estudio",
+
     pathMatch: "full",
+
     redirectTo: "",
   },
+
   {
     path: "estudio/:slug/trabalho/:albumId",
+
     canActivate: [encaminharTrabalhoParaToca],
+
     loadComponent: carregarAlbumPublico,
   },
+
   {
     path: "estudio/:slug",
+
     pathMatch: "full",
+
     redirectTo: ":slug",
   },
+
   {
     path: ":slug",
+
     loadComponent: carregarPaginaEstudio,
   },
+
   {
     path: "**",
+
     redirectTo: "",
   },
 ];
@@ -156,16 +216,22 @@ const rotasCard: Routes = [
  * casa.fleiva.com.br
  *
  * Carrega somente a nova experiência Sala.
+ *
  * Os links da Sala levam aos Cards no domínio card.fleiva.com.br.
  */
+
 const rotasCasa: Routes = [
   {
     path: "",
+
     pathMatch: "full",
+
     loadComponent: carregarSala,
   },
+
   {
     path: "**",
+
     redirectTo: "",
   },
 ];
@@ -173,62 +239,92 @@ const rotasCasa: Routes = [
 /**
  * play.fleiva.com.br
  */
+
 const rotasPlay: Routes = [
   {
     path: "",
+
     pathMatch: "full",
+
     loadComponent: carregarToca,
   },
+
   {
     path: "a/:token",
+
     loadComponent: carregarAlbumCompartilhado,
   },
+
   {
     path: "t/:token",
+
     loadComponent: carregarArquivoCompartilhado,
   },
+
   {
     path: "album/:token",
+
     loadComponent: carregarAlbumCompartilhado,
   },
+
   {
     path: "arquivo/:token",
+
     loadComponent: carregarArquivoCompartilhado,
   },
+
   {
-  path: "experiencia/:experienciaId",
-  loadComponent:
-    carregarExperienciaImersivaPublica,
-},
+    path: "experiencia/:experienciaId",
+
+    loadComponent:
+      carregarExperienciaImersivaPublica,
+  },
+
   {
     path: "estudio",
+
     pathMatch: "full",
+
     redirectTo: "",
   },
+
   {
     path: "estudio/:slug/trabalho/:albumId",
+
     loadComponent: carregarAlbumPublico,
   },
+
   {
     path: "estudio/:slug",
+
     pathMatch: "full",
+
     redirectTo: ":slug",
   },
+
   {
     path: ":slug/trabalho/:albumId",
+
     loadComponent: carregarAlbumPublico,
   },
+
   {
     path: ":slug/trabalho",
+
     pathMatch: "full",
+
     redirectTo: ":slug",
   },
+
   {
     path: ":slug",
+
     loadComponent: carregarToca,
   },
+
   {
     path: "**",
+
     redirectTo: "",
   },
 ];
@@ -236,120 +332,255 @@ const rotasPlay: Routes = [
 /**
  * Aplicação principal.
  */
+
 const rotasApp: Routes = [
   {
     path: "experiencia/:experienciaId",
+
     loadComponent: carregarExperienciaImersivaPublica,
   },
+
   {
     path: "estudio/:slug/trabalho/:albumId",
+
     loadComponent: carregarAlbumPublico,
   },
+
   {
     path: "estudio/:slug",
+
     loadComponent: carregarPaginaEstudio,
   },
+
   {
     path: "arquivo/:token",
+
     loadComponent: carregarArquivoCompartilhado,
   },
+
   {
     path: "album/:token",
+
     loadComponent: carregarAlbumCompartilhado,
   },
+
   {
     path: "cadastro",
+
     loadComponent: () =>
-      import("./paginas/cadastro/cadastro").then((modulo) => modulo.Cadastro),
+      import("./paginas/cadastro/cadastro").then(
+        (modulo) => modulo.Cadastro,
+      ),
   },
+
+  {
+    path: "convite",
+
+    loadComponent: () =>
+      import("./paginas/convite/convite").then(
+        (modulo) => modulo.Convite,
+      ),
+  },
+
   {
     path: "login",
+
     loadComponent: () =>
-      import("./paginas/login/login").then((modulo) => modulo.PaginaLogin),
+      import("./paginas/login/login").then(
+        (modulo) => modulo.PaginaLogin,
+      ),
   },
+
   {
     path: "",
+
     canActivate: [exigirAutenticacao],
+
     canActivateChild: [exigirAcessoAoModulo],
+
     loadComponent: () =>
       import("./layout/layout-principal/layout-principal").then(
         (modulo) => modulo.LayoutPrincipal,
       ),
+
     children: [
       {
         path: "",
+
         pathMatch: "full",
-        redirectTo: "agendamentos",
+
+        canActivate: [
+          async () => {
+            const dadosEstudio = inject(DadosEstudio);
+
+            const clienteSupabase = inject(ClienteSupabase);
+
+            const roteador = inject(Router);
+
+            await dadosEstudio.carregar();
+
+            // É dono de um estúdio com artistas.
+
+            if (
+              dadosEstudio.estudio() &&
+              dadosEstudio.possuiModulo("artistas")
+            ) {
+              return roteador.parseUrl("/projetos");
+            }
+
+            // Verifica se é um contato ativo.
+
+            const { data, error } =
+              await clienteSupabase.cliente.rpc(
+                "usuario_tem_acesso_como_contato",
+              );
+
+            if (!error && data === true) {
+              return roteador.parseUrl(
+                "/projetos-externos",
+              );
+            }
+
+            // É dono, mas não possui artistas.
+
+            if (dadosEstudio.estudio()) {
+              return roteador.parseUrl(
+                obterDestinoPermitido(dadosEstudio),
+              );
+            }
+
+            return roteador.parseUrl("/login");
+          },
+        ],
+
+        loadComponent: () =>
+          import(
+            "./paginas/projetos-artisticos/projetos-artisticos"
+          ).then(
+            (modulo) => modulo.ProjetosArtisticos,
+          ),
       },
+
       {
         path: "agendamentos",
+
         loadComponent: () =>
           import("./paginas/agendamentos/agendamentos").then(
             (modulo) => modulo.Agendamentos,
           ),
       },
+
       {
         path: "contatos",
+
         loadComponent: () =>
           import("./paginas/contatos/contatos").then(
             (modulo) => modulo.Contatos,
           ),
       },
+
       {
         path: "projetos/:id",
+
         loadComponent: () =>
           import("./paginas/projeto-detalhe/projeto-detalhe").then(
             (modulo) => modulo.ProjetoDetalhe,
           ),
       },
+
       {
         path: "projetos",
+
         loadComponent: () =>
-          import("./paginas/projetos-artisticos/projetos-artisticos").then(
+          import(
+            "./paginas/projetos-artisticos/projetos-artisticos"
+          ).then(
             (modulo) => modulo.ProjetosArtisticos,
           ),
       },
+
+      {
+        path: "projetos-externos",
+
+        loadComponent: () =>
+          import(
+            "./paginas/projetos-externos/projetos-externos"
+          ).then(
+            (modulo) => modulo.ProjetosExternos,
+          ),
+      },
+      {
+  path: "projetos-externos/:id",
+
+  loadComponent: () =>
+    import(
+      "./paginas/projeto-detalhe/projeto-detalhe"
+    ).then(
+      (modulo) => modulo.ProjetoDetalhe,
+    ),
+},
+
       {
         path: "servicos",
+
         loadComponent: () =>
           import("./paginas/servicos/servicos").then(
             (modulo) => modulo.Servicos,
           ),
       },
+
       {
         path: "faixas",
+
         loadComponent: () =>
-          import("./paginas/faixas/faixas").then((modulo) => modulo.Faixas),
-      },
-      {
-        path: "albuns",
-        loadComponent: () =>
-          import("./paginas/albuns/albuns").then((modulo) => modulo.Albuns),
-      },
-      {
-        path: "acertos",
-        loadComponent: () =>
-          import("./paginas/acertos/acertos").then((modulo) => modulo.Acertos),
-      },
-      {
-        path: "perfil",
-        loadComponent: () =>
-          import("./paginas/perfil/perfil").then((modulo) => modulo.Perfil),
+          import("./paginas/faixas/faixas").then(
+            (modulo) => modulo.Faixas,
+          ),
       },
 
-{
-  path: "experiencias",
-  loadComponent: () =>
-    import(
-      "./paginas/experiencias-imersivas/experiencias-imersivas"
-    ).then(
-      (modulo) => modulo.ExperienciasImersivas,
-    ),
-},
+      {
+        path: "albuns",
+
+        loadComponent: () =>
+          import("./paginas/albuns/albuns").then(
+            (modulo) => modulo.Albuns,
+          ),
+      },
+
+      {
+        path: "acertos",
+
+        loadComponent: () =>
+          import("./paginas/acertos/acertos").then(
+            (modulo) => modulo.Acertos,
+          ),
+      },
+
+      {
+        path: "perfil",
+
+        loadComponent: () =>
+          import("./paginas/perfil/perfil").then(
+            (modulo) => modulo.Perfil,
+          ),
+      },
+
+      {
+        path: "experiencias",
+
+        loadComponent: () =>
+          import(
+            "./paginas/experiencias-imersivas/experiencias-imersivas"
+          ).then(
+            (modulo) => modulo.ExperienciasImersivas,
+          ),
+      },
     ],
   },
+
   {
     path: "**",
+
     redirectTo: "",
   },
 ];
@@ -370,17 +601,29 @@ function identificarSuperficie(): SuperficieFleiva {
     return "app";
   }
 
-  const hostname = window.location.hostname.trim().toLocaleLowerCase();
+  const hostname =
+    window.location.hostname
+      .trim()
+      .toLocaleLowerCase();
 
-  if (hostname === "card.fleiva.com.br" || hostname === "card.localhost") {
+  if (
+    hostname === "card.fleiva.com.br" ||
+    hostname === "card.localhost"
+  ) {
     return "card";
   }
 
-  if (hostname === "casa.fleiva.com.br" || hostname === "casa.localhost") {
+  if (
+    hostname === "casa.fleiva.com.br" ||
+    hostname === "casa.localhost"
+  ) {
     return "casa";
   }
 
-  if (hostname === "play.fleiva.com.br" || hostname === "play.localhost") {
+  if (
+    hostname === "play.fleiva.com.br" ||
+    hostname === "play.localhost"
+  ) {
     return "play";
   }
 

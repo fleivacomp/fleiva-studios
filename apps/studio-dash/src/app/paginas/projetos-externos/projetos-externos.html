@@ -1,0 +1,192 @@
+<main class="pagina">
+
+  <header class="cabecalho-pagina">
+
+    <div>
+
+      <p class="sobretitulo">MEUS ACESSOS</p>
+
+      <h1>Projetos</h1>
+
+      <p>
+        Acesse os projetos aos quais você foi autorizado.
+      </p>
+
+    </div>
+
+    <div class="acoes-cabecalho">
+
+      <span>
+        {{ dadosProjetos.projetos().length }}
+
+        @if (dadosProjetos.projetos().length === 1) {
+          projeto
+        } @else {
+          projetos
+        }
+      </span>
+
+    </div>
+
+  </header>
+
+  <section
+    class="seletor-projetos"
+    aria-labelledby="titulo-seletor"
+  >
+
+    <header class="cabecalho-secao">
+
+      <div>
+
+        <p class="sobretitulo">
+          SEUS ACESSOS
+        </p>
+
+        <h2 id="titulo-seletor">
+          Projetos disponíveis
+        </h2>
+
+      </div>
+
+      <p>
+        Selecione um projeto para acessar sua central.
+      </p>
+
+    </header>
+
+    @if (dadosProjetos.carregando()) {
+
+      <div class="estado">
+        Carregando projetos...
+      </div>
+
+    } @else if (dadosProjetos.erro()) {
+
+      <div class="estado estado-erro">
+
+        <p>
+          {{ dadosProjetos.erro() }}
+        </p>
+
+        <button
+          type="button"
+          class="botao secundario"
+          (click)="dadosProjetos.listar()"
+        >
+          Tentar novamente
+        </button>
+
+      </div>
+
+    } @else if (dadosProjetos.projetos().length === 0) {
+
+      <div class="estado-vazio">
+
+        <div>
+
+          <p class="sobretitulo">
+            SEM ACESSOS
+          </p>
+
+          <h3>
+            Nenhum projeto disponível.
+          </h3>
+
+          <p>
+            Você ainda não possui acesso a nenhum projeto.
+          </p>
+
+        </div>
+
+      </div>
+
+    } @else {
+
+      <div class="lista-projetos">
+
+        @for (
+          projeto of dadosProjetos.projetos();
+          track projeto.id
+
+
+        ) {
+
+          <a
+            class="item-projeto"
+            [routerLink]="[
+              '/projetos-externos',
+              projeto.id
+            ]"
+          >
+
+            <span class="miniatura">
+
+              @if (
+                dadosProjetos.capaUrl(projeto);
+                as capaUrl
+              ) {
+
+                <img
+                  [src]="capaUrl"
+                  [alt]="''"
+                />
+
+              } @else {
+
+                <span aria-hidden="true">
+                  {{
+                    projeto.nome
+                      .charAt(0)
+                      .toLocaleUpperCase('pt-BR')
+                  }}
+
+                </span>
+
+              }
+
+            </span>
+
+            <span class="dados-item">
+
+             <strong>
+  {{ projeto.nome }}
+</strong>
+
+@if (projeto.estudio) {
+
+  <small>
+    {{ projeto.estudio.nome }}
+  </small>
+
+}
+
+@if (projeto.tipo) {
+
+  <small>
+    {{ projeto.tipo }}
+  </small>
+
+}
+
+            </span>
+
+            <span
+              class="seta"
+              aria-hidden="true"
+            >
+              →
+            </span>
+
+          </a>
+
+        }
+
+      </div>
+
+    }
+
+  </section>
+
+</main>
+
