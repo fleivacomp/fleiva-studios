@@ -3,6 +3,7 @@ import {
   ElementRef,
   OnDestroy,
   OnInit,
+  booleanAttribute,
   effect,
   inject,
   input,
@@ -45,7 +46,7 @@ export class ExperienciaImersivaPublica
   readonly modoTeste = signal(false);
   readonly experienciaIdEntrada = input<string | null>(null);
   readonly modoTesteEntrada = input(false);
-  readonly integrado = input(false);
+  readonly integrado = input(false, { transform: booleanAttribute });
 
   readonly blocoEmFocoId = signal<string | null>(null);
   readonly blocoSonoroId = signal<string | null>(null);

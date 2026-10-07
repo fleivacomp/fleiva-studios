@@ -50,6 +50,40 @@
         }
       }
     },
+"build-widget": {
+      "executor": "@angular/build:application",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "defaultConfiguration": "production",
+      "options": {
+        "outputPath": "dist/apps/studio-dash-widget",
+        "browser": "apps/studio-dash/src/main-widget.ts",
+        "tsConfig": "apps/studio-dash/tsconfig.app.json",
+        "inlineStyleLanguage": "scss",
+        "assets": [
+          {
+            "glob": "**/*",
+            "input": "apps/studio-dash/public"
+          }
+        ],
+        "styles": [
+        ],
+        "outputHashing": "none"
+      },
+      "configurations": {
+        "production": {
+          "optimization": false,
+          "outputHashing": "none"
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true,
+          "outputHashing": "none"
+        }
+      }
+    },
     "serve": {
       "continuous": true,
       "executor": "@angular/build:dev-server",

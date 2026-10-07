@@ -108,29 +108,12 @@
             <span>Escolher arquivo</span>
 
             <input
-              #inputLogo
               type="file"
               accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+              [disabled]="enviandoLogo() || removendoLogo()"
               (change)="selecionarLogo($event)"
             />
           </label>
-
-          <button
-            type="button"
-            class="botao-claro"
-            [disabled]="
-              !arquivoSelecionado() ||
-              enviandoLogo() ||
-              removendoLogo()
-            "
-            (click)="enviarLogo(inputLogo)"
-          >
-            @if (enviandoLogo()) {
-              Enviando...
-            } @else {
-              Atualizar logo
-            }
-          </button>
 
           @if (estudio.logo_caminho) {
             <button
@@ -888,5 +871,13 @@
     }
   </section>
 }
+  }
+
+  @if (arquivoParaRecortar(); as arquivo) {
+    <app-cropper-logo
+      [arquivo]="arquivo"
+      (confirmado)="aplicarCropper($event)"
+      (cancelado)="cancelarCropper()"
+    />
   }
 </main>

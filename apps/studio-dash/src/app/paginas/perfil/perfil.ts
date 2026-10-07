@@ -25,11 +25,12 @@ type ProvedorEmbedPublico,
   type ConfiguracaoPublicaEstudio,
   type TemaPaginaPublica,
 } from '@fleiva-studios/shared-data-access';
+import { CropperLogo } from './cropper-logo';
 
 @Component({
   selector: 'app-perfil',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, CropperLogo],
   templateUrl: './perfil.html',
   styleUrl: './perfil.scss',
 })
@@ -55,6 +56,7 @@ export class Perfil implements OnInit {
   readonly salvandoEmbeds = signal(false);
 readonly embedsPrevia = signal<EmbedPublico[]>([]);
 readonly erroEmbeds = signal<string | null>(null);
+readonly arquivoParaRecortar = signal<File | null>(null);
 readonly mensagemEmbeds = signal<string | null>(null);
   readonly temaPaginaPublicaPrevia =
     signal<TemaPaginaPublica>('grafite');
@@ -393,44 +395,48 @@ urlPaginaPublica(): string {
   }
 
   selecionarLogo(evento: Event): void {
-    const input = evento.target as HTMLInputElement;
-    const arquivo = input.files?.item(0) ?? null;
+  const input = evento.target as HTMLInputElement;
+  const arquivo = input.files?.item(0) ?? null;
 
-    this.arquivoSelecionado.set(arquivo);
-    this.limparRetornoOperacao();
+  if (!arquivo) {
+    return;
   }
 
-  async enviarLogo(
-    inputArquivo: HTMLInputElement,
-  ): Promise<void> {
-    const arquivo = this.arquivoSelecionado();
+  this.arquivoParaRecortar.set(arquivo);
+  this.arquivoSelecionado.set(arquivo);
+  this.limparRetornoOperacao();
+}
 
-    if (!arquivo) {
-      this.erroOperacao.set(
-        'Selecione uma imagem para enviar.',
-      );
-      return;
-    }
+cancelarCropper(): void {
+  this.arquivoParaRecortar.set(null);
+  this.arquivoSelecionado.set(null);
+}
 
-    this.enviandoLogo.set(true);
-    this.limparRetornoOperacao();
-
-    try {
-      await this.dadosEstudio.enviarLogo(arquivo);
-
-      this.arquivoSelecionado.set(null);
-      inputArquivo.value = '';
-      this.mensagemOperacao.set(
-        'Logo do estúdio atualizado.',
-      );
-    } catch (erro) {
-      this.erroOperacao.set(
-        this.obterMensagemErro(erro),
-      );
-    } finally {
-      this.enviandoLogo.set(false);
-    }
+async aplicarCropper(blob: Blob): Promise<void> {
+  if (this.enviandoLogo()) {
+    return;
   }
+
+  this.enviandoLogo.set(true);
+  this.limparRetornoOperacao();
+
+  try {
+    const arquivo = new File([blob], 'logo.webp', {
+      type: 'image/webp',
+    });
+
+    await this.dadosEstudio.enviarLogo(arquivo);
+
+    this.arquivoParaRecortar.set(null);
+    this.arquivoSelecionado.set(null);
+    this.mensagemOperacao.set('Logo do estúdio atualizada.');
+  } catch (erro) {
+    this.erroOperacao.set(this.obterMensagemErro(erro));
+  } finally {
+    this.enviandoLogo.set(false);
+  }
+}
+
 
   async removerLogo(): Promise<void> {
     const confirmou = window.confirm(

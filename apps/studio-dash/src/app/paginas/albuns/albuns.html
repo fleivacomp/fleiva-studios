@@ -396,6 +396,26 @@
       [class.publicado]="album.publico_na_landing"
     >
       <header class="cabecalho-publicacao">
+        @if (!albumPertenceAoUsuario(album)) {
+<div class="controle-casa">
+  <div>
+    <p class="rotulo-menor">SUA PÁGINA</p>
+    <strong>Publicar este trabalho na sua página</strong>
+    <span>
+      Este trabalho foi criado por outro usuário do projeto.
+      Você pode publicá-lo na sua página pública também.
+    </span>
+  </div>
+  <button
+    type="button"
+    [disabled]="publicandoNaMinhaPaginaId() === album.id"
+    (click)="publicarNaMinhaPagina(album)"
+  >
+    @if (publicandoNaMinhaPaginaId() === album.id) { Publicando... }
+    @else { Publicar na minha página }
+  </button>
+</div>
+}
         <div>
           <p class="rotulo-menor">PÁGINA PÚBLICA</p>
           <h2>Apresente este trabalho</h2>

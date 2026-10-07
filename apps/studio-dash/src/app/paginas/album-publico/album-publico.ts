@@ -255,11 +255,37 @@ constructor() {
     this.tempoAtual.set(tempo);
   }
 
-  aoEncerrar(): void {
-    this.reproduzindo.set(false);
-    this.tempoAtual.set(0);
+  aoEncerrar(audio: HTMLAudioElement): void {
+  this.reproduzindo.set(false);
+  this.tempoAtual.set(0);
+
+  const album = this.dados.album();
+  const faixaAtualId = this.faixaAtivaId();
+
+  if (!album || !faixaAtualId) {
+    return;
   }
 
+  const faixas = album.faixas;
+  const indiceAtual = faixas.findIndex(
+    (faixa) => faixa.id === faixaAtualId,
+  );
+
+  if (indiceAtual < 0) {
+    return;
+  }
+
+  const proxima = faixas[indiceAtual + 1];
+
+  if (!proxima) {
+    // Era a última faixa — encerra de vez.
+    this.faixaAtivaId.set(null);
+    this.duracao.set(0);
+    return;
+  }
+
+  void this.reproduzir(proxima, audio);
+}
   formatarOrdem(ordem: number): string {
     return String(ordem).padStart(2, '0');
   }

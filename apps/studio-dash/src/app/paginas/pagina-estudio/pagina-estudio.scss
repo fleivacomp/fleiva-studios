@@ -731,7 +731,7 @@
   border: 0.0625rem solid var(--borda-forte);
 
   &:not(.sem-logo) {
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 1;
   }
 
   img {
@@ -742,7 +742,7 @@
     height: 100%;
     max-width: none;
     max-height: none;
-    object-fit: scale-down;
+    object-fit: cover;
     object-position: center;
   }
 
@@ -1654,7 +1654,7 @@
 
   /* logo com proporção mais panorâmica, ocupa menos altura */
   .logo-grande:not(.sem-logo) {
-    aspect-ratio: 16 / 10;
+    aspect-ratio: 1;
     min-height: 0;
   }
 

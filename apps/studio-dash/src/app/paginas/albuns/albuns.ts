@@ -350,7 +350,46 @@ export class Albuns implements OnInit {
       this.erroOperacao.set(this.obterMensagemErro(erro));
     }
   }
+readonly publicandoNaMinhaPaginaId = signal<string | null>(null);
 
+albumPertenceAoUsuario(album: AlbumCompleto): boolean {
+  const estudioId = this.dadosEstudio.estudio()?.id;
+
+  return !!estudioId && album.estudio_id === estudioId;
+}
+
+async publicarNaMinhaPagina(album: AlbumCompleto): Promise<void> {
+  if (this.publicandoNaMinhaPaginaId()) {
+    return;
+  }
+
+  if (album.faixas.length === 0) {
+    this.erroOperacao.set("Adicione pelo menos uma faixa antes de publicar.");
+    return;
+  }
+
+  this.publicandoNaMinhaPaginaId.set(album.id);
+  this.limparRetorno();
+
+  try {
+    const valor = this.formularioPublicacao.getRawValue();
+
+    const configuracao: ConfiguracaoPublicacaoAlbum = {
+      tipo_publico: this.normalizarTextoOpcional(valor.tipo_publico),
+      descricao_publica: this.normalizarTextoOpcional(valor.descricao_publica),
+      reproducao_publica: valor.reproducao_publica,
+      download_publico: valor.download_publico,
+    };
+
+    await this.dadosAlbuns.publicarNaMinhaPagina(album.id, configuracao);
+
+    this.mensagemOperacao.set("Trabalho publicado na sua página.");
+  } catch (erro) {
+    this.erroOperacao.set(this.obterMensagemErro(erro));
+  } finally {
+    this.publicandoNaMinhaPaginaId.set(null);
+  }
+}
   async copiarLink(album: AlbumCompleto): Promise<void> {
     if (!album.publico_na_landing || this.copiandoLinkId()) {
       if (!album.publico_na_landing) {

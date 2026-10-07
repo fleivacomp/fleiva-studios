@@ -416,3 +416,33 @@ button {
     transition-duration: 0.01ms !important;
   }
 }
+
+main.leitor.is-integrado {
+  background: transparent !important;
+  font-family: inherit !important;
+  color: inherit !important;
+  box-shadow: none !important;
+  height: auto;
+  min-height: 100%;
+  width: 100%;
+  position: relative;
+
+  h1, h2, h3, h4, h5, h6, p, span, pre, strong, small {
+    font-family: inherit !important;
+    color: inherit !important;
+    background: transparent !important;
+  }
+
+  button {
+    font-family: inherit !important;
+    background: transparent !important;
+    color: inherit !important;
+    border: 1px solid currentColor !important;
+  }
+
+  .abertura, .publicacao {
+    padding-top: 1rem;
+    min-height: auto;
+    background: transparent !important;
+  }
+}

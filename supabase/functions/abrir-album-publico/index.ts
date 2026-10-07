@@ -47,14 +47,21 @@ interface ItemAlbumConsultado {
 interface AlbumConsultado {
   id: string;
   nome: string;
-  tipo_publico: string | null;
-  descricao_publica: string | null;
   capa_caminho: string | null;
-  reproducao_publica: boolean;
-  download_publico: boolean;
   projeto:
     | ProjetoConsultado
     | ProjetoConsultado[]
+    | null;
+}
+
+interface PublicacaoConsultada {
+  tipo_publico: string | null;
+  descricao_publica: string | null;
+  reproducao_publica: boolean;
+  download_publico: boolean;
+  album:
+    | AlbumConsultado
+    | AlbumConsultado[]
     | null;
 }
 
@@ -162,26 +169,28 @@ Deno.serve(async (requisicao) => {
       return responderIndisponivel();
     }
 
-    const [resultadoAlbum, resultadoItens] =
+    const [resultadoPublicacao, resultadoItens] =
       await Promise.all([
         clienteSupabase
-          .from('albuns')
+          .from('publicacoes_album')
           .select(`
-            id,
-            nome,
             tipo_publico,
             descricao_publica,
-            capa_caminho,
             reproducao_publica,
             download_publico,
-            projeto:projetos_artisticos!albuns_projeto_id_fkey (
+            album:albuns!publicacoes_album_album_id_fkey (
+              id,
               nome,
-              capa_caminho
+              capa_caminho,
+              projeto:projetos_artisticos!albuns_projeto_id_fkey (
+                nome,
+                capa_caminho
+              )
             )
           `)
-          .eq('id', albumId)
+          .eq('album_id', albumId)
           .eq('estudio_id', estudio.id)
-          .eq('publico_na_landing', true)
+          .eq('publico', true)
           .maybeSingle(),
 
         clienteSupabase
@@ -208,20 +217,28 @@ Deno.serve(async (requisicao) => {
           }),
       ]);
 
-    if (resultadoAlbum.error) {
-      throw resultadoAlbum.error;
+    if (resultadoPublicacao.error) {
+      throw resultadoPublicacao.error;
     }
 
     if (resultadoItens.error) {
       throw resultadoItens.error;
     }
 
-    if (!resultadoAlbum.data) {
+    if (!resultadoPublicacao.data) {
       return responderIndisponivel();
     }
 
-    const album =
-      resultadoAlbum.data as unknown as AlbumConsultado;
+    const publicacao =
+      resultadoPublicacao.data as unknown as PublicacaoConsultada;
+
+    const album = obterPrimeiroRegistro(
+      publicacao.album,
+    );
+
+    if (!album) {
+      return responderIndisponivel();
+    }
 
     const projeto = obterPrimeiroRegistro(
       album.projeto,
@@ -294,14 +311,14 @@ Deno.serve(async (requisicao) => {
 
       if (
         acao === 'reproducao' &&
-        !album.reproducao_publica
+        !publicacao.reproducao_publica
       ) {
         return responderIndisponivel();
       }
 
       if (
         acao === 'download' &&
-        !album.download_publico
+        !publicacao.download_publico
       ) {
         return responderIndisponivel();
       }
@@ -375,16 +392,16 @@ Deno.serve(async (requisicao) => {
         id: album.id,
         nome: album.nome,
         projeto: projeto.nome,
-        tipo: album.tipo_publico,
-        descricao: album.descricao_publica,
+        tipo: publicacao.tipo_publico,
+        descricao: publicacao.descricao_publica,
         capa_url: criarUrlPublica(
           URL_PUBLICA_CAPAS,
           caminhoCapa,
         ),
         reproducao_publica:
-          album.reproducao_publica,
+          publicacao.reproducao_publica,
         download_publico:
-          album.download_publico,
+          publicacao.download_publico,
         faixas,
       },
       arquivo,

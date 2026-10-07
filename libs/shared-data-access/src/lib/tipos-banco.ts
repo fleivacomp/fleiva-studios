@@ -7,19 +7,18 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
-
   graphql_public: {
     Tables: {
       [_ in never]: never
     }
-
     Views: {
       [_ in never]: never
     }
-
     Functions: {
       graphql: {
         Args: {
@@ -28,20 +27,16 @@ export type Database = {
           query?: string
           variables?: Json
         }
-
         Returns: Json
       }
     }
-
     Enums: {
       [_ in never]: never
     }
-
     CompositeTypes: {
       [_ in never]: never
     }
   }
-
   public: {
     Tables: {
       acoes_bloco_experiencia_imersiva: {
@@ -58,7 +53,6 @@ export type Database = {
           parametros: Json
           recurso_id: string | null
         }
-
         Insert: {
           acao: string
           atualizado_em?: string
@@ -72,7 +66,6 @@ export type Database = {
           parametros?: Json
           recurso_id?: string | null
         }
-
         Update: {
           acao?: string
           atualizado_em?: string
@@ -86,7 +79,6 @@ export type Database = {
           parametros?: Json
           recurso_id?: string | null
         }
-
         Relationships: [
           {
             foreignKeyName: "acoes_bloco_experiencia_imersiva_bloco_fkey"
@@ -104,7 +96,6 @@ export type Database = {
           },
         ]
       }
-
       agendamento_servicos: {
         Row: {
           agendamento_id: string
@@ -112,21 +103,18 @@ export type Database = {
           quantidade: number
           servico_id: string
         }
-
         Insert: {
           agendamento_id: string
           estudio_id: string
           quantidade?: number
           servico_id: string
         }
-
         Update: {
           agendamento_id?: string
           estudio_id?: string
           quantidade?: number
           servico_id?: string
         }
-
         Relationships: [
           {
             foreignKeyName: "agendamento_servicos_agendamento_id_estudio_id_fkey"
@@ -151,7 +139,6 @@ export type Database = {
           },
         ]
       }
-
       agendamentos: {
         Row: {
           contato_id: string
@@ -163,7 +150,6 @@ export type Database = {
           observacoes_fechamento: string | null
           resultado: string | null
         }
-
         Insert: {
           contato_id: string
           estudio_id: string
@@ -174,7 +160,6 @@ export type Database = {
           observacoes_fechamento?: string | null
           resultado?: string | null
         }
-
         Update: {
           contato_id?: string
           estudio_id?: string
@@ -185,7 +170,6 @@ export type Database = {
           observacoes_fechamento?: string | null
           resultado?: string | null
         }
-
         Relationships: [
           {
             foreignKeyName: "agendamentos_contato_id_estudio_id_fkey"
@@ -203,7 +187,6 @@ export type Database = {
           },
         ]
       }
-
       album_faixas: {
         Row: {
           album_id: string
@@ -212,7 +195,6 @@ export type Database = {
           ordem: number
           versao_id: string
         }
-
         Insert: {
           album_id: string
           criado_em?: string
@@ -220,7 +202,6 @@ export type Database = {
           ordem: number
           versao_id: string
         }
-
         Update: {
           album_id?: string
           criado_em?: string
@@ -228,7 +209,6 @@ export type Database = {
           ordem?: number
           versao_id?: string
         }
-
         Relationships: [
           {
             foreignKeyName: "album_faixas_album_id_fkey"
@@ -246,7 +226,6 @@ export type Database = {
           },
         ]
       }
-
       albuns: {
         Row: {
           atualizado_em: string
@@ -266,7 +245,6 @@ export type Database = {
           tipo_publico: string | null
           token_compartilhamento: string | null
         }
-
         Insert: {
           atualizado_em?: string
           capa_caminho?: string | null
@@ -285,7 +263,6 @@ export type Database = {
           tipo_publico?: string | null
           token_compartilhamento?: string | null
         }
-
         Update: {
           atualizado_em?: string
           capa_caminho?: string | null
@@ -304,7 +281,6 @@ export type Database = {
           tipo_publico?: string | null
           token_compartilhamento?: string | null
         }
-
         Relationships: [
           {
             foreignKeyName: "albuns_estudio_id_fkey"
@@ -322,7 +298,6 @@ export type Database = {
           },
         ]
       }
-
       armazenamento_estudios: {
         Row: {
           atualizado_em: string
@@ -330,21 +305,18 @@ export type Database = {
           estudio_id: string
           limite_bytes: number
         }
-
         Insert: {
           atualizado_em?: string
           criado_em?: string
           estudio_id: string
           limite_bytes: number
         }
-
         Update: {
           atualizado_em?: string
           criado_em?: string
           estudio_id?: string
           limite_bytes?: number
         }
-
         Relationships: [
           {
             foreignKeyName: "armazenamento_estudios_estudio_id_fkey"
@@ -355,7 +327,6 @@ export type Database = {
           },
         ]
       }
-
       blocos_experiencia_imersiva: {
         Row: {
           atualizado_em: string
@@ -369,7 +340,6 @@ export type Database = {
           ordem: number
           teto_temporal_segundos: number | null
         }
-
         Insert: {
           atualizado_em?: string
           conteudo?: string | null
@@ -382,7 +352,6 @@ export type Database = {
           ordem: number
           teto_temporal_segundos?: number | null
         }
-
         Update: {
           atualizado_em?: string
           conteudo?: string | null
@@ -395,7 +364,6 @@ export type Database = {
           ordem?: number
           teto_temporal_segundos?: number | null
         }
-
         Relationships: [
           {
             foreignKeyName: "blocos_experiencia_imersiva_experiencia_fkey"
@@ -406,7 +374,6 @@ export type Database = {
           },
         ]
       }
-
       casa_ocultacoes: {
         Row: {
           conteudo_id: string
@@ -415,7 +382,6 @@ export type Database = {
           ocultado_por: string | null
           tipo_conteudo: string
         }
-
         Insert: {
           conteudo_id: string
           motivo?: string | null
@@ -423,7 +389,6 @@ export type Database = {
           ocultado_por?: string | null
           tipo_conteudo: string
         }
-
         Update: {
           conteudo_id?: string
           motivo?: string | null
@@ -431,10 +396,8 @@ export type Database = {
           ocultado_por?: string | null
           tipo_conteudo?: string
         }
-
         Relationships: []
       }
-
       cobranca_itens: {
         Row: {
           agendamento_id: string | null
@@ -447,7 +410,6 @@ export type Database = {
           quantidade: number
           valor_unitario: number
         }
-
         Insert: {
           agendamento_id?: string | null
           atualizado_em?: string
@@ -459,7 +421,6 @@ export type Database = {
           quantidade?: number
           valor_unitario: number
         }
-
         Update: {
           agendamento_id?: string | null
           atualizado_em?: string
@@ -471,7 +432,6 @@ export type Database = {
           quantidade?: number
           valor_unitario?: number
         }
-
         Relationships: [
           {
             foreignKeyName: "cobranca_itens_agendamento_estudio_fkey"
@@ -503,7 +463,6 @@ export type Database = {
           },
         ]
       }
-
       cobrancas: {
         Row: {
           atualizado_em: string
@@ -515,7 +474,6 @@ export type Database = {
           observacoes: string | null
           vencimento_em: string | null
         }
-
         Insert: {
           atualizado_em?: string
           contato_id: string
@@ -526,7 +484,6 @@ export type Database = {
           observacoes?: string | null
           vencimento_em?: string | null
         }
-
         Update: {
           atualizado_em?: string
           contato_id?: string
@@ -537,7 +494,6 @@ export type Database = {
           observacoes?: string | null
           vencimento_em?: string | null
         }
-
         Relationships: [
           {
             foreignKeyName: "cobrancas_contato_estudio_fkey"
@@ -555,29 +511,24 @@ export type Database = {
           },
         ]
       }
-
       configuracoes_casa: {
         Row: {
           atualizado_em: string
           id: string
           limite_trabalhos_por_estudio: number
         }
-
         Insert: {
           atualizado_em?: string
           id: string
           limite_trabalhos_por_estudio: number
         }
-
         Update: {
           atualizado_em?: string
           id?: string
           limite_trabalhos_por_estudio?: number
         }
-
         Relationships: []
       }
-
       contatos: {
         Row: {
           atualizado_em: string
@@ -591,7 +542,6 @@ export type Database = {
           status_acesso: string
           telefone: string | null
         }
-
         Insert: {
           atualizado_em?: string
           auth_user_id?: string | null
@@ -604,7 +554,6 @@ export type Database = {
           status_acesso?: string
           telefone?: string | null
         }
-
         Update: {
           atualizado_em?: string
           auth_user_id?: string | null
@@ -617,7 +566,6 @@ export type Database = {
           status_acesso?: string
           telefone?: string | null
         }
-
         Relationships: [
           {
             foreignKeyName: "contatos_estudio_id_fkey"
@@ -628,7 +576,6 @@ export type Database = {
           },
         ]
       }
-
       estudios: {
         Row: {
           atualizado_em: string
@@ -649,7 +596,6 @@ export type Database = {
           tema_pagina_publica: string | null
           whatsapp_publico: string | null
         }
-
         Insert: {
           atualizado_em?: string
           cidade?: string | null
@@ -669,7 +615,6 @@ export type Database = {
           tema_pagina_publica?: string | null
           whatsapp_publico?: string | null
         }
-
         Update: {
           atualizado_em?: string
           cidade?: string | null
@@ -689,10 +634,8 @@ export type Database = {
           tema_pagina_publica?: string | null
           whatsapp_publico?: string | null
         }
-
         Relationships: []
       }
-
       experiencias_imersivas: {
         Row: {
           album_id: string | null
@@ -703,7 +646,6 @@ export type Database = {
           nome: string
           publicada_em: string | null
         }
-
         Insert: {
           album_id?: string | null
           atualizado_em?: string
@@ -713,7 +655,6 @@ export type Database = {
           nome: string
           publicada_em?: string | null
         }
-
         Update: {
           album_id?: string | null
           atualizado_em?: string
@@ -723,7 +664,6 @@ export type Database = {
           nome?: string
           publicada_em?: string | null
         }
-
         Relationships: [
           {
             foreignKeyName: "experiencias_imersivas_album_id_fkey"
@@ -741,7 +681,6 @@ export type Database = {
           },
         ]
       }
-
       faixas: {
         Row: {
           atualizado_em: string
@@ -757,7 +696,6 @@ export type Database = {
           tom: string | null
           versao_principal_id: string | null
         }
-
         Insert: {
           atualizado_em?: string
           bpm?: number | null
@@ -772,7 +710,6 @@ export type Database = {
           tom?: string | null
           versao_principal_id?: string | null
         }
-
         Update: {
           atualizado_em?: string
           bpm?: number | null
@@ -787,7 +724,6 @@ export type Database = {
           tom?: string | null
           versao_principal_id?: string | null
         }
-
         Relationships: [
           {
             foreignKeyName: "faixas_estudio_id_fkey"
@@ -812,7 +748,6 @@ export type Database = {
           },
         ]
       }
-
       membros_projeto: {
         Row: {
           ativo: boolean
@@ -822,12 +757,11 @@ export type Database = {
           estudio_id: string
           id: string
           papel: string
-          projeto_id: string
           pode_acessar: boolean
-          pode_enviar: boolean
           pode_comentar: boolean
+          pode_enviar: boolean
+          projeto_id: string
         }
-
         Insert: {
           ativo?: boolean
           atualizado_em?: string
@@ -836,12 +770,11 @@ export type Database = {
           estudio_id: string
           id?: string
           papel: string
-          projeto_id: string
           pode_acessar?: boolean
-          pode_enviar?: boolean
           pode_comentar?: boolean
+          pode_enviar?: boolean
+          projeto_id: string
         }
-
         Update: {
           ativo?: boolean
           atualizado_em?: string
@@ -850,12 +783,11 @@ export type Database = {
           estudio_id?: string
           id?: string
           papel?: string
-          projeto_id?: string
           pode_acessar?: boolean
-          pode_enviar?: boolean
           pode_comentar?: boolean
+          pode_enviar?: boolean
+          projeto_id?: string
         }
-
         Relationships: [
           {
             foreignKeyName: "membros_projeto_contato_estudio_id_fkey"
@@ -880,7 +812,6 @@ export type Database = {
           },
         ]
       }
-
       pagamentos: {
         Row: {
           cobranca_id: string
@@ -893,7 +824,6 @@ export type Database = {
           pago_em: string
           valor: number
         }
-
         Insert: {
           cobranca_id: string
           criado_em?: string
@@ -905,7 +835,6 @@ export type Database = {
           pago_em?: string
           valor: number
         }
-
         Update: {
           cobranca_id?: string
           criado_em?: string
@@ -917,7 +846,6 @@ export type Database = {
           pago_em?: string
           valor?: number
         }
-
         Relationships: [
           {
             foreignKeyName: "pagamentos_cobranca_estudio_fkey"
@@ -949,7 +877,6 @@ export type Database = {
           },
         ]
       }
-
       projetos_artisticos: {
         Row: {
           atualizado_em: string
@@ -960,7 +887,6 @@ export type Database = {
           nome: string
           tipo: string
         }
-
         Insert: {
           atualizado_em?: string
           capa_caminho?: string | null
@@ -970,7 +896,6 @@ export type Database = {
           nome: string
           tipo?: string
         }
-
         Update: {
           atualizado_em?: string
           capa_caminho?: string | null
@@ -980,7 +905,6 @@ export type Database = {
           nome?: string
           tipo?: string
         }
-
         Relationships: [
           {
             foreignKeyName: "projetos_artisticos_estudio_id_fkey"
@@ -991,7 +915,60 @@ export type Database = {
           },
         ]
       }
-
+      publicacoes_album: {
+        Row: {
+          album_id: string
+          atualizado_em: string
+          criado_em: string
+          descricao_publica: string | null
+          download_publico: boolean
+          estudio_id: string
+          id: string
+          publico: boolean
+          reproducao_publica: boolean
+          tipo_publico: string | null
+        }
+        Insert: {
+          album_id: string
+          atualizado_em?: string
+          criado_em?: string
+          descricao_publica?: string | null
+          download_publico?: boolean
+          estudio_id: string
+          id?: string
+          publico?: boolean
+          reproducao_publica?: boolean
+          tipo_publico?: string | null
+        }
+        Update: {
+          album_id?: string
+          atualizado_em?: string
+          criado_em?: string
+          descricao_publica?: string | null
+          download_publico?: boolean
+          estudio_id?: string
+          id?: string
+          publico?: boolean
+          reproducao_publica?: boolean
+          tipo_publico?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publicacoes_album_album_id_fkey"
+            columns: ["album_id"]
+            isOneToOne: false
+            referencedRelation: "albuns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "publicacoes_album_estudio_id_fkey"
+            columns: ["estudio_id"]
+            isOneToOne: false
+            referencedRelation: "estudios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recursos_experiencia_imersiva: {
         Row: {
           atualizado_em: string
@@ -1008,7 +985,6 @@ export type Database = {
           tipo_mime: string | null
           versao_id: string | null
         }
-
         Insert: {
           atualizado_em?: string
           chave_objeto?: string | null
@@ -1024,7 +1000,6 @@ export type Database = {
           tipo_mime?: string | null
           versao_id?: string | null
         }
-
         Update: {
           atualizado_em?: string
           chave_objeto?: string | null
@@ -1040,7 +1015,6 @@ export type Database = {
           tipo_mime?: string | null
           versao_id?: string | null
         }
-
         Relationships: [
           {
             foreignKeyName: "recursos_experiencia_imersiva_experiencia_fkey"
@@ -1058,7 +1032,6 @@ export type Database = {
           },
         ]
       }
-
       servicos: {
         Row: {
           duracao_minutos: number | null
@@ -1069,7 +1042,6 @@ export type Database = {
           publico_na_landing: boolean
           tipo_cobranca: string
         }
-
         Insert: {
           duracao_minutos?: number | null
           estudio_id: string
@@ -1079,7 +1051,6 @@ export type Database = {
           publico_na_landing?: boolean
           tipo_cobranca: string
         }
-
         Update: {
           duracao_minutos?: number | null
           estudio_id?: string
@@ -1089,7 +1060,6 @@ export type Database = {
           publico_na_landing?: boolean
           tipo_cobranca?: string
         }
-
         Relationships: [
           {
             foreignKeyName: "servicos_estudio_id_fkey"
@@ -1100,7 +1070,6 @@ export type Database = {
           },
         ]
       }
-
       versoes_faixa: {
         Row: {
           chave_objeto: string
@@ -1118,7 +1087,6 @@ export type Database = {
           token_compartilhamento: string | null
           versao: string
         }
-
         Insert: {
           chave_objeto: string
           confirmado_em?: string | null
@@ -1135,7 +1103,6 @@ export type Database = {
           token_compartilhamento?: string | null
           versao: string
         }
-
         Update: {
           chave_objeto?: string
           confirmado_em?: string | null
@@ -1152,7 +1119,6 @@ export type Database = {
           token_compartilhamento?: string | null
           versao?: string
         }
-
         Relationships: [
           {
             foreignKeyName: "versoes_faixa_faixa_estudio_fkey"
@@ -1164,7 +1130,6 @@ export type Database = {
         ]
       }
     }
-
     Views: {
       cobrancas_resumo: {
         Row: {
@@ -1180,7 +1145,6 @@ export type Database = {
           valor_total: number | null
           vencimento_em: string | null
         }
-
         Relationships: [
           {
             foreignKeyName: "cobrancas_contato_estudio_fkey"
@@ -1199,7 +1163,6 @@ export type Database = {
         ]
       }
     }
-
     Functions: {
       calcular_uso_armazenamento_estudio: {
         Args: {
@@ -1209,31 +1172,21 @@ export type Database = {
         }
         Returns: number
       }
-
       cancelar_reserva_upload_faixa: {
-        Args: {
-          p_versao_id: string
-        }
+        Args: { p_versao_id: string }
         Returns: undefined
       }
-
       cancelar_reserva_upload_recurso_experiencia: {
-        Args: {
-          p_recurso_id: string
-        }
+        Args: { p_recurso_id: string }
         Returns: undefined
       }
-
       confirmar_upload_faixa: {
-        Args: {
-          p_tamanho_bytes_real: number
-          p_versao_id: string
-        }
-
+        Args: { p_tamanho_bytes_real: number; p_versao_id: string }
         Returns: {
           chave_objeto: string
           confirmado_em: string | null
           criado_em: string
+          criado_por: string | null
           estudio_id: string
           faixa_id: string
           id: string
@@ -1245,7 +1198,6 @@ export type Database = {
           token_compartilhamento: string | null
           versao: string
         }
-
         SetofOptions: {
           from: "*"
           to: "versoes_faixa"
@@ -1253,18 +1205,17 @@ export type Database = {
           isSetofReturn: false
         }
       }
-
       confirmar_upload_faixa_execucao: {
         Args: {
           p_estudio_id: string
           p_tamanho_bytes_real: number
           p_versao_id: string
         }
-
         Returns: {
           chave_objeto: string
           confirmado_em: string | null
           criado_em: string
+          criado_por: string | null
           estudio_id: string
           faixa_id: string
           id: string
@@ -1276,7 +1227,6 @@ export type Database = {
           token_compartilhamento: string | null
           versao: string
         }
-
         SetofOptions: {
           from: "*"
           to: "versoes_faixa"
@@ -1284,18 +1234,17 @@ export type Database = {
           isSetofReturn: false
         }
       }
-
       confirmar_upload_faixa_interno: {
         Args: {
           p_estudio_id: string
           p_tamanho_bytes_real: number
           p_versao_id: string
         }
-
         Returns: {
           chave_objeto: string
           confirmado_em: string | null
           criado_em: string
+          criado_por: string | null
           estudio_id: string
           faixa_id: string
           id: string
@@ -1307,7 +1256,6 @@ export type Database = {
           token_compartilhamento: string | null
           versao: string
         }
-
         SetofOptions: {
           from: "*"
           to: "versoes_faixa"
@@ -1315,14 +1263,12 @@ export type Database = {
           isSetofReturn: false
         }
       }
-
       confirmar_upload_recurso_experiencia_interno: {
         Args: {
           p_estudio_id: string
           p_recurso_id: string
           p_tamanho_bytes_real: number
         }
-
         Returns: {
           atualizado_em: string
           chave_objeto: string | null
@@ -1338,7 +1284,6 @@ export type Database = {
           tipo_mime: string | null
           versao_id: string | null
         }
-
         SetofOptions: {
           from: "*"
           to: "recursos_experiencia_imersiva"
@@ -1346,7 +1291,30 @@ export type Database = {
           isSetofReturn: false
         }
       }
-
+      contato_pode_enviar_no_projeto: {
+        Args: { p_projeto_id: string }
+        Returns: boolean
+      }
+      contato_pode_ver_contato_no_projeto: {
+        Args: { p_contato_id: string }
+        Returns: boolean
+      }
+      contato_pode_ver_participante: {
+        Args: { p_contato_id: string }
+        Returns: boolean
+      }
+      contato_tem_acesso_projeto: {
+        Args: { p_projeto_id: string }
+        Returns: boolean
+      }
+      contato_tem_acesso_projeto_membros: {
+        Args: { p_estudio_id: string; p_projeto_id: string }
+        Returns: boolean
+      }
+      contato_tem_modulo_no_estudio: {
+        Args: { p_estudio_id: string; p_modulo: string }
+        Returns: boolean
+      }
       criar_agendamento: {
         Args: {
           p_contato_id: string
@@ -1356,7 +1324,6 @@ export type Database = {
         }
         Returns: string
       }
-
       criar_agendamento_interno: {
         Args: {
           p_contato_id: string
@@ -1366,58 +1333,31 @@ export type Database = {
         }
         Returns: string
       }
-
       criar_cobranca_agendamento: {
-        Args: {
-          p_agendamento_id: string
-        }
+        Args: { p_agendamento_id: string }
         Returns: string
       }
-
       criar_cobranca_agendamento_interno: {
-        Args: {
-          p_agendamento_id: string
-        }
+        Args: { p_agendamento_id: string }
         Returns: string
       }
-
       criar_link_compartilhamento_faixa: {
-        Args: {
-          p_versao_id: string
-        }
+        Args: { p_versao_id: string }
         Returns: string
       }
-
       criar_link_compartilhamento_faixa_interno: {
-        Args: {
-          p_versao_id: string
-        }
+        Args: { p_versao_id: string }
         Returns: string
       }
-
       definir_trabalho_na_casa: {
-        Args: {
-          exibir: boolean
-          trabalho_id: string
-        }
+        Args: { exibir: boolean; trabalho_id: string }
         Returns: boolean
       }
-
       estudio_possui_modulo: {
-        Args: {
-          p_estudio_id: string
-          p_modulo: string
-        }
+        Args: { p_estudio_id: string; p_modulo: string }
         Returns: boolean
       }
-
-      estudio_tem_modulo: {
-        Args: {
-          p_modulo: string
-        }
-        Returns: boolean
-      }
-
+      estudio_tem_modulo: { Args: { p_modulo: string }; Returns: boolean }
       listar_casa: {
         Args: never
         Returns: {
@@ -1433,7 +1373,6 @@ export type Database = {
           slug: string
         }[]
       }
-
       listar_trabalhos_casa: {
         Args: never
         Returns: {
@@ -1452,12 +1391,7 @@ export type Database = {
           selecionado_para_casa_em: string
         }[]
       }
-
-      obter_limite_trabalhos_casa: {
-        Args: never
-        Returns: number
-      }
-
+      obter_limite_trabalhos_casa: { Args: never; Returns: number }
       reservar_upload_faixa: {
         Args: {
           p_chave_objeto: string
@@ -1468,11 +1402,11 @@ export type Database = {
           p_tipo_mime: string
           p_versao: string
         }
-
         Returns: {
           chave_objeto: string
           confirmado_em: string | null
           criado_em: string
+          criado_por: string | null
           estudio_id: string
           faixa_id: string
           id: string
@@ -1484,7 +1418,6 @@ export type Database = {
           token_compartilhamento: string | null
           versao: string
         }
-
         SetofOptions: {
           from: "*"
           to: "versoes_faixa"
@@ -1492,7 +1425,6 @@ export type Database = {
           isSetofReturn: false
         }
       }
-
       reservar_upload_faixa_interno: {
         Args: {
           p_chave_objeto: string
@@ -1503,11 +1435,11 @@ export type Database = {
           p_tipo_mime: string
           p_versao: string
         }
-
         Returns: {
           chave_objeto: string
           confirmado_em: string | null
           criado_em: string
+          criado_por: string | null
           estudio_id: string
           faixa_id: string
           id: string
@@ -1519,7 +1451,6 @@ export type Database = {
           token_compartilhamento: string | null
           versao: string
         }
-
         SetofOptions: {
           from: "*"
           to: "versoes_faixa"
@@ -1527,7 +1458,6 @@ export type Database = {
           isSetofReturn: false
         }
       }
-
       reservar_upload_recurso_experiencia: {
         Args: {
           p_chave_objeto: string
@@ -1537,7 +1467,6 @@ export type Database = {
           p_tamanho_bytes: number
           p_tipo_mime: string
         }
-
         Returns: {
           atualizado_em: string
           chave_objeto: string | null
@@ -1553,7 +1482,6 @@ export type Database = {
           tipo_mime: string | null
           versao_id: string | null
         }
-
         SetofOptions: {
           from: "*"
           to: "recursos_experiencia_imersiva"
@@ -1561,20 +1489,16 @@ export type Database = {
           isSetofReturn: false
         }
       }
-
       revogar_link_compartilhamento_faixa: {
-        Args: {
-          p_versao_id: string
-        }
+        Args: { p_versao_id: string }
         Returns: undefined
       }
-
-      usuario_tem_acesso_como_contato: {
-        Args: Record<PropertyKey, never>
+      usuario_tem_acesso_como_contato: { Args: never; Returns: boolean }
+      usuario_tem_acesso_estudio: {
+        Args: { p_estudio_id: string }
         Returns: boolean
       }
     }
-
     Enums: {
       status_producao_faixa:
         | "composicao"
@@ -1585,7 +1509,6 @@ export type Database = {
         | "masterizacao"
         | "concluido"
     }
-
     CompositeTypes: {
       [_ in never]: never
     }
@@ -1594,184 +1517,125 @@ export type Database = {
 
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-type DefaultSchema =
-  DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-
-  TableName extends (
-    DefaultSchemaTableNameOrOptions extends {
-      schema: keyof DatabaseWithoutInternals
-    }
-      ? keyof (
-          DatabaseWithoutInternals[
-            DefaultSchemaTableNameOrOptions["schema"]
-          ]["Tables"] &
-            DatabaseWithoutInternals[
-              DefaultSchemaTableNameOrOptions["schema"]
-            ]["Views"]
-        )
-      : never
-  ) = never,
-> =
-  DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? (
-        DatabaseWithoutInternals[
-          DefaultSchemaTableNameOrOptions["schema"]
-        ]["Tables"] &
-          DatabaseWithoutInternals[
-            DefaultSchemaTableNameOrOptions["schema"]
-          ]["Views"]
-      )[TableName] extends {
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
       : never
-    : DefaultSchemaTableNameOrOptions extends keyof (
-          DefaultSchema["Tables"] & DefaultSchema["Views"]
-        )
-      ? (
-          DefaultSchema["Tables"] &
-            DefaultSchema["Views"]
-        )[DefaultSchemaTableNameOrOptions] extends {
-          Row: infer R
-        }
-        ? R
-        : never
-      : never
+    : never
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-
-  TableName extends (
-    DefaultSchemaTableNameOrOptions extends {
-      schema: keyof DatabaseWithoutInternals
-    }
-      ? keyof DatabaseWithoutInternals[
-          DefaultSchemaTableNameOrOptions["schema"]
-        ]["Tables"]
-      : never
-  ) = never,
-> =
-  DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? DatabaseWithoutInternals[
-        DefaultSchemaTableNameOrOptions["schema"]
-      ]["Tables"][TableName] extends {
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
       : never
-    : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-      ? DefaultSchema["Tables"][
-          DefaultSchemaTableNameOrOptions
-        ] extends {
-          Insert: infer I
-        }
-        ? I
-        : never
-      : never
+    : never
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-
-  TableName extends (
-    DefaultSchemaTableNameOrOptions extends {
-      schema: keyof DatabaseWithoutInternals
-    }
-      ? keyof DatabaseWithoutInternals[
-          DefaultSchemaTableNameOrOptions["schema"]
-        ]["Tables"]
-      : never
-  ) = never,
-> =
-  DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? DatabaseWithoutInternals[
-        DefaultSchemaTableNameOrOptions["schema"]
-      ]["Tables"][TableName] extends {
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
       : never
-    : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-      ? DefaultSchema["Tables"][
-          DefaultSchemaTableNameOrOptions
-        ] extends {
-          Update: infer U
-        }
-        ? U
-        : never
-      : never
+    : never
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-
-  EnumName extends (
-    DefaultSchemaEnumNameOrOptions extends {
-      schema: keyof DatabaseWithoutInternals
-    }
-      ? keyof DatabaseWithoutInternals[
-          DefaultSchemaEnumNameOrOptions["schema"]
-        ]["Enums"]
-      : never
-  ) = never,
-> =
-  DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? DatabaseWithoutInternals[
-        DefaultSchemaEnumNameOrOptions["schema"]
-      ]["Enums"][EnumName]
-    : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-      ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-      : never
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never) = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-
-  CompositeTypeName extends (
-    PublicCompositeTypeNameOrOptions extends {
-      schema: keyof DatabaseWithoutInternals
-    }
-      ? keyof DatabaseWithoutInternals[
-          PublicCompositeTypeNameOrOptions["schema"]
-        ]["CompositeTypes"]
-      : never
-  ) = never,
-> =
-  PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? DatabaseWithoutInternals[
-        PublicCompositeTypeNameOrOptions["schema"]
-      ]["CompositeTypes"][CompositeTypeName]
-    : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-      ? DefaultSchema["CompositeTypes"][
-          PublicCompositeTypeNameOrOptions
-        ]
-      : never
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never) = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
 
 export const Constants = {
   graphql_public: {
     Enums: {},
   },
-
   public: {
     Enums: {
       status_producao_faixa: [

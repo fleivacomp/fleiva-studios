@@ -1,8 +1,9 @@
 <main
   class="leitor"
   [class.modo-teste]="modoTeste()"
-  [style.--accent]="dados.corPrincipal()"
-  [style.--on-accent]="dados.corContraste()"
+  [class.is-integrado]="integrado()"
+  [style.--accent]="integrado() ? null : dados.corPrincipal()"
+  [style.--on-accent]="integrado() ? null : dados.corContraste()"
 >
   @if (dados.carregando()) {
     <section class="estado-leitor">
@@ -17,21 +18,26 @@
       <button type="button" (click)="carregar()">Tentar novamente</button>
     </section>
   } @else if (dados.experiencia(); as experiencia) {
-    <header class="barra-leitor">
-      @if (experiencia.estudio; as estudio) {
-        <a
-          [routerLink]="['/', estudio.slug]"
-          class="marca"
-        >
-          {{ estudio.nome }}
-        </a>
-      } @else {
-        <a routerLink="/" class="marca">FLEIVA</a>
-      }
-      <span>{{ modoTeste() ? 'MODO DE TESTE' : leituraSimples() ? 'LEITURA' : motor.iniciado() ? 'EM CURSO' : 'EXPERIÊNCIA' }}</span>
-    </header>
 
-    @if (modoTeste()) {
+    <!-- Esconde a barra superior do Flêiva no Widget -->
+    @if (!integrado()) {
+      <header class="barra-leitor">
+        @if (experiencia.estudio; as estudio) {
+          <a
+            [routerLink]="['/', estudio.slug]"
+            class="marca"
+          >
+            {{ estudio.nome }}
+          </a>
+        } @else {
+          <a routerLink="/" class="marca">FLEIVA</a>
+        }
+        <span>{{ modoTeste() ? 'MODO DE TESTE' : leituraSimples() ? 'LEITURA' : motor.iniciado() ? 'EM CURSO' : 'EXPERIÊNCIA' }}</span>
+      </header>
+    }
+
+    <!-- Esconde o painel de testes no Widget para não vazar pro cliente -->
+    @if (modoTeste() && !integrado()) {
       <aside class="painel-teste" aria-label="Estado do teste da experiência">
         <span class="rotulo-painel">TESTE</span>
         <div>
@@ -87,10 +93,14 @@
       </section>
     } @else {
       <article class="publicacao">
-        <header class="titulo-publicacao">
-          <p class="rotulo">{{ leituraSimples() ? 'SEM ÁUDIO' : '' }}</p>
-          <h1>{{ experiencia.nome }}</h1>
-        </header>
+
+        <!-- Esconde o título gigante no Widget -->
+        @if (!integrado()) {
+          <header class="titulo-publicacao">
+            <p class="rotulo">{{ leituraSimples() ? 'SEM ÁUDIO' : '' }}</p>
+            <h1>{{ experiencia.nome }}</h1>
+          </header>
+        }
 
         @if (erroExecucao()) {
           <p class="mensagem-erro" role="alert">{{ erroExecucao() }}</p>
@@ -132,10 +142,13 @@
           }
         </div>
 
-        <footer class="fim-publicacao">
-          <span>FIM</span>
-          <strong>{{ experiencia.nome }}</strong>
-        </footer>
+        <!-- Esconde o rodapé no Widget -->
+        @if (!integrado()) {
+          <footer class="fim-publicacao">
+            <span>FIM</span>
+            <strong>{{ experiencia.nome }}</strong>
+          </footer>
+        }
       </article>
     }
   }
